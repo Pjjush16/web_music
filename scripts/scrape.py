@@ -1,40 +1,47 @@
 #!/usr/bin/env python3
 """
-扫描 audio/，补全元数据、封面和歌词。
+扫描 audio/，按 Kodi 音乐刮削思路补全元数据、封面和歌词。
 
-优先级：
-  元数据  tag > AcoustID 指纹（需 key）> 目录/文件名解析
-  封面    已有 .jpg/.png > 内嵌封面 > iTunes Search API
-  歌词    已有 .lrc > LRCLIB
+扫描：只读内嵌标签（title / artist / album / MusicBrainz ID）。
+刮削：优先用标签里的 MusicBrainz Recording ID 精确查询；
+      没有 MBID 时用 artist + title 搜索 MusicBrainz，取最高分匹配。
+封面：Cover Art Archive（基于 release MBID），失败退到 iTunes。
+歌词：LRCLIB（基于 artist + title）。
 
 产物写在音频同目录：
   <stem>.jpg   封面
   <stem>.lrc   歌词
-补全的 title/artist/album 写回 tag（只补空缺，不覆盖）。
+补全的 title / artist / album 写回标签（只补空缺，不覆盖）。
 """
 
 import json
 import os
 import re
-import sys
 import time
 from pathlib import Path
 
 import requests
 from mutagen import File as MutagenFile
 from mutagen.flac import Picture
-from mutagen.id3 import APIC
+from mutagen.id3 import APIC, TXXX
 
 AUDIO_EXTS = {".mp3", ".flac", ".m4a", ".aac", ".ogg", ".opus", ".wav", ".wma"}
 AUDIO_ROOT = Path("audio")
 STATE_FILE = Path("scrape_state.json")
 COVER_EXTS = [".jpg", ".jpeg", ".png"]
 
-REQ_TIMEOUT = 15
-USER_AGENT = "YAONET-Audio-Scraper/1.0"
+MB_BASE = "https://musicbrainz.org/ws/2"
+CAA_BASE = "https://coverartarchive.org"
+LRCLIB_BASE = "https://lrclib.net/api"
+ITUNES_BASE = "https://itunes.apple.com"
+
+REQ_TIMEOUT = 20
+USER_AGENT = "YAONET-AudioScraper/1.0 (https://github.com/yaonet/audio)"
+MB_SLEEP = 1.1          # MusicBrainz 限速 1 req/s，留余量
+CAA_SLEEP = 0.5
 ITUNES_SLEEP = 0.6
 LRCLIB_SLEEP = 0.3
-ACOUSTID_SLEEP = 0.4
+MB_MIN_SCORE = 85       # 搜索结果最低可信分
 
 
 def log(msg):
@@ -61,36 +68,103 @@ def save_state(state):
     STATE_FILE.write_text(content, encoding="utf-8")
 
 
-# ---------- 元数据 ----------
+# ---------- 标签读取 ----------
 
 def read_tags(path):
-    info = {"title": "", "artist": "", "album": "", "duration": 0}
+    """
+    返回 title / artist / album / duration，
+    以及 MusicBrainz 的 recording / release / artist MBID（如果有）。
+    """
+    info = {
+        "title": "", "artist": "", "album": "", "duration": 0,
+        "mb_recording": "", "mb_release": "", "mb_artist": ""
+    }
+
+    # easy 模式读常用字段
     try:
-        audio = MutagenFile(str(path), easy=True)
+        easy = MutagenFile(str(path), easy=True)
     except Exception:
-        return info
-    if audio is None:
-        return info
+        easy = None
+    if easy is not None:
+        def pick(key):
+            val = easy.tags.get(key) if easy.tags else None
+            if isinstance(val, list):
+                return str(val[0]).strip() if val else ""
+            if isinstance(val, str):
+                return val.strip()
+            return ""
+        info["title"] = pick("title")
+        info["artist"] = pick("artist")
+        info["album"] = pick("album")
+        try:
+            info["duration"] = round(float(easy.info.length), 2)
+        except Exception:
+            pass
 
-    def pick(key):
-        val = audio.tags.get(key) if audio.tags else None
-        if isinstance(val, list):
-            return str(val[0]).strip() if val else ""
-        if isinstance(val, str):
-            return val.strip()
-        return ""
-
-    info["title"] = pick("title")
-    info["artist"] = pick("artist")
-    info["album"] = pick("album")
+    # 原始模式读 MBID
     try:
-        info["duration"] = round(float(audio.info.length), 2)
+        raw = MutagenFile(str(path))
+    except Exception:
+        raw = None
+    if raw is None or raw.tags is None:
+        return info
+
+    # ID3（MP3）
+    try:
+        for key, value in raw.tags.items():
+            if not isinstance(key, str):
+                continue
+            kl = key.lower()
+            if kl.startswith("txxx:musicbrainz track id"):
+                info["mb_recording"] = str(value).strip()
+            elif kl.startswith("txxx:musicbrainz album id"):
+                info["mb_release"] = str(value).strip()
+            elif kl.startswith("txxx:musicbrainz artist id"):
+                info["mb_artist"] = str(value).strip()
+            elif kl.startswith("ufid:http://musicbrainz.org"):
+                info["mb_recording"] = info["mb_recording"] or str(value).strip()
     except Exception:
         pass
+
+    # Vorbis Comment（FLAC / OGG）
+    try:
+        getter = getattr(raw.tags, "get", None)
+        if callable(getter):
+            for key, attr in (
+                ("musicbrainz_trackid", "mb_recording"),
+                ("musicbrainz_albumid", "mb_release"),
+                ("musicbrainz_artistid", "mb_artist"),
+            ):
+                val = raw.tags.get(key)
+                if isinstance(val, list):
+                    val = val[0] if val else ""
+                if val:
+                    info[attr] = str(val).strip()
+    except Exception:
+        pass
+
+    # MP4（M4A）
+    try:
+        for key, attr in (
+            ("----:com.apple.iTunes:MusicBrainz Track Id", "mb_recording"),
+            ("----:com.apple.iTunes:MusicBrainz Album Id", "mb_release"),
+            ("----:com.apple.iTunes:MusicBrainz Artist Id", "mb_artist"),
+        ):
+            val = raw.tags.get(key)
+            if isinstance(val, list):
+                val = val[0] if val else b""
+            if isinstance(val, bytes):
+                val = val.decode("utf-8", "ignore")
+            if val:
+                info[attr] = str(val).strip()
+    except Exception:
+        pass
+
     return info
 
 
 def parse_from_path(path):
+    """标签缺失时从路径推断 artist / album / title。"""
     rel = path.relative_to(AUDIO_ROOT)
     parts = list(rel.parts)
     stem = Path(parts[-1]).stem
@@ -121,58 +195,96 @@ def parse_from_path(path):
     return {"title": title, "artist": artist, "album": album}
 
 
-def identify_acoustid(path, api_key):
-    if not api_key:
-        return {}
+# ---------- MusicBrainz ----------
+
+def mb_get(path, params):
+    params = dict(params)
+    params["fmt"] = "json"
     try:
-        import acoustid
-    except ImportError:
-        log("  [warn] pyacoustid 未安装，跳过指纹识别")
-        return {}
-    try:
-        for score, _rid, title, artist in acoustid.match(api_key, str(path)):
-            if score >= 0.6:
-                return {"title": title or "", "artist": artist or ""}
+        r = requests.get(
+            MB_BASE + path,
+            params=params,
+            timeout=REQ_TIMEOUT,
+            headers={"User-Agent": USER_AGENT},
+        )
+        if r.status_code == 404:
+            return None
+        r.raise_for_status()
+        return r.json()
     except Exception as e:
-        log(f"  [warn] AcoustID 失败: {e}")
-    return {}
+        log(f"  [warn] MusicBrainz 请求失败: {e}")
+        return None
+    finally:
+        time.sleep(MB_SLEEP)
 
 
-def merge_metadata(tag, path_meta, fp):
+def mb_lookup_recording(mbid):
+    return mb_get(f"/recording/{mbid}", {"inc": "artist-credits+releases"})
+
+
+def mb_search_recording(artist, title):
+    if not title:
+        return None
+    if artist:
+        query = f'artist:"{artist}" AND recording:"{title}"'
+    else:
+        query = f'recording:"{title}"'
+    data = mb_get("/recording", {"query": query, "limit": 5})
+    if not data:
+        return None
+    items = data.get("recordings") or []
+    best = None
+    best_score = 0
+    for item in items:
+        try:
+            score = int(item.get("score", 0))
+        except Exception:
+            score = 0
+        if score > best_score:
+            best_score = score
+            best = item
+    if best and best_score >= MB_MIN_SCORE:
+        return best
+    return None
+
+
+def pick_release(recording):
+    """从 recording 的 releases 里取一个 release MBID。"""
+    if not recording:
+        return ""
+    releases = recording.get("releases") or []
+    for rel in releases:
+        rid = rel.get("id") or ""
+        if rid:
+            return rid
+    return ""
+
+
+def extract_recording_info(recording):
+    if not recording:
+        return {}
+    title = recording.get("title") or ""
+    artist = ""
+    credits = recording.get("artist-credit") or []
+    if credits:
+        parts = []
+        for c in credits:
+            if isinstance(c, dict):
+                nm = c.get("name") or (c.get("artist") or {}).get("name") or ""
+                if nm:
+                    parts.append(nm)
+        artist = " / ".join(parts)
+    album = ""
+    releases = recording.get("releases") or []
+    if releases:
+        album = releases[0].get("title") or ""
     return {
-        "title": tag["title"] or fp.get("title") or path_meta["title"],
-        "artist": tag["artist"] or fp.get("artist") or path_meta["artist"],
-        "album": tag["album"] or path_meta["album"],
-        "duration": tag["duration"],
+        "title": title,
+        "artist": artist,
+        "album": album,
+        "mb_recording": recording.get("id") or "",
+        "mb_release": pick_release(recording),
     }
-
-
-def write_tags(path, meta):
-    try:
-        audio = MutagenFile(str(path), easy=True)
-        if audio is None:
-            return
-        if audio.tags is None:
-            audio.add_tags()
-        changed = False
-        for key in ("title", "artist", "album"):
-            val = meta.get(key, "").strip()
-            if not val:
-                continue
-            cur = audio.tags.get(key)
-            if isinstance(cur, list):
-                cur_val = cur[0] if cur else ""
-            elif isinstance(cur, str):
-                cur_val = cur
-            else:
-                cur_val = ""
-            if not cur_val:
-                audio.tags[key] = [val]
-                changed = True
-        if changed:
-            audio.save()
-    except Exception as e:
-        log(f"  [warn] 写回 tag 失败: {e}")
 
 
 # ---------- 封面 ----------
@@ -219,13 +331,31 @@ def extract_embedded_cover(path):
     return None
 
 
+def fetch_cover_caa(release_mbid):
+    if not release_mbid:
+        return None
+    url = f"{CAA_BASE}/release/{release_mbid}/front-500"
+    try:
+        r = requests.get(url, timeout=REQ_TIMEOUT, headers={"User-Agent": USER_AGENT})
+        if r.status_code == 404:
+            return None
+        r.raise_for_status()
+        if r.content:
+            return r.content, "image/jpeg"
+    except Exception as e:
+        log(f"  [warn] Cover Art Archive 失败: {e}")
+    finally:
+        time.sleep(CAA_SLEEP)
+    return None
+
+
 def fetch_cover_itunes(artist, title):
     if not title:
         return None
     term = f"{artist} {title}".strip()
     try:
         r = requests.get(
-            "https://itunes.apple.com/search",
+            f"{ITUNES_BASE}/search",
             params={"term": term, "media": "music", "entity": "song", "limit": 1},
             timeout=REQ_TIMEOUT,
             headers={"User-Agent": USER_AGENT},
@@ -244,6 +374,8 @@ def fetch_cover_itunes(artist, title):
     except Exception as e:
         log(f"  [warn] iTunes 封面失败: {e}")
         return None
+    finally:
+        time.sleep(ITUNES_SLEEP)
 
 
 def save_cover(path, data, mime):
@@ -275,18 +407,20 @@ def fetch_lyrics_lrclib(artist, title, album, duration):
 
     try:
         r = requests.get(
-            "https://lrclib.net/api/get",
+            f"{LRCLIB_BASE}/get",
             params=params,
             timeout=REQ_TIMEOUT,
             headers={"User-Agent": USER_AGENT},
         )
         if r.status_code == 200:
             d = r.json()
-            return d.get("syncedLyrics") or d.get("plainLyrics")
+            text = d.get("syncedLyrics") or d.get("plainLyrics")
+            if text:
+                return text
 
         q = f"{artist} {title}".strip()
         r = requests.get(
-            "https://lrclib.net/api/search",
+            f"{LRCLIB_BASE}/search",
             params={"q": q},
             timeout=REQ_TIMEOUT,
             headers={"User-Agent": USER_AGENT},
@@ -297,7 +431,39 @@ def fetch_lyrics_lrclib(artist, title, album, duration):
                 return arr[0].get("syncedLyrics") or arr[0].get("plainLyrics")
     except Exception as e:
         log(f"  [warn] LRCLIB 失败: {e}")
+    finally:
+        time.sleep(LRCLIB_SLEEP)
     return None
+
+
+# ---------- 写回标签 ----------
+
+def write_tags(path, meta):
+    try:
+        audio = MutagenFile(str(path), easy=True)
+        if audio is None:
+            return
+        if audio.tags is None:
+            audio.add_tags()
+        changed = False
+        for key in ("title", "artist", "album"):
+            val = (meta.get(key) or "").strip()
+            if not val:
+                continue
+            cur = audio.tags.get(key)
+            if isinstance(cur, list):
+                cur_val = cur[0] if cur else ""
+            elif isinstance(cur, str):
+                cur_val = cur
+            else:
+                cur_val = ""
+            if not cur_val:
+                audio.tags[key] = [val]
+                changed = True
+        if changed:
+            audio.save()
+    except Exception as e:
+        log(f"  [warn] 写回标签失败: {e}")
 
 
 # ---------- 主流程 ----------
@@ -316,10 +482,6 @@ def iter_audio_files():
 
 
 def main():
-    api_key = os.environ.get("ACOUSTID_API_KEY", "").strip()
-    if not api_key:
-        log("未配置 ACOUSTID_API_KEY：跳过指纹识别，改用 tag / 路径 / iTunes")
-
     state = load_state()
     files = list(iter_audio_files())
     log(f"发现 {len(files)} 个音频文件")
@@ -332,22 +494,36 @@ def main():
         key = path.as_posix()
         entry = state.setdefault(key, {})
 
-        tag = read_tags(path)
+        tags = read_tags(path)
         path_meta = parse_from_path(path)
 
-        fp = {}
-        if api_key and (not tag["title"] or not tag["artist"]):
-            fp = identify_acoustid(path, api_key)
-            if fp:
-                time.sleep(ACOUSTID_SLEEP)
+        title = tags["title"] or path_meta["title"]
+        artist = tags["artist"] or path_meta["artist"]
+        album = tags["album"] or path_meta["album"]
 
-        meta = merge_metadata(tag, path_meta, fp)
-        if not meta["title"]:
+        recording = None
+        if tags["mb_recording"]:
+            log(f"  使用 MusicBrainz Recording ID: {tags['mb_recording']}")
+            recording = mb_lookup_recording(tags["mb_recording"])
+        if not recording and title:
+            log(f"  搜索 MusicBrainz: artist={artist!r} title={title!r}")
+            recording = mb_search_recording(artist, title)
+
+        mb_info = extract_recording_info(recording) if recording else {}
+        if mb_info:
+            title = mb_info.get("title") or title
+            artist = mb_info.get("artist") or artist
+            album = mb_info.get("album") or album
+            log(f"  MusicBrainz 匹配: title={title!r} artist={artist!r} album={album!r}")
+        else:
+            log("  MusicBrainz 未匹配，保留标签/路径信息")
+
+        if not title:
             log("  [skip] 无法识别标题")
             entry["status"] = "no_title"
             continue
 
-        log(f"  title={meta['title']!r} artist={meta['artist']!r} album={meta['album']!r}")
+        meta = {"title": title, "artist": artist, "album": album, "duration": tags["duration"]}
 
         # 封面
         existing = find_existing_cover(path)
@@ -355,14 +531,16 @@ def main():
             log(f"  封面已存在: {existing.name}")
             entry["cover"] = existing.name
         else:
-            data = extract_embedded_cover(path)
+            cover = extract_embedded_cover(path)
             source = "embedded"
-            if not data:
-                data = fetch_cover_itunes(meta["artist"], meta["title"])
+            if not cover and mb_info.get("mb_release"):
+                cover = fetch_cover_caa(mb_info["mb_release"])
+                source = "caa"
+            if not cover:
+                cover = fetch_cover_itunes(artist, title)
                 source = "itunes"
-                time.sleep(ITUNES_SLEEP)
-            if data:
-                raw, mime = data
+            if cover:
+                raw, mime = cover
                 saved = save_cover(path, raw, mime)
                 log(f"  封面已保存 ({source}): {saved.name}")
                 entry["cover"] = saved.name
@@ -376,8 +554,7 @@ def main():
             log(f"  歌词已存在: {existing.name}")
             entry["lyrics"] = existing.name
         else:
-            lrc = fetch_lyrics_lrclib(meta["artist"], meta["title"], meta["album"], meta["duration"])
-            time.sleep(LRCLIB_SLEEP)
+            lrc = fetch_lyrics_lrclib(artist, title, album, tags["duration"])
             if lrc:
                 out = path.with_suffix(".lrc")
                 out.write_text(lrc, encoding="utf-8")
@@ -388,10 +565,13 @@ def main():
                 entry["lyrics"] = None
 
         write_tags(path, meta)
+
         entry["status"] = "ok"
         entry["title"] = meta["title"]
         entry["artist"] = meta["artist"]
         entry["album"] = meta["album"]
+        entry["mb_recording"] = mb_info.get("mb_recording", "")
+        entry["mb_release"] = mb_info.get("mb_release", "")
 
     save_state(state)
     log("刮削完成")
