@@ -74,7 +74,7 @@
 
   .cover-stage {
     width: 100%; height: 360px; position: relative;
-    perspective: 1200px;
+    perspective: 1200px; /* 全局透视景深 */
     display: flex; align-items: center;
     cursor: grab;
   }
@@ -89,17 +89,20 @@
   }
   .cover-track::-webkit-scrollbar { display: none; }
 
+  /* 卡片改为自适应宽度，保证两边能露出 */
   .cover-card {
-    flex-shrink: 0; width: 240px; height: 240px; border-radius: 20px;
+    flex-shrink: 0; 
+    width: min(240px, 55vw); 
+    height: min(240px, 55vw); 
+    border-radius: 20px;
     position: relative; background: var(--surface);
     box-shadow: var(--shadow-md); border: 1px solid var(--border);
-    transform-style: preserve-3d;
     will-change: transform, opacity;
     overflow: hidden;
   }
   .cover-card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
   .cover-card.no-cover { display: grid; place-items: center; font-size: 3rem; color: var(--text-3); background: var(--accent-soft); }
-  .cover-card.is-centered { box-shadow: 0 0 0 3px var(--accent), var(--shadow-md); }
+  .cover-card.is-centered { box-shadow: 0 0 0 3px var(--accent), 0 20px 40px rgba(0,0,0,0.2); }
 
   /* ==================== 底栏 Dock ==================== */
   .player-bar {
@@ -358,7 +361,8 @@
     
     .cover-stage { height: 280px; }
     .cover-track { padding: 0 calc(50vw - 100px); gap: 16px;}
-    .cover-card { width: 200px; height: 200px; }
+    /* 移动端卡片变小，让左右露出更多 */
+    .cover-card { width: min(200px, 50vw); height: min(200px, 50vw); }
 
     .np-spectrum{height:100px}
     .np-content{max-height:calc(100vh - 100px)}
@@ -715,7 +719,6 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     spectrumColor = [r, g, b];
     spectrumColorLight = lightenColor([r,g,b], 70);
     
-    // 背景深色渐变保持
     var darkR = Math.floor(r * 0.35), darkG = Math.floor(g * 0.35), darkB = Math.floor(b * 0.35);
     npBackdrop.style.background = `radial-gradient(circle at 50% 10%, rgba(${r},${g},${b}, 0.45) 0%, rgba(${darkR},${darkG},${darkB}, 0.85) 40%, #0f0f0f 90%)`;
     
@@ -811,7 +814,10 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
       return;
     }
 
-    var renderList = [...filtered, ...filtered, ...filtered];
+    // 复制 9 份，确保无限滚动和两侧有足够的卡片
+    var renderList = [];
+    for (var k = 0; k < 9; k++) renderList = renderList.concat(filtered);
+    
     var html = renderList.map((t, i) => {
       var cImg = t.cover ? `<img src="${esc(t.cover)}" onerror="this.style.display='none'">` : '';
       var cls = t.cover ? 'cover-card' : 'cover-card no-cover';
@@ -827,8 +833,9 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
       var gap = parseInt(window.getComputedStyle(coverTrack).gap) || 24;
       var singleGroupWidth = (cardW + gap) * filtered.length;
       
+      // 定位到正中间那组（第 5 组）
       coverTrack.style.scrollBehavior = 'auto';
-      coverTrack.scrollLeft = singleGroupWidth;
+      coverTrack.scrollLeft = singleGroupWidth * 4;
       coverTrack.style.scrollBehavior = '';
       
       update3D();
@@ -849,26 +856,39 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
       var distance = stageCenter - cardCenter;
       var absDist = Math.abs(distance);
       
-      if (absDist > window.innerWidth) {
+      // 计算跨越的卡片数量步长
+      var cardW = rect.width;
+      var gap = 24;
+      var stepWidth = cardW + gap;
+      var step = distance / stepWidth;
+      var absStep = Math.abs(step);
+
+      // 只渲染中间附近的几张，超出视野的直接隐藏
+      if (absStep > 3) {
         card.style.opacity = '0';
         card.style.pointerEvents = 'none';
         return;
       }
 
-      var rotateY = (distance / stageCenter) * 45;
-      rotateY = Math.max(-45, Math.min(45, rotateY));
+      // 旋转角度：越往两侧倾斜越大
+      var rotateY = step * 45; 
       
-      var scale = 1 - (absDist / stageCenter) * 0.35;
-      scale = Math.max(0.6, scale);
+      // 缩放：中心为 1，两侧缩小
+      var scale = 1 - absStep * 0.15;
       
-      var opacity = 1 - (absDist / stageCenter) * 0.6;
-      opacity = Math.max(0.2, opacity);
+      // 景深：两侧往后退
+      var translateZ = -absStep * 50;
       
-      var zIndex = 100 - Math.floor(absDist / 10);
+      // 垂直下沉：两侧稍微往下掉
+      var translateY = absStep * 15;
+      
+      // 透明度：越往两侧越暗
+      var opacity = 1 - absStep * 0.35;
 
-      card.style.transform = `perspective(1000px) rotateY(${rotateY}deg) scale(${scale})`;
-      card.style.opacity = opacity;
-      card.style.zIndex = zIndex;
+      // 组合 3D 变换（父容器已设置 perspective）
+      card.style.transform = `translateX(0) translateY(${translateY}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
+      card.style.opacity = Math.max(0, opacity);
+      card.style.zIndex = 100 - Math.floor(absStep * 10);
       card.style.pointerEvents = 'auto';
       
       if (absDist < minDist) {
@@ -891,11 +911,12 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     var gap = parseInt(window.getComputedStyle(coverTrack).gap) || 24;
     var singleGroupWidth = (cardW + gap) * filtered.length;
 
-    if (coverTrack.scrollLeft < singleGroupWidth * 0.5) {
+    // 无限循环边界调整（在 3.5 到 4.5 之间无缝跳跃）
+    if (coverTrack.scrollLeft < singleGroupWidth * 3.5) {
       coverTrack.style.scrollBehavior = 'auto';
       coverTrack.scrollLeft += singleGroupWidth;
       coverTrack.style.scrollBehavior = '';
-    } else if (coverTrack.scrollLeft > singleGroupWidth * 2.5) {
+    } else if (coverTrack.scrollLeft > singleGroupWidth * 4.5) {
       coverTrack.style.scrollBehavior = 'auto';
       coverTrack.scrollLeft -= singleGroupWidth;
       coverTrack.style.scrollBehavior = '';
