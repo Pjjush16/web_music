@@ -93,7 +93,7 @@
 
   .cover-stage {
     width: 100%; height: 360px; position: relative;
-    perspective: 1200px; /* 3D 景深 */
+    perspective: 1200px;
     display: flex; align-items: center;
     cursor: grab;
   }
@@ -101,7 +101,7 @@
 
   .cover-track {
     display: flex; align-items: center; gap: 20px;
-    padding: 0 calc(50vw - 130px); /* 确保首尾能滚到中心 */
+    padding: 0 calc(50vw - 130px);
     height: 100%; overflow-x: auto; scrollbar-width: none;
     transform-style: preserve-3d;
   }
@@ -117,17 +117,8 @@
     overflow: hidden;
   }
   .cover-card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-  
-  /* 封面占位 */
-  .cover-card.no-cover {
-    display: grid; place-items: center; font-size: 3rem; color: var(--text-3);
-    background: var(--accent-soft);
-  }
-  
-  /* 选中效果 */
-  .cover-card.is-centered {
-    box-shadow: 0 0 0 3px var(--accent), var(--shadow-md);
-  }
+  .cover-card.no-cover { display: grid; place-items: center; font-size: 3rem; color: var(--text-3); background: var(--accent-soft); }
+  .cover-card.is-centered { box-shadow: 0 0 0 3px var(--accent), var(--shadow-md); }
 
   /* ==================== 底栏 ==================== */
   .player-bar {
@@ -194,87 +185,92 @@
   }
   .pb-bar:hover .pb-bar-fill::after { opacity: 1; }
 
-  /* ==================== 全屏 Now Playing (沉浸版) ==================== */
+  /* ==================== 全屏 Now Playing (重构专业版) ==================== */
   .now-playing { position: fixed; inset: 0; z-index: 300; overflow: hidden; display: flex; flex-direction: column; }
   .now-playing[hidden] { display: none; }
   
-  .np-backdrop {
-    position: absolute; inset: 0;
-    background: #0f0f0f;
-    transition: background 0.8s ease;
-    animation: npFade 0.4s ease both;
+  /* 动态毛玻璃背景 */
+  .np-backdrop-blur {
+    position: absolute; inset: -50px;
+    background-size: cover; background-position: center;
+    filter: blur(60px) brightness(0.4);
+    transition: background-image 0.8s ease;
+    z-index: 0;
   }
-  @keyframes npFade { from { opacity: 0; } to { opacity: 1; } }
+  .np-backdrop-mask {
+    position: absolute; inset: 0;
+    background: rgba(0, 0, 0, 0.4); /* 统一压暗 */
+    z-index: 1;
+  }
   
+  /* 顶部导航 */
   .np-header {
     position: relative; z-index: 10; display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 24px; color: #fff;
+    padding: 20px 24px; color: #fff;
   }
-  .np-header-left, .np-header-right { display: flex; align-items: center; gap: 16px; min-width: 80px; }
+  .np-header-left, .np-header-right { display: flex; align-items: center; min-width: 60px; }
   .np-header-right { justify-content: flex-end; }
-  .np-icon-btn {
-    background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.8); cursor: pointer;
-    width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
-    transition: background 0.2s, color 0.2s; backdrop-filter: blur(4px);
-  }
-  .np-icon-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+  .np-header-center { flex: 1; text-align: center; min-width: 0; opacity: 1; transition: opacity 0.3s; }
+  .np-header-center h3 { font-size: 1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .np-header-center p { font-size: 0.8rem; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   
-  .np-header-title { flex: 1; text-align: center; min-width: 0; opacity: 1; }
-  .np-header-title h3 { font-size: 0.95rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .np-header-title p { font-size: 0.75rem; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .np-icon-btn {
+    background: rgba(255,255,255,0.15); border: none; color: #fff; cursor: pointer;
+    width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    transition: background 0.2s; backdrop-filter: blur(8px);
+  }
+  .np-icon-btn:hover { background: rgba(255,255,255,0.25); }
 
+  /* 中间主视图 */
   .np-main {
     position: relative; z-index: 5; flex: 1; display: flex; flex-direction: column;
     padding: 10px 32px 0; max-width: 600px; margin: 0 auto; width: 100%; min-height: 0;
+    justify-content: center;
   }
 
+  /* 封面视图 */
   .np-view-cover {
-    flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
-    min-height: 0; padding-bottom: 20px; transition: opacity 0.3s, transform 0.3s;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    transition: opacity 0.3s, transform 0.3s; width: 100%;
   }
   .np-view-cover.hidden { opacity: 0; pointer-events: none; transform: scale(0.95); }
   
-  .np-art { display: flex; align-items: center; justify-content: center; position: relative; width: 100%; }
+  .np-art { display: flex; align-items: center; justify-content: center; position: relative; width: 100%; margin-bottom: 30px;}
   .np-cover {
-    width: min(320px, 65vw); height: min(320px, 65vw); border-radius: 24px; position: relative; z-index: 2;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 4px 16px rgba(0,0,0,0.2);
-    display: grid; place-items: center; background: #333; will-change: transform; overflow: hidden;
+    width: min(280px, 65vw); height: min(280px, 65vw); border-radius: 20px; position: relative; z-index: 2;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: grid; place-items: center; background: rgba(255,255,255,0.1); 
+    background-size: cover; background-position: center;
   }
-  .np-cover::before { content: '♪'; color: rgba(255,255,255,0.9); font-size: clamp(3rem, 8vw, 4rem); position: absolute; }
-  .np-cover img { width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1; }
-  
   .np-vinyl {
-    width: min(300px, 60vw); height: min(300px, 60vw); margin-left: calc(min(300px, 60vw) * -0.55);
-    position: relative; z-index: 1; animation: vinylIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+    width: min(280px, 65vw); height: min(280px, 65vw); margin-left: calc(min(280px, 65vw) * -0.4);
+    position: relative; z-index: 1; animation: vinylIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
-  @keyframes vinylIn { from { transform: translateX(-45%) scale(0.84) rotate(-18deg); opacity: 0; } to { transform: translateX(0) scale(1) rotate(0); opacity: 1; } }
+  @keyframes vinylIn { from { transform: translateX(-30%) rotate(-15deg); opacity: 0; } to { transform: translateX(0) rotate(0); opacity: 1; } }
   .np-vinyl-disc {
     width: 100%; height: 100%; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.1), transparent 46%), repeating-radial-gradient(circle at center, #1d1d1d 0 1px, #0d0d0d 1px 3px);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), 0 28px 70px rgba(0,0,0,0.4);
-    position: relative; animation: spin 12s linear infinite; animation-play-state: paused;
+    background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.15), transparent 40%), repeating-radial-gradient(circle at center, #1a1a1a 0 1px, #0d0d0d 1px 4px);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.5);
+    position: relative; animation: spin 15s linear infinite; animation-play-state: paused;
   }
   .now-playing.is-playing .np-vinyl-disc { animation-play-state: running; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .np-vinyl-disc::before {
-    content: ''; position: absolute; width: 40%; height: 40%; border-radius: 50%; top: 50%; left: 50%;
-    transform: translate(-50%, -50%); background: var(--vinyl-label, #333); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.22);
+    content: ''; position: absolute; width: 45%; height: 45%; border-radius: 50%; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); background: var(--vinyl-label, #333); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.3);
+    background-size: cover; background-position: center;
   }
   .np-vinyl-disc::after {
-    content: ''; position: absolute; width: 6%; height: 6%; border-radius: 50%; top: 50%; left: 50%;
-    transform: translate(-50%, -50%); background: #0a0a0a;
+    content: ''; position: absolute; width: 8%; height: 8%; border-radius: 50%; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); background: #000; box-shadow: 0 0 10px rgba(0,0,0,0.8);
   }
 
-  .np-info { text-align: left; width: 100%; max-width: 320px; margin-top: 30px; }
-  .np-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
-  .np-title-row h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; color: #fff; }
-  .np-like-btn { background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer; padding: 4px; transition: color 0.2s; }
-  .np-like-btn:hover { color: #fff; }
-  .np-info p { font-size: 0.9rem; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .np-info { text-align: center; width: 100%; padding: 0 20px; }
+  .np-info h2 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 8px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 10px rgba(0,0,0,0.3);}
+  .np-info p { font-size: 0.95rem; color: rgba(255,255,255,0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* 歌词视图 */
   .np-view-lyrics {
-    position: absolute; inset: 60px 32px 140px; display: flex; flex-direction: column;
+    position: absolute; inset: 60px 32px 180px; display: flex; flex-direction: column;
     opacity: 0; pointer-events: none; transition: opacity 0.3s;
     overflow-y: auto; scrollbar-width: none;
     -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
@@ -287,47 +283,56 @@
   
   .lyric-line {
     font-size: 1.1rem; line-height: 1.6; color: rgba(255,255,255,0.4);
-    text-align: center; padding: 14px 0; transition: color 0.3s, transform 0.3s, font-size 0.3s; font-weight: 600;
+    text-align: center; padding: 12px 0; transition: color 0.3s, transform 0.3s, font-size 0.3s; font-weight: 600;
   }
-  .lyric-line.active { color: #fff; font-size: 1.25rem; font-weight: 800; transform: scale(1.02); }
+  .lyric-line.active { color: #fff; font-size: 1.25rem; font-weight: 800; transform: scale(1.02); text-shadow: 0 2px 12px rgba(0,0,0,0.5); }
 
-  /* 底部控制 */
-  .np-footer { position: relative; z-index: 10; padding: 0 32px 30px; max-width: 600px; margin: 0 auto; width: 100%; }
+  /* 底部功能区 */
+  .np-footer {
+    position: relative; z-index: 10; padding: 0 32px 40px;
+    max-width: 600px; margin: 0 auto; width: 100%;
+  }
   
-  .np-actions { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  /* 操作按钮 */
+  .np-actions { display: flex; align-items: center; justify-content: space-around; margin-bottom: 24px; }
   .np-action-btn {
     background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer;
     display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; transition: color 0.2s; padding: 8px;
   }
   .np-action-btn:hover { color: #fff; }
-  .np-action-btn.active { color: var(--accent); }
+  .np-action-btn.active { color: #fff; }
   .np-action-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-  .np-progress-row { display: flex; align-items: center; gap: 12px; font-size: 0.75rem; color: rgba(255,255,255,0.5); font-variant-numeric: tabular-nums; margin-bottom: 16px; }
+  /* 进度条 */
+  .np-progress-row { display: flex; align-items: center; gap: 12px; font-size: 0.75rem; color: rgba(255,255,255,0.6); font-variant-numeric: tabular-nums; margin-bottom: 24px; }
   .np-bar { flex: 1; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.2); position: relative; cursor: pointer; overflow: hidden; }
   .np-bar-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 999px; background: #fff; width: 0%; transition: width 0.1s linear; }
   .np-bar-fill::after { content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 8px; height: 8px; border-radius: 50%; background: #fff; opacity: 0; transition: opacity 0.2s; }
   .np-bar:hover .np-bar-fill::after { opacity: 1; }
 
-  .np-controls { display: flex; align-items: center; justify-content: space-between; }
-  .np-btn { background: none; border: none; color: rgba(255,255,255,0.8); cursor: pointer; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; transition: color 0.2s, transform 0.1s; }
-  .np-btn:hover { color: #fff; }
+  /* 播放控制 */
+  .np-controls { display: flex; align-items: center; justify-content: space-between; padding: 0 10px; }
+  .np-btn { background: rgba(255,255,255,0.1); border: none; color: #fff; cursor: pointer; width: 50px; height: 50px; display: grid; place-items: center; border-radius: 50%; transition: background 0.2s, transform 0.1s; backdrop-filter: blur(8px); }
+  .np-btn:hover { background: rgba(255,255,255,0.2); }
   .np-btn:active { transform: scale(0.92); }
-  .np-btn.np-main { width: 64px; height: 64px; background: #fff; color: #1a1a1a; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
-  .np-btn.np-main:hover { opacity: 0.9; color: #1a1a1a; transform: scale(1.02); }
+  .np-btn.np-main { width: 70px; height: 70px; background: #fff; color: #1a1a1a; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .np-btn.np-main:hover { background: #f0f0f0; color: #1a1a1a; transform: scale(1.02); }
 
+  /* 全屏频谱 */
   .np-spectrum {
-    display: block; position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 160px;
-    pointer-events: none; z-index: 1;
-    -webkit-mask-image: linear-gradient(to top, black 20%, transparent 100%);
-    mask-image: linear-gradient(to top, black 20%, transparent 100%);
+    display: block; position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 140px;
+    pointer-events: none; z-index: 2;
+    -webkit-mask-image: linear-gradient(to top, black 30%, transparent 100%);
+    mask-image: linear-gradient(to top, black 30%, transparent 100%);
   }
 
+  /* 关闭动画 */
   .now-playing.closing .np-main,
   .now-playing.closing .np-footer,
   .now-playing.closing .np-header,
   .now-playing.closing .np-spectrum,
-  .now-playing.closing .np-backdrop { opacity: 0; transition: opacity 0.2s ease; }
+  .now-playing.closing .np-backdrop-blur,
+  .now-playing.closing .np-backdrop-mask { opacity: 0; transition: opacity 0.2s ease; }
 
   /* ==================== 设置弹窗 ==================== */
   .settings-modal { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: 24px; }
@@ -358,7 +363,6 @@
   .settings-row-title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
   .settings-row-desc { font-size: 0.75rem; color: var(--text-3); margin-top: 4px; }
   
-  /* 简单的 Switch 开关 */
   .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
   .switch input { opacity: 0; width: 0; height: 0; }
   .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); transition: .3s; border-radius: 24px; }
@@ -392,11 +396,16 @@
     .cover-card { width: 200px; height: 200px; }
     
     .np-main { padding: 0 20px; }
-    .np-footer { padding: 0 20px 20px; }
-    .np-view-lyrics { inset: 60px 20px 120px; }
-    .np-cover { width: min(280px, 75vw); height: min(280px, 75vw); }
-    .np-vinyl { width: min(260px, 70vw); height: min(260px, 70vw); margin-left: calc(min(260px, 70vw) * -0.55); }
+    .np-footer { padding: 0 20px 30px; }
+    .np-view-lyrics { inset: 60px 20px 150px; }
+    .np-cover { width: min(260px, 70vw); height: min(260px, 70vw); }
+    .np-vinyl { width: min(260px, 70vw); height: min(260px, 70vw); margin-left: calc(min(260px, 70vw) * -0.35); }
     .np-spectrum { height: 100px; }
+    
+    .np-btn { width: 44px; height: 44px; }
+    .np-btn.np-main { width: 60px; height: 60px; }
+    .np-actions { margin-bottom: 16px; }
+    .np-progress-row { margin-bottom: 16px; }
   }
 </style>
 </head>
@@ -455,16 +464,19 @@
 
 <!-- 全屏 Now Playing -->
 <div class="now-playing" id="now-playing" hidden>
-  <div class="np-backdrop" id="np-backdrop"></div>
+  <!-- 模糊动态背景 -->
+  <div class="np-backdrop-blur" id="np-backdrop-blur"></div>
+  <div class="np-backdrop-mask"></div>
   <canvas class="np-spectrum" id="np-spectrum"></canvas>
 
+  <!-- 顶部导航 -->
   <div class="np-header">
     <div class="np-header-left">
       <button class="np-icon-btn" data-np-close aria-label="收起">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
     </div>
-    <div class="np-header-title" id="np-header-title">
+    <div class="np-header-center" id="np-header-title">
       <h3 id="np-header-name">—</h3>
       <p id="np-header-artist">—</p>
     </div>
@@ -475,48 +487,65 @@
     </div>
   </div>
 
+  <!-- 主体 -->
   <div class="np-main">
+    <!-- 封面 -->
     <div class="np-view-cover" id="np-view-cover">
       <div class="np-art">
         <div class="np-cover" id="np-cover"></div>
         <div class="np-vinyl"><div class="np-vinyl-disc" id="np-vinyl-disc"></div></div>
       </div>
       <div class="np-info">
-        <div class="np-title-row">
-          <h2 id="np-title">—</h2>
-        </div>
+        <h2 id="np-title">—</h2>
         <p id="np-artist">—</p>
       </div>
     </div>
 
+    <!-- 歌词 -->
     <div class="np-view-lyrics hidden" id="np-view-lyrics">
-      <div id="np-lyrics-content" style="padding-bottom:50%">
-        <div class="lyric-line active">暂无歌词</div>
-      </div>
+      <div id="np-lyrics-content" style="padding-bottom:50%"></div>
     </div>
   </div>
 
+  <!-- 底部控件 -->
   <div class="np-footer">
+    <!-- 操作按钮 -->
     <div class="np-actions">
-      <button class="np-action-btn" id="np-toggle-lyrics">
+      <button class="np-action-btn" aria-label="下载">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>下载</span>
+      </button>
+      <button class="np-action-btn" id="np-toggle-lyrics" aria-label="歌词">
         <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h6"/></svg>
         <span>词</span>
       </button>
+      <button class="np-action-btn" aria-label="评论">
+        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        <span>评论</span>
+      </button>
+      <button class="np-action-btn" aria-label="更多">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        <span>更多</span>
+      </button>
     </div>
+
+    <!-- 进度条 -->
     <div class="np-progress-row">
       <span id="np-cur">0:00</span>
       <div class="np-bar" id="np-bar"><div class="np-bar-fill" id="np-fill"></div></div>
       <span id="np-dur">0:00</span>
     </div>
+
+    <!-- 播放控制 (恢复了标准的三个圆形按钮) -->
     <div class="np-controls">
       <button class="np-btn" id="np-prev" aria-label="上一首">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12l-9-6z"/></svg>
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12l-9-6z"/></svg>
       </button>
       <button class="np-btn np-main" id="np-play" aria-label="播放">
         <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
       </button>
       <button class="np-btn" id="np-next" aria-label="下一首">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l9 6-9 6z"/></svg>
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l9 6-9 6z"/></svg>
       </button>
     </div>
   </div>
@@ -593,11 +622,12 @@
 src、cover、lyrics 的路径基于清单地址解析。
 lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
 
-  // DOM
-  var appWrapper = document.querySelector('.app-wrapper');
+  // DOM 基础
   var tabsEl = document.getElementById('tabs');
   var coverStage = document.getElementById('cover-stage');
   var coverTrack = document.getElementById('cover-track');
+  
+  // 底栏
   var pbCover = document.getElementById('pb-cover');
   var pbCoverImg = document.getElementById('pb-cover-img');
   var pbTitle = document.getElementById('pb-title');
@@ -611,17 +641,21 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
   var durTimeEl = document.getElementById('dur-time');
   var audio = document.getElementById('player');
 
-  // Now Playing
+  // 全屏 Now Playing
   var npModal = document.getElementById('now-playing');
-  var npBackdrop = document.getElementById('np-backdrop');
+  var npBackdropBlur = document.getElementById('np-backdrop-blur');
   var npCover = document.getElementById('np-cover');
   var npVinylDisc = document.getElementById('np-vinyl-disc');
   var npTitle = document.getElementById('np-title');
   var npArtist = document.getElementById('np-artist');
+  var npHeaderName = document.getElementById('np-header-name');
+  var npHeaderArtist = document.getElementById('np-header-artist');
+  
   var npLyricsContent = document.getElementById('np-lyrics-content');
   var npViewCover = document.getElementById('np-view-cover');
   var npViewLyrics = document.getElementById('np-view-lyrics');
   var npToggleLyricsBtn = document.getElementById('np-toggle-lyrics');
+  
   var npPlayBtn = document.getElementById('np-play');
   var npPrevBtn = document.getElementById('np-prev');
   var npNextBtn = document.getElementById('np-next');
@@ -630,7 +664,7 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
   var npCur = document.getElementById('np-cur');
   var npDur = document.getElementById('np-dur');
 
-  // Settings
+  // 设置
   var settingsBtn = document.getElementById('settings-btn');
   var settingsModal = document.getElementById('settings-modal');
   var settingsTabs = document.getElementById('settings-tabs');
@@ -680,10 +714,6 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     if (/^[a-z][a-z0-9+.-]*:/i.test(url) || url.indexOf('//') === 0) return url;
     try { return new URL(url, base).href; } catch(e){ return url; }
   }
-  function isSameOriginUrl(url){
-    if (!url) return true;
-    try { return new URL(url, location.href).origin === location.origin; } catch(e){ return false; }
-  }
 
   // ==================== 主题切换 ====================
   function initTheme() {
@@ -695,7 +725,6 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
       document.documentElement.removeAttribute('data-theme');
       themeToggle.checked = false;
     } else {
-      // 跟随系统
       var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (prefersDark) {
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -714,6 +743,8 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
   });
 
   // ==================== 取色逻辑 ====================
+  var spectrumColor = [45, 90, 74], spectrumColorLight = [127, 191, 168];
+
   function lightenColor(rgb, amount){
     return [Math.min(255, rgb[0] + amount), Math.min(255, rgb[1] + amount), Math.min(255, rgb[2] + amount)];
   }
@@ -746,22 +777,29 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     img.src = url;
   }
 
-  var spectrumColor = [45, 90, 74], spectrumColorLight = [127, 191, 168];
-
-  function applyColors(r, g, b) {
+  function applyColors(r, g, b, coverUrl) {
     spectrumColor = [r, g, b];
-    spectrumColorLight = lightenColor([r,g,b], 70);
-    var darkR = Math.floor(r * 0.35), darkG = Math.floor(g * 0.35), darkB = Math.floor(b * 0.35);
-    npBackdrop.style.background = `radial-gradient(circle at 50% 10%, rgba(${r},${g},${b}, 0.45) 0%, rgba(${darkR},${darkG},${darkB}, 0.85) 40%, #0f0f0f 90%)`;
-    npVinylDisc.style.setProperty('--vinyl-label', `rgb(${r},${g},${b})`);
+    spectrumColorLight = lightenColor([r,g,b], 60);
+    
+    // 动态毛玻璃背景
+    if (coverUrl) {
+      npBackdropBlur.style.backgroundImage = `url("${coverUrl}")`;
+      npVinylDisc.style.setProperty('--vinyl-label', `url("${coverUrl}")`);
+    } else {
+      npBackdropBlur.style.backgroundImage = 'none';
+      npBackdropBlur.style.background = `radial-gradient(circle at center, rgb(${r},${g},${b}) 0%, #111 100%)`;
+      npVinylDisc.style.setProperty('--vinyl-label', `rgb(${r},${g},${b})`);
+    }
   }
 
   function updateTrackColors(track) {
-    applyColors(45, 90, 74);
-    if (!track || !track.cover) return;
-    extractColorFromImage(track.cover, function(rgb){
-      if (rgb) applyColors(rgb[0], rgb[1], rgb[2]);
-    });
+    applyColors(45, 90, 74, null); // 默认
+    if (!track) return;
+    if (track.cover) {
+      extractColorFromImage(track.cover, function(rgb){
+        if (rgb) applyColors(rgb[0], rgb[1], rgb[2], track.cover);
+      });
+    }
   }
 
   // ==================== 歌词逻辑 ====================
@@ -828,7 +866,7 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     }
   }
 
-  // ==================== 3D 卡片墙逻辑 ====================
+  // ==================== 3D 卡片墙 ====================
   function renderTabs() {
     var set = {};
     tracks.forEach(t => { if (t.category) set[t.category] = true; });
@@ -853,7 +891,6 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     });
     coverTrack.innerHTML = html;
 
-    // 如果当前歌曲在新列表里，滚动过去
     if (filtered.some(t => t.id === currentId)) {
       setTimeout(() => scrollToCard(currentId, 'auto'), 50);
     } else {
@@ -913,10 +950,7 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     }
   });
 
-  coverStage.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    coverTrack.scrollLeft += e.deltaY;
-  }, { passive: false });
+  coverStage.addEventListener('wheel', (e) => { e.preventDefault(); coverTrack.scrollLeft += e.deltaY; }, { passive: false });
 
   coverTrack.addEventListener('click', (e) => {
     var card = e.target.closest('.cover-card');
@@ -926,7 +960,7 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     }
   });
 
-  // 拖拽滚动
+  // 拖拽
   let isDown = false, startX, scrollLeftStart;
   coverTrack.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - coverTrack.offsetLeft; scrollLeftStart = coverTrack.scrollLeft; });
   coverTrack.addEventListener('mouseleave', () => isDown = false);
@@ -1017,11 +1051,11 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     
     // 同步全屏 Now Playing
     npCover.style.background = t.cover ? `url("${t.cover}") center/cover` : 'var(--accent-soft)';
-    if (t.cover) npCover.innerHTML = `<img src="${esc(t.cover)}" alt="" onerror="this.remove()">`; else npCover.innerHTML = '';
+    if (!t.cover) npCover.innerHTML = '<span style="font-size:4rem;color:rgba(255,255,255,0.2)">♪</span>'; else npCover.innerHTML = '';
     npTitle.textContent = t.title;
     npArtist.textContent = (t.artist || '') + (t.album ? ' · ' + t.album : '');
-    document.getElementById('np-header-name').textContent = t.title;
-    document.getElementById('np-header-artist').textContent = t.artist || '';
+    npHeaderName.textContent = t.title;
+    npHeaderArtist.textContent = t.artist || '';
 
     updateTrackColors(t);
     loadLyrics(t);
@@ -1037,7 +1071,7 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     audio.play().catch(e => console.warn('播放失败', e));
     
     updatePlayerUI(t);
-    savePlayerState(true);
+    savePlayerState();
     scrollToCard(id);
   }
 
@@ -1082,7 +1116,7 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
 
   // ==================== 持久化 ====================
   function savePlayerState() {
-    try { localStorage.setItem(PLAYER_KEY, JSON.stringify({ trackId: currentId || null, currentTime: audio.currentTime || 0, volume: audio.volume })); } catch(e){}
+    try { localStorage.setItem(PLAYER_KEY, JSON.stringify({ trackId: currentId || null, currentTime: audio.currentTime || 0 })); } catch(e){}
   }
 
   function applyRestoredPlayerState() {
@@ -1090,7 +1124,6 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
       var raw = localStorage.getItem(PLAYER_KEY);
       if (!raw) return;
       var state = JSON.parse(raw);
-      
       if (state.trackId) {
         var t = getTrack(state.trackId);
         if (t) {
@@ -1107,8 +1140,8 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     } catch(e){}
   }
 
-  // ==================== 频谱动画 ====================
-  var audioCtx = null, analyser = null, freqData = null, hasRealAudioData = false;
+  // ==================== 频谱 ====================
+  var audioCtx = null, analyser = null, freqData = null;
   var barSpectrumCanvas = document.getElementById('bar-spectrum'), barSpectrumCtx = barSpectrumCanvas.getContext('2d');
   var npSpectrumCanvas = document.getElementById('np-spectrum'), npSpectrumCtx = npSpectrumCanvas.getContext('2d');
   var spectrumRAF = null;
@@ -1144,14 +1177,13 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     var w = canvas.clientWidth, h = canvas.clientHeight;
     if (!w || !h) return;
     if (canvas.width !== w*dpr) { canvas.width = w*dpr; canvas.height = h*dpr; }
-    
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
     var data = generateFakeData(Date.now());
     if (analyser && freqData) {
       analyser.getByteFrequencyData(freqData);
-      if (freqData.reduce((a,b)=>a+b, 0) > 100) { hasRealAudioData = true; data = freqData; }
+      if (freqData.reduce((a,b)=>a+b, 0) > 100) { data = freqData; }
     }
 
     var usable = Math.floor(data.length * 0.7);
@@ -1181,11 +1213,10 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
   function loopSpectrum() {
     if (npOpen) drawSpectrum(npSpectrumCanvas, npSpectrumCtx, true);
     else drawSpectrum(barSpectrumCanvas, barSpectrumCtx, false);
-    
     if (isPlaying) spectrumRAF = requestAnimationFrame(loopSpectrum);
   }
 
-  // ==================== Now Playing 逻辑 ====================
+  // ==================== 界面交互逻辑 ====================
   function toggleLyricsView() {
     if (npViewCover.classList.contains('hidden')) {
       npViewLyrics.classList.remove('active');
@@ -1209,26 +1240,11 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     npModal.classList.remove('closing');
     document.body.style.overflow = 'hidden';
     
-    // 重置视图状态
     npViewCover.classList.remove('hidden');
     npViewLyrics.classList.add('hidden');
     npViewLyrics.classList.remove('active');
     npToggleLyricsBtn.classList.remove('active');
 
-    // 封面动画
-    var firstRect = pbCover.getBoundingClientRect();
-    var lastRect  = npCover.getBoundingClientRect();
-    if (firstRect.width && lastRect.width){
-      var dx = firstRect.left - lastRect.left, dy = firstRect.top - lastRect.top;
-      var sx = firstRect.width / lastRect.width, sy = firstRect.height / lastRect.height;
-      npCover.style.transformOrigin = 'top left';
-      var anim = npCover.animate([
-        { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
-        { transform: 'translate(0,0) scale(1,1)' }
-      ], { duration: 500, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
-      anim.onfinish = () => { npCover.style.transformOrigin = ''; anim.cancel(); };
-    }
-    
     if (isPlaying) { cancelAnimationFrame(spectrumRAF); loopSpectrum(); }
   }
 
@@ -1236,29 +1252,11 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     if (!npOpen) return;
     npOpen = false;
     npModal.classList.add('closing');
-
-    var firstRect = pbCover.getBoundingClientRect();
-    var lastRect  = npCover.getBoundingClientRect();
-    
-    function finish() {
+    setTimeout(() => {
       npModal.hidden = true;
       npModal.classList.remove('closing');
       document.body.style.overflow = '';
-      npCover.style.transformOrigin = '';
-    }
-
-    if (firstRect.width && lastRect.width && !npViewCover.classList.contains('hidden')){
-      var dx = firstRect.left - lastRect.left, dy = firstRect.top - lastRect.top;
-      var sx = firstRect.width / lastRect.width, sy = firstRect.height / lastRect.height;
-      npCover.style.transformOrigin = 'top left';
-      var anim = npCover.animate([
-        { transform: 'translate(0,0) scale(1,1)' },
-        { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` }
-      ], { duration: 400, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
-      anim.onfinish = () => { finish(); anim.cancel(); };
-    } else {
-      finish();
-    }
+    }, 200);
   }
 
   // ==================== 事件绑定 ====================
@@ -1303,7 +1301,7 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     if (e.key === 'ArrowLeft' && !npOpen) prevTrack();
   });
 
-  // 设置面板逻辑
+  // 设置面板
   function updateManifestHints(){
     var raw = (sourceState.manifestUrl || '').trim();
     var resolved = raw ? absoluteUrl(raw) : absoluteUrl('./manifest.json');
