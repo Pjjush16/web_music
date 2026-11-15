@@ -56,8 +56,8 @@
   .hero{display:flex;gap:26px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:26px 30px;box-shadow:var(--shadow-sm);margin-bottom:22px;transition:box-shadow .2s,border-color .2s}
   .hero:hover{box-shadow:var(--shadow-md);border-color:color-mix(in srgb,var(--accent) 22%,var(--border))}
   .hero-cover{width:158px;height:158px;border-radius:16px;flex-shrink:0;position:relative;overflow:hidden;box-shadow:0 14px 34px rgba(45,90,74,.22);display:grid;place-items:center}
-  .hero-cover span{color:rgba(255,255,255,.9);font-size:2.6rem;line-height:1;transform:translateY(-2px)}
-  .hero-cover img{width:100%;height:100%;object-fit:cover}
+  .hero-cover::before{content:'♪';color:rgba(255,255,255,.9);font-size:2.6rem;line-height:1;transform:translateY(-2px);position:absolute}
+  .hero-cover img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
   .hero-body{min-width:0;flex:1}
   .hero-meta{display:flex;align-items:center;gap:10px;font-size:.76rem;color:var(--text-3);margin-bottom:11px;flex-wrap:wrap}
   .hero h2{font-size:clamp(1.4rem,2.6vw,1.85rem);font-weight:800;letter-spacing:-.03em;line-height:1.25;margin-bottom:8px}
@@ -70,8 +70,8 @@
   .track-item:hover{background:color-mix(in srgb,var(--accent) 5%,transparent);border-color:var(--border)}
   .track-item.active{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 26%,transparent)}
   .track-cover{width:50px;height:50px;border-radius:11px;flex-shrink:0;position:relative;overflow:hidden;display:grid;place-items:center;box-shadow:var(--shadow-sm)}
-  .track-cover span{color:rgba(255,255,255,.85);font-size:1.15rem;line-height:1;transform:translateY(-1px)}
-  .track-cover img{width:100%;height:100%;object-fit:cover}
+  .track-cover::before{content:'♪';color:rgba(255,255,255,.85);font-size:1.15rem;line-height:1;transform:translateY(-1px);position:absolute}
+  .track-cover img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
   .track-body{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
   .track-title{font-size:.95rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
   .track-meta{font-size:.78rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -102,13 +102,14 @@
   .current-manifest strong{color:var(--text-2);font-weight:600}
 
   .player-bar{position:fixed;left:0;right:0;bottom:0;z-index:150;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(18px) saturate(180%);-webkit-backdrop-filter:blur(18px) saturate(180%);border-top:1px solid var(--border);box-shadow:0 -8px 30px rgba(0,0,0,.06)}
+  .bar-spectrum{display:block;width:100%;height:28px;pointer-events:none;opacity:.9}
   .player-inner{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.7fr) minmax(0,1fr);align-items:center;gap:24px;height:var(--player-h)}
   .pb-track{display:flex;align-items:center;gap:12px;min-width:0}
   .pb-cover{width:52px;height:52px;border-radius:11px;flex-shrink:0;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);background:var(--accent-soft);display:grid;place-items:center;cursor:pointer;transition:transform .18s,box-shadow .18s}
   .pb-cover:hover{transform:scale(1.07);box-shadow:var(--shadow-md)}
   .pb-cover:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-  .pb-cover span{color:rgba(255,255,255,.9);font-size:1.25rem;line-height:1;transform:translateY(-1px)}
-  .pb-cover img{width:100%;height:100%;object-fit:cover}
+  .pb-cover::before{content:'♪';color:rgba(255,255,255,.9);font-size:1.25rem;line-height:1;transform:translateY(-1px);position:absolute}
+  .pb-cover img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
   .pb-info{min-width:0}
   .pb-title{font-size:.9rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pb-artist{font-size:.76rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -136,9 +137,8 @@
   .np-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:22px;width:100%;max-width:720px}
   .np-art{display:flex;align-items:center;justify-content:center;position:relative}
   .np-cover{width:min(300px,56vw);height:min(300px,56vw);border-radius:min(20px,4vw);position:relative;z-index:2;box-shadow:0 30px 80px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.18);display:grid;place-items:center;background:var(--accent-soft);will-change:transform;overflow:hidden}
-  .np-cover::after{content:'♪';color:rgba(255,255,255,.9);font-size:clamp(2.4rem,7vw,3.6rem);line-height:1;transform:translateY(-4%)}
-  .np-cover.has-image::after{content:none}
-  .np-cover img{width:100%;height:100%;object-fit:cover}
+  .np-cover::before{content:'♪';color:rgba(255,255,255,.9);font-size:clamp(2.4rem,7vw,3.6rem);line-height:1;transform:translateY(-4%);position:absolute}
+  .np-cover img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
   .np-vinyl{width:min(280px,52vw);height:min(280px,52vw);margin-left:calc(min(280px,52vw) * -0.5);position:relative;z-index:1;animation:vinylIn .55s cubic-bezier(.22,1,.36,1) .08s both}
   @keyframes vinylIn{from{transform:translateX(-45%) scale(.84) rotate(-18deg);opacity:0}to{transform:translateX(0) scale(1) rotate(0);opacity:1}}
   .np-vinyl-disc{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.10),transparent 46%),repeating-radial-gradient(circle at center,#1d1d1d 0 1px,#0d0d0d 1px 3px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 28px 70px rgba(0,0,0,.42);position:relative;animation:spin 10s linear infinite;animation-play-state:paused}
@@ -152,6 +152,7 @@
   .np-progress{display:flex;align-items:center;gap:12px;width:100%;max-width:440px;font-size:.76rem;color:var(--text-3);font-variant-numeric:tabular-nums}
   .np-bar{flex:1;height:5px;border-radius:999px;background:var(--accent-soft);position:relative;cursor:pointer}
   .np-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:var(--accent);width:0%;transition:width .12s linear}
+  .np-spectrum{display:block;width:100%;max-width:460px;height:56px;pointer-events:none}
   .np-controls{display:flex;align-items:center;gap:18px}
   .np-btn{width:52px;height:52px;border-radius:50%;border:1px solid var(--border);background:color-mix(in srgb,var(--surface) 70%,transparent);color:var(--text);cursor:pointer;display:grid;place-items:center;transition:background .2s,color .2s,transform .12s,border-color .2s}
   .np-btn:hover{background:var(--surface);border-color:var(--accent);color:var(--accent)}
@@ -161,6 +162,7 @@
   .now-playing.closing .np-vinyl,
   .now-playing.closing .np-info,
   .now-playing.closing .np-progress,
+  .now-playing.closing .np-spectrum,
   .now-playing.closing .np-controls,
   .now-playing.closing .np-close,
   .now-playing.closing .np-backdrop{opacity:0;transition:opacity .18s ease}
@@ -248,6 +250,7 @@
     .np-close{top:14px;right:14px;width:38px;height:38px}
     .np-content{gap:18px}
     .np-progress{max-width:100%}
+    .np-spectrum{max-width:100%;height:44px}
     .doc-panel{max-height:calc(100vh - 240px);padding:14px 16px}
   }
 </style>
@@ -309,7 +312,7 @@
 
     <div class="side-card">
       <h3>说明</h3>
-      <p class="about-text">播放器读取一个 JSON 清单文件来加载曲目。清单地址留空时，自动尝试当前站点的 <code>./manifest.json</code> 与 <code>/manifest.json</code>。</p>
+      <p class="about-text">播放器读取一个 JSON 清单文件来加载曲目。清单地址留空时，自动尝试当前站点的 <code>./manifest.json</code> 与 <code>/manifest.json</code>。清单中的相对路径会基于清单地址解析。</p>
     </div>
   </aside>
 </main>
@@ -324,9 +327,10 @@
 </footer>
 
 <div class="player-bar" id="player-bar">
+  <canvas class="bar-spectrum" id="bar-spectrum"></canvas>
   <div class="container player-inner">
     <div class="pb-track">
-      <div class="pb-cover" id="pb-cover" role="button" tabindex="0" aria-label="展开全屏播放"><span>♪</span></div>
+      <div class="pb-cover" id="pb-cover" role="button" tabindex="0" aria-label="展开全屏播放"></div>
       <div class="pb-info">
         <div class="pb-title" id="pb-title">未在播放</div>
         <div class="pb-artist" id="pb-artist">请从曲目列表中选择</div>
@@ -400,6 +404,7 @@
         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l9 6-9 6z"/></svg>
       </button>
     </div>
+    <canvas class="np-spectrum" id="np-spectrum"></canvas>
   </div>
 </div>
 
@@ -419,7 +424,7 @@
       <div>
         <label class="settings-label" for="manifest-url">清单地址</label>
         <input class="settings-input" id="manifest-url" type="text" placeholder="留空则自动使用当前站点" value="">
-        <p class="settings-hint">留空时依次尝试当前站点的 <code>./manifest.json</code> 与 <code>/manifest.json</code>。若托管在别处，填写完整 URL，并确保该地址允许跨域访问。</p>
+        <p class="settings-hint">留空时依次尝试当前站点的 <code>./manifest.json</code> 与 <code>/manifest.json</code>。若文件放在别处，填写完整 URL，并确保该地址允许跨域访问。</p>
         <div class="settings-current" id="settings-current"></div>
       </div>
       <div class="settings-actions">
@@ -476,6 +481,19 @@
     '}',
     '',
     '',
+    '路径解析规则',
+    '──────────────────────────────────────────────',
+    '',
+    'src、cover、lyrics 三个字段的路径都基于清单文件的地址解析，',
+    '而不是基于页面地址。',
+    '',
+    '  · 如果清单在 /data/manifest.json，',
+    '    那么 src: "audio/001.mp3" 会解析为 /data/audio/001.mp3。',
+    '',
+    '  · 如果写的是完整 URL（http:// 或 https:// 开头），',
+    '    播放器直接使用，不再拼接。',
+    '',
+    '',
     '字段说明',
     '──────────────────────────────────────────────',
     '',
@@ -486,7 +504,7 @@
     '',
     '  title     曲目标题。',
     '',
-    '  src       音频文件地址。可以是相对路径，也可以是完整 URL。',
+    '  src       音频文件地址。',
     '',
     '',
     '可选：',
@@ -506,18 +524,32 @@
     '  lyrics    歌词文件地址，支持 LRC 或纯文本。',
     '',
     '',
-    '音频服务器要求',
+    '频谱颜色',
     '──────────────────────────────────────────────',
     '',
-    '  · 正确返回 Content-Type，如 audio/mpeg。',
+    '当曲目带封面时，播放器会从封面图片中提取主色，',
+    '用于底部频谱的颜色。',
     '',
-    '  · 支持 Range 请求。进度拖动依赖此特性。',
+    '若封面与页面跨域，浏览器会阻止读取像素，',
+    '此时频谱回落到主题色。',
+    '',
+    '若音频与页面跨域，浏览器会阻止读取音频数据，',
+    '此时频谱使用装饰性数据，不反映实际音频。',
+    '将音频与页面放在同一域名下可以获得真实频谱。',
+    '',
+    '',
+    '音频文件要求',
+    '──────────────────────────────────────────────',
+    '',
+    '  · Content-Type 正确，如 audio/mpeg。',
+    '',
+    '  · 支持 Range 请求，否则进度拖动会失效。',
     '',
     '',
     '跨域',
     '──────────────────────────────────────────────',
     '',
-    '若清单或音频托管在其他域名，服务器需返回：',
+    '若清单或音频文件与页面不同源，托管方需返回：',
     '',
     '  Access-Control-Allow-Origin: *',
     '',
@@ -532,29 +564,7 @@
     '  ./manifest.json   当前页面所在目录',
     '  /manifest.json    站点根目录',
     '',
-    '任一地址返回有效 JSON 即停止尝试。',
-    '也可以在设置中填写完整 URL 覆盖此行为。',
-    '',
-    '',
-    '示例',
-    '──────────────────────────────────────────────',
-    '',
-    '同目录放 manifest.json：',
-    '',
-    '{',
-    '  "tracks": [',
-    '    {',
-    '      "id": "a1",',
-    '      "title": "雨落窗台",',
-    '      "artist": "Yuki",',
-    '      "album": "Piano Diary",',
-    '      "category": "钢琴",',
-    '      "duration": 215,',
-    '      "src": "audio/yuki/rain.mp3",',
-    '      "cover": "audio/yuki/rain.jpg"',
-    '    }',
-    '  ]',
-    '}'
+    '任一地址返回有效 JSON 即停止尝试。'
   ].join('\n');
 
   var listEl    = document.getElementById('list');
@@ -616,7 +626,7 @@
   var currentId = null, isPlaying = false, shuffleOn = false, npOpen = false;
   var currentManifestUrl = '';
 
-  var SOURCE_KEY = 'yaonet_manifest_v2';
+  var SOURCE_KEY = 'yaonet_manifest_v3';
   var PLAYER_KEY = 'yaonet_player_state_v1';
 
   var sourceState = { manifestUrl: '' };
@@ -646,6 +656,27 @@
     return -1;
   }
 
+  // ==================== 路径解析 ====================
+
+  function absoluteUrl(url){
+    if (!url) return '';
+    try { return new URL(url, location.href).href; }
+    catch(e){ return url; }
+  }
+
+  function resolveAsset(url, base){
+    if (!url) return '';
+    if (/^[a-z][a-z0-9+.-]*:/i.test(url) || url.indexOf('//') === 0) return url;
+    try { return new URL(url, base).href; }
+    catch(e){ return url; }
+  }
+
+  function isSameOriginUrl(url){
+    if (!url) return true;
+    try { return new URL(url, location.href).origin === location.origin; }
+    catch(e){ return false; }
+  }
+
   // ==================== 清单地址 ====================
 
   function buildCandidates(rawInput){
@@ -656,17 +687,10 @@
     var seen = {};
     var out = [];
     for (var i = 0; i < list.length; i++){
-      var abs;
-      try { abs = new URL(list[i], location.href).href; }
-      catch(e){ abs = list[i]; }
+      var abs = absoluteUrl(list[i]);
       if (!seen[abs]){ seen[abs] = true; out.push(list[i]); }
     }
     return out;
-  }
-
-  function absoluteUrl(url){
-    try { return new URL(url, location.href).href; }
-    catch(e){ return url; }
   }
 
   function fetchManifest(url){
@@ -688,13 +712,9 @@
     return new Promise(function(resolve, reject){
       var i = 0;
       var errors = [];
-
       function next(){
         if (i >= candidates.length){
-          var msg = errors.length
-            ? errors[errors.length - 1]
-            : '未找到可用的清单';
-          reject(new Error(msg));
+          reject(new Error(errors.length ? errors[errors.length - 1] : '未找到可用的清单'));
           return;
         }
         var url = candidates[i++];
@@ -705,7 +725,6 @@
             next();
           });
       }
-
       next();
     });
   }
@@ -823,7 +842,7 @@
 
   // ==================== 数据加载 ====================
 
-  function normalizeSongs(rawSongs){
+  function normalizeSongs(rawSongs, baseUrl){
     var out = [];
     for (var i = 0; i < rawSongs.length; i++){
       var s = rawSongs[i];
@@ -836,9 +855,9 @@
         category: s.category || '未分类',
         desc: s.desc || '',
         duration: s.duration || 0,
-        src: s.src || '',
-        cover: s.cover || '',
-        lyrics: s.lyrics || ''
+        src: resolveAsset(s.src, baseUrl),
+        cover: resolveAsset(s.cover, baseUrl),
+        lyrics: resolveAsset(s.lyrics, baseUrl)
       });
     }
     return out;
@@ -853,7 +872,8 @@
     fetchFirstAvailable(candidates)
       .then(function(res){
         currentManifestUrl = res.url;
-        tracks = normalizeSongs(res.data.tracks);
+        var baseUrl = absoluteUrl(res.url);
+        tracks = normalizeSongs(res.data.tracks, baseUrl);
         activeCat = '全部';
         computeFiltered();
         renderTabs();
@@ -869,6 +889,7 @@
         syncPlayUI();
         updateManifestHints();
         applyRestoredPlayerState();
+        prepareSpectrum();
       })
       .catch(function(e){
         currentManifestUrl = '';
@@ -926,11 +947,13 @@
     tabsEl.innerHTML = html;
   }
 
-  function coverMarkup(t){
-    if (t.cover){
-      return '<img src="' + esc(t.cover) + '" alt="" loading="lazy">';
-    }
-    return '<span>♪</span>';
+  function coverLayer(t){
+    var bg = 'style="background:' + coverGradient(t.id) + '"';
+    if (!t.cover) return { bg: bg, img: '' };
+    return {
+      bg: bg,
+      img: '<img src="' + esc(t.cover) + '" alt="" loading="lazy" onerror="this.remove()">'
+    };
   }
 
   function renderHero(){
@@ -941,10 +964,10 @@
     }
     var playingThis = (t.id === currentId && isPlaying);
     var status = (t.id === currentId) ? (isPlaying ? '正在播放' : '已暂停') : '未播放';
-    var bg = t.cover ? '' : ('style="background:' + coverGradient(t.id) + '"');
+    var c = coverLayer(t);
 
     heroEl.innerHTML =
-      '<div class="hero-cover" ' + bg + '>' + coverMarkup(t) + '</div>' +
+      '<div class="hero-cover" ' + c.bg + '>' + c.img + '</div>' +
       '<div class="hero-body">' +
         '<div class="hero-meta">' +
           '<span class="tag">' + esc(t.category || '') + '</span>' +
@@ -972,10 +995,10 @@
     for (var i = 0; i < filtered.length; i++){
       var t = filtered[i];
       var active = (t.id === currentId);
-      var bg = t.cover ? '' : ('style="background:' + coverGradient(t.id) + '"');
+      var c = coverLayer(t);
       html +=
         '<button class="track-item' + (active ? ' active' : '') + (active && isPlaying ? ' playing' : '') + '" type="button" data-id="' + esc(t.id) + '">' +
-          '<span class="track-cover" ' + bg + '>' + coverMarkup(t) + '</span>' +
+          '<span class="track-cover" ' + c.bg + '>' + c.img + '</span>' +
           '<span class="track-body">' +
             '<span class="track-title">' + esc(t.title) + '</span>' +
             '<span class="track-meta">' + esc(t.artist || '') + (t.album ? ' · ' + esc(t.album) : '') + '</span>' +
@@ -1066,17 +1089,16 @@
       pbTitle.textContent = '未在播放';
       pbArtist.textContent = '请从曲目列表中选择';
       pbCover.style.background = 'var(--accent-soft)';
-      pbCover.innerHTML = '<span>♪</span>';
+      pbCover.innerHTML = '';
       return;
     }
     pbTitle.textContent = t.title;
     pbArtist.textContent = (t.artist || '') + (t.album ? ' · ' + t.album : '');
+    pbCover.style.background = coverGradient(t.id);
     if (t.cover){
-      pbCover.style.background = '';
-      pbCover.innerHTML = '<img src="' + esc(t.cover) + '" alt="">';
+      pbCover.innerHTML = '<img src="' + esc(t.cover) + '" alt="" onerror="this.remove()">';
     } else {
-      pbCover.style.background = coverGradient(t.id);
-      pbCover.innerHTML = '<span>♪</span>';
+      pbCover.innerHTML = '';
     }
   }
 
@@ -1108,6 +1130,7 @@
     audio.play().catch(function(){});
     updatePlayerBar();
     syncPlayUI();
+    updateSpectrumColorForTrack(t);
     savePlayerState(true);
   }
 
@@ -1119,6 +1142,7 @@
     var t = getTrack(currentId);
     if (audio.paused){
       if (!audio.src && t && t.src) audio.src = t.src;
+      ensureAudioContext();
       audio.play().catch(function(){});
     } else {
       audio.pause();
@@ -1149,16 +1173,210 @@
     playTrack(filtered[n].id);
   }
 
+  // ==================== 频谱 ====================
+
+  var audioCtx = null;
+  var analyser = null;
+  var freqData = null;
+  var sourceNode = null;
+  var hasRealAudioData = false;
+  var audioCtxFailed = false;
+
+  var npSpectrumCanvas = document.getElementById('np-spectrum');
+  var barSpectrumCanvas = document.getElementById('bar-spectrum');
+  var npSpectrumCtx = npSpectrumCanvas.getContext('2d');
+  var barSpectrumCtx = barSpectrumCanvas.getContext('2d');
+
+  var spectrumColor = [45, 90, 74];
+  var spectrumColorLight = [127, 191, 168];
+  var spectrumRAF = null;
+  var spectrumActive = false;
+
+  function setupAnalyser(){
+    if (audioCtx) return;
+    if (audioCtxFailed) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC){ audioCtxFailed = true; return; }
+    try {
+      audioCtx = new AC();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.82;
+      sourceNode = audioCtx.createMediaElementSource(audio);
+      sourceNode.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      freqData = new Uint8Array(analyser.frequencyBinCount);
+    } catch(e){
+      console.warn('Web Audio 初始化失败', e);
+      audioCtx = null;
+      audioCtxFailed = true;
+    }
+  }
+
+  function ensureAudioContext(){
+    if (audioCtx && audioCtx.state === 'suspended'){
+      audioCtx.resume().catch(function(){});
+    }
+  }
+
+  // 所有音频同源时才启用 Web Audio，避免跨域音频被静音
+  function prepareSpectrum(){
+    if (audioCtx || audioCtxFailed) return;
+    if (!tracks.length) return;
+    var allSame = true;
+    for (var i = 0; i < tracks.length; i++){
+      if (tracks[i].src && !isSameOriginUrl(tracks[i].src)){ allSame = false; break; }
+    }
+    if (allSame) setupAnalyser();
+  }
+
+  function lightenColor(rgb, amount){
+    return [
+      Math.min(255, rgb[0] + amount),
+      Math.min(255, rgb[1] + amount),
+      Math.min(255, rgb[2] + amount)
+    ];
+  }
+
+  function extractColorFromImage(url, callback){
+    if (!url) return callback(null);
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function(){
+      try {
+        var c = document.createElement('canvas');
+        var size = 40;
+        c.width = size; c.height = size;
+        var cx = c.getContext('2d');
+        cx.drawImage(img, 0, 0, size, size);
+        var data = cx.getImageData(0, 0, size, size).data;
+        var r=0,g=0,b=0,n=0;
+        for (var i=0;i<data.length;i+=4){
+          var pr=data[i], pg=data[i+1], pb=data[i+2], pa=data[i+3];
+          if (pa < 128) continue;
+          var mx = Math.max(pr,pg,pb), mn = Math.min(pr,pg,pb);
+          if (mx - mn < 25) continue;
+          var br = (pr+pg+pb)/3;
+          if (br < 25 || br > 235) continue;
+          r+=pr; g+=pg; b+=pb; n++;
+        }
+        if (n === 0) return callback(null);
+        callback([Math.round(r/n), Math.round(g/n), Math.round(b/n)]);
+      } catch(e){ callback(null); }
+    };
+    img.onerror = function(){ callback(null); };
+    img.src = url;
+  }
+
+  function updateSpectrumColorForTrack(track){
+    spectrumColor = [45, 90, 74];
+    spectrumColorLight = [127, 191, 168];
+    if (!track || !track.cover) return;
+    extractColorFromImage(track.cover, function(rgb){
+      if (rgb){
+        spectrumColor = rgb;
+        spectrumColorLight = lightenColor(rgb, 70);
+      }
+    });
+  }
+
+  function generateFakeData(t){
+    var arr = new Uint8Array(64);
+    for (var i=0;i<64;i++){
+      var phase = i * 0.21;
+      var v1 = Math.sin(t*0.0023 + phase) * 0.5 + 0.5;
+      var v2 = Math.sin(t*0.0007 + phase*0.5) * 0.3 + 0.7;
+      var v3 = Math.sin(t*0.0051 + phase*1.7) * 0.15 + 0.85;
+      var freq = 1 - (i/64) * 0.4;
+      arr[i] = Math.floor(v1 * v2 * v3 * freq * 255);
+    }
+    return arr;
+  }
+
+  function drawSpectrum(canvas, ctx, data, wide){
+    var dpr = window.devicePixelRatio || 1;
+    var w = canvas.clientWidth;
+    var h = canvas.clientHeight;
+    if (!w || !h) return;
+
+    if (canvas.width !== Math.round(w*dpr) || canvas.height !== Math.round(h*dpr)){
+      canvas.width = Math.round(w*dpr);
+      canvas.height = Math.round(h*dpr);
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    if (!data || !data.length) return;
+
+    var usable = Math.floor(data.length * 0.7);
+    var bars = wide ? 44 : 72;
+    if (usable < bars) bars = usable;
+
+    var step = Math.max(1, Math.floor(usable / bars));
+    var barW = w / bars;
+    var gap = Math.max(1, Math.min(3, barW * 0.35));
+    var bw = barW - gap;
+
+    var grad = ctx.createLinearGradient(0, h, 0, 0);
+    grad.addColorStop(0, 'rgba(' + spectrumColor.join(',') + ',0.95)');
+    grad.addColorStop(1, 'rgba(' + spectrumColorLight.join(',') + ',0.85)');
+    ctx.fillStyle = grad;
+
+    for (var i=0;i<bars;i++){
+      var sum = 0, cnt = 0;
+      for (var j=0;j<step;j++){
+        var idx = i*step + j;
+        if (idx < usable){ sum += data[idx]; cnt++; }
+      }
+      var v = cnt ? sum / cnt / 255 : 0;
+      v = Math.pow(v, 0.6);
+      var bh = Math.max(2, v * h);
+      ctx.fillRect(i*barW + gap/2, h - bh, bw, bh);
+    }
+  }
+
+  function spectrumLoop(t){
+    if (!spectrumActive) return;
+
+    var data;
+    if (analyser && freqData){
+      analyser.getByteFrequencyData(freqData);
+      var sum = 0;
+      for (var i=0;i<freqData.length;i++) sum += freqData[i];
+      if (sum > 100) hasRealAudioData = true;
+    }
+
+    if (hasRealAudioData && freqData){
+      data = freqData;
+    } else {
+      data = generateFakeData(t);
+    }
+
+    drawSpectrum(npSpectrumCanvas, npSpectrumCtx, data, true);
+    drawSpectrum(barSpectrumCanvas, barSpectrumCtx, data, false);
+
+    spectrumRAF = requestAnimationFrame(spectrumLoop);
+  }
+
+  function startSpectrum(){
+    if (spectrumActive) return;
+    spectrumActive = true;
+    spectrumRAF = requestAnimationFrame(spectrumLoop);
+  }
+
+  function stopSpectrum(){
+    if (!spectrumActive) return;
+    spectrumActive = false;
+    if (spectrumRAF){ cancelAnimationFrame(spectrumRAF); spectrumRAF = null; }
+  }
+
   // ==================== Now Playing ====================
 
   function updateNowPlayingContent(t){
+    npCover.style.background = coverGradient(t.id);
     if (t.cover){
-      npCover.classList.add('has-image');
-      npCover.style.background = '';
-      npCover.innerHTML = '<img src="' + esc(t.cover) + '" alt="">';
+      npCover.innerHTML = '<img src="' + esc(t.cover) + '" alt="" onerror="this.remove()">';
     } else {
-      npCover.classList.remove('has-image');
-      npCover.style.background = coverGradient(t.id);
       npCover.innerHTML = '';
     }
     npVinylDisc.style.setProperty('--vinyl-label', coverGradient(t.id));
@@ -1179,11 +1397,14 @@
     }
 
     updateNowPlayingContent(t);
+    updateSpectrumColorForTrack(t);
     npOpen = true;
     npModal.hidden = false;
     npModal.classList.remove('closing');
     document.body.style.overflow = 'hidden';
     syncNowPlaying();
+
+    if (isPlaying) startSpectrum();
 
     var firstRect = pbCover.getBoundingClientRect();
     var lastRect  = npCover.getBoundingClientRect();
@@ -1288,8 +1509,13 @@
       var url = candidates[i++];
       fetchManifest(url)
         .then(function(data){
+          var n = data.tracks.length;
+          var withCover = 0;
+          for (var k = 0; k < data.tracks.length; k++){
+            if (data.tracks[k].cover) withCover++;
+          }
           settingsStatus.className = 'settings-status ok';
-          settingsStatus.textContent = '读取成功（' + absoluteUrl(url) + '），共 ' + data.tracks.length + ' 首曲目。';
+          settingsStatus.textContent = '读取成功（' + absoluteUrl(url) + '），共 ' + n + ' 首曲目，' + withCover + ' 首带封面。';
         })
         .catch(function(e){
           tried.push(absoluteUrl(url) + '：' + e.message);
@@ -1335,12 +1561,8 @@
       }
       var url = candidates[i++];
       fetchManifest(url)
-        .then(function(){
-          commit(true, '验证通过，已保存。');
-        })
-        .catch(function(){
-          next();
-        });
+        .then(function(){ commit(true, '验证通过，已保存。'); })
+        .catch(function(){ next(); });
     }
 
     next();
@@ -1348,9 +1570,15 @@
 
   // ==================== 事件 ====================
 
-  audio.addEventListener('play', function(){ isPlaying = true; syncPlayUI(); });
+  audio.addEventListener('play', function(){
+    isPlaying = true;
+    ensureAudioContext();
+    startSpectrum();
+    syncPlayUI();
+  });
   audio.addEventListener('pause', function(){
     isPlaying = false;
+    stopSpectrum();
     syncPlayUI();
     savePlayerState(true);
   });
