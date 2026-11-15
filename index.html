@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YAONET · 音频播放器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f7f6f3;--surface:#fff;--text:#1a1a1a;--text-2:#5f5f5f;--text-3:#8a8a8a;
+    --border:rgba(0,0,0,.07);--accent:#2d5a4a;--accent-soft:#e8efec;
+    --radius-lg:18px;--radius-md:14px;--radius-sm:10px;
+    --font:'Manrope',system-ui,-apple-system,sans-serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.04);--shadow-md:0 8px 30px rgba(0,0,0,.06);
+    --max-width:1200px;--header-h:64px;--subnav-h:52px;--player-h:92px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#0f0f0f;--surface:#1a1a1a;--text:#f0f0f0;--text-2:#a0a0a0;--text-3:#6e6e6e;
+      --border:rgba(255,255,255,.08);--accent:#7fbfa8;--accent-soft:#1f2e29;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.3);--shadow-md:0 8px 30px rgba(0,0,0,.4);}
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.65;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font-family:var(--font)}
+  .container{max-width:var(--max-width);margin:0 auto;padding:0 24px}
+
+  .site-header{position:sticky;top:0;z-index:100;backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);background:color-mix(in srgb,var(--bg) 80%,transparent);border-bottom:1px solid var(--border)}
+  .header-inner{display:flex;align-items:center;justify-content:space-between;height:var(--header-h)}
+  .site-brand{font-size:1.32rem;font-weight:800;letter-spacing:-.03em;display:inline-flex;align-items:baseline}
+  .site-brand span{color:var(--accent)}
+  .header-right{display:flex;align-items:center;gap:14px}
+  .live-badge{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;color:var(--text-2);max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.15);animation:pulse 2s infinite;flex-shrink:0}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .settings-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text-2);cursor:pointer;display:grid;place-items:center;transition:background .2s,color .2s,transform .15s;flex-shrink:0}
+  .settings-btn:hover{background:var(--surface);color:var(--text);transform:rotate(18deg)}
+  .settings-btn:active{transform:scale(.94)}
+
+  .subnav{position:sticky;top:var(--header-h);z-index:90;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);border-bottom:1px solid var(--border)}
+  .subnav-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;height:var(--subnav-h)}
+  .cat-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+  .cat-tabs::-webkit-scrollbar{display:none}
+  .cat-tab{flex-shrink:0;font-size:.86rem;font-weight:600;padding:7px 15px;border-radius:999px;color:var(--text-2);border:none;background:transparent;cursor:pointer;transition:all .18s;white-space:nowrap}
+  .cat-tab:hover{color:var(--text);background:var(--surface)}
+  .cat-tab.active{background:var(--accent);color:#fff}
+  .subnav-meta{font-size:.76rem;color:var(--text-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+  .audio-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:36px;padding-top:26px;padding-bottom:64px;align-items:start;animation:fadeUp .5s ease both}
+  .main-col{min-width:0}
+
+  .search-bar{display:flex;gap:10px;margin-bottom:18px}
+  .search-input{flex:1;font-family:var(--font);font-size:.88rem;padding:10px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;transition:border-color .2s}
+  .search-input:focus{border-color:var(--accent)}
+
+  .hero{display:flex;gap:26px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:26px 30px;box-shadow:var(--shadow-sm);margin-bottom:22px;transition:box-shadow .2s,border-color .2s}
+  .hero:hover{box-shadow:var(--shadow-md);border-color:color-mix(in srgb,var(--accent) 22%,var(--border))}
+  .hero-cover{width:158px;height:158px;border-radius:16px;flex-shrink:0;position:relative;overflow:hidden;box-shadow:0 14px 34px rgba(45,90,74,.22);display:grid;place-items:center}
+  .hero-cover span{color:rgba(255,255,255,.9);font-size:2.6rem;line-height:1;transform:translateY(-2px)}
+  .hero-body{min-width:0;flex:1}
+  .hero-meta{display:flex;align-items:center;gap:10px;font-size:.76rem;color:var(--text-3);margin-bottom:11px;flex-wrap:wrap}
+  .hero h2{font-size:clamp(1.4rem,2.6vw,1.85rem);font-weight:800;letter-spacing:-.03em;line-height:1.25;margin-bottom:8px}
+  .hero p{font-size:.9rem;color:var(--text-2);line-height:1.65;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:16px}
+  .hero-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .hero-status{font-size:.78rem;color:var(--text-3);font-variant-numeric:tabular-nums}
+
+  .track-list{display:flex;flex-direction:column;gap:2px}
+  .track-item{display:flex;align-items:center;gap:16px;padding:12px 14px;border-radius:var(--radius-md);border:1px solid transparent;background:transparent;cursor:pointer;text-align:left;width:100%;color:inherit;transition:background .18s,border-color .18s}
+  .track-item:hover{background:color-mix(in srgb,var(--accent) 5%,transparent);border-color:var(--border)}
+  .track-item.active{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 26%,transparent)}
+  .track-cover{width:50px;height:50px;border-radius:11px;flex-shrink:0;position:relative;overflow:hidden;display:grid;place-items:center;box-shadow:var(--shadow-sm)}
+  .track-cover span{color:rgba(255,255,255,.85);font-size:1.15rem;line-height:1;transform:translateY(-1px)}
+  .track-body{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+  .track-title{font-size:.95rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+  .track-meta{font-size:.78rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tag{font-size:.64rem;font-weight:700;letter-spacing:.05em;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);line-height:1.6;white-space:nowrap;flex-shrink:0}
+  .eq{display:inline-flex;align-items:flex-end;gap:2px;height:16px;width:16px;flex-shrink:0}
+  .eq i{display:block;width:3px;border-radius:2px;background:var(--accent);animation:eq 1s ease-in-out infinite}
+  .eq i:nth-child(2){animation-delay:.2s}
+  .eq i:nth-child(3){animation-delay:.4s}
+  .track-item:not(.playing) .eq i{animation-play-state:paused;opacity:.45}
+  @keyframes eq{0%,100%{height:4px}50%{height:14px}}
+
+  .sidebar{display:flex;flex-direction:column;gap:18px;position:sticky;top:calc(var(--header-h) + var(--subnav-h) + 16px)}
+  .side-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px 22px;box-shadow:var(--shadow-sm)}
+  .side-card h3{font-size:.88rem;font-weight:700;letter-spacing:.02em;margin-bottom:14px;color:var(--text)}
+  .about-text{font-size:.82rem;color:var(--text-2);line-height:1.7}
+  .about-text code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:5px;font-size:.85em;font-family:var(--mono)}
+  .rank-list{display:flex;flex-direction:column;gap:1px}
+  .rank-item{display:flex;align-items:center;gap:12px;padding:7px 0;font-size:.86rem;background:none;border:none;cursor:pointer;text-align:left;width:100%;color:inherit;transition:color .2s}
+  .rank-num{width:20px;font-weight:800;color:var(--text-3);font-variant-numeric:tabular-nums;flex-shrink:0;font-size:.82rem}
+  .rank-item:nth-child(-n+3) .rank-num{color:var(--accent)}
+  .rank-name{flex:1;color:var(--text-2);transition:color .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rank-item:hover .rank-name{color:var(--accent)}
+  .rank-count{font-size:.74rem;color:var(--text-3);font-variant-numeric:tabular-nums;flex-shrink:0}
+  .source-list{display:flex;flex-direction:column;gap:1px}
+  .source-row{display:flex;justify-content:space-between;align-items:center;font-size:.83rem;padding:6px 0;color:var(--text-2)}
+  .source-row span:last-child{color:var(--text-3);font-size:.74rem;font-variant-numeric:tabular-nums}
+
+  .player-bar{position:fixed;left:0;right:0;bottom:0;z-index:150;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(18px) saturate(180%);-webkit-backdrop-filter:blur(18px) saturate(180%);border-top:1px solid var(--border);box-shadow:0 -8px 30px rgba(0,0,0,.06)}
+  .player-inner{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.7fr) minmax(0,1fr);align-items:center;gap:24px;height:var(--player-h)}
+  .pb-track{display:flex;align-items:center;gap:12px;min-width:0}
+  .pb-cover{width:52px;height:52px;border-radius:11px;flex-shrink:0;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);background:var(--accent-soft);display:grid;place-items:center;cursor:pointer;transition:transform .18s,box-shadow .18s}
+  .pb-cover:hover{transform:scale(1.07);box-shadow:var(--shadow-md)}
+  .pb-cover:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .pb-cover span{color:rgba(255,255,255,.9);font-size:1.25rem;line-height:1;transform:translateY(-1px)}
+  .pb-info{min-width:0}
+  .pb-title{font-size:.9rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pb-artist{font-size:.76rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pb-center{display:flex;flex-direction:column;gap:4px;align-items:center;min-width:0}
+  .pb-controls{display:flex;align-items:center;gap:8px}
+  .pb-btn{width:36px;height:36px;border-radius:50%;border:none;background:transparent;color:var(--text-2);display:grid;place-items:center;cursor:pointer;transition:background .18s,color .18s,transform .12s}
+  .pb-btn:hover{background:var(--accent-soft);color:var(--accent)}
+  .pb-btn:active{transform:scale(.94)}
+  .pb-btn.on{color:var(--accent);background:var(--accent-soft)}
+  .pb-play{width:44px;height:44px;background:var(--accent);color:#fff}
+  .pb-play:hover{background:var(--accent);color:#fff;opacity:.9}
+  .pb-progress{display:flex;align-items:center;gap:10px;width:100%;font-size:.72rem;color:var(--text-3);font-variant-numeric:tabular-nums}
+  .pb-bar{flex:1;height:5px;border-radius:999px;background:var(--accent-soft);position:relative;cursor:pointer}
+  .pb-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:var(--accent);width:0%;transition:width .12s linear}
+  .pb-right{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+  .pb-vol{display:flex;align-items:center;gap:8px;color:var(--text-3)}
+  .pb-vol input{width:88px;accent-color:var(--accent);cursor:pointer}
+
+  .now-playing{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:24px}
+  .now-playing[hidden]{display:none}
+  .np-backdrop{position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%);animation:npFade .3s ease both}
+  @keyframes npFade{from{opacity:0}to{opacity:1}}
+  .np-close{position:absolute;top:22px;right:24px;z-index:5;width:42px;height:42px;border-radius:50%;border:1px solid var(--border);background:color-mix(in srgb,var(--surface) 80%,transparent);color:var(--text-2);cursor:pointer;display:grid;place-items:center;transition:background .2s,color .2s,transform .15s}
+  .np-close:hover{background:var(--surface);color:var(--text);transform:scale(1.05)}
+  .np-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:22px;width:100%;max-width:720px}
+  .np-art{display:flex;align-items:center;justify-content:center;position:relative}
+  .np-cover{width:min(300px,56vw);height:min(300px,56vw);border-radius:min(20px,4vw);position:relative;z-index:2;box-shadow:0 30px 80px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.18);display:grid;place-items:center;background:var(--accent-soft);will-change:transform}
+  .np-cover::after{content:'♪';color:rgba(255,255,255,.9);font-size:clamp(2.4rem,7vw,3.6rem);line-height:1;transform:translateY(-4%)}
+  .np-vinyl{width:min(280px,52vw);height:min(280px,52vw);margin-left:calc(min(280px,52vw) * -0.5);position:relative;z-index:1;animation:vinylIn .55s cubic-bezier(.22,1,.36,1) .08s both}
+  @keyframes vinylIn{from{transform:translateX(-45%) scale(.84) rotate(-18deg);opacity:0}to{transform:translateX(0) scale(1) rotate(0);opacity:1}}
+  .np-vinyl-disc{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.10),transparent 46%),repeating-radial-gradient(circle at center,#1d1d1d 0 1px,#0d0d0d 1px 3px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 28px 70px rgba(0,0,0,.42);position:relative;animation:spin 10s linear infinite;animation-play-state:paused}
+  .now-playing.is-playing .np-vinyl-disc{animation-play-state:running}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .np-vinyl-disc::before{content:'';position:absolute;width:37%;height:37%;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--vinyl-label,var(--accent));box-shadow:inset 0 0 0 1px rgba(0,0,0,.22),0 2px 10px rgba(0,0,0,.3)}
+  .np-vinyl-disc::after{content:'';position:absolute;width:7%;height:7%;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:#0a0a0a;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+  .np-info{text-align:center;max-width:100%;padding:0 12px}
+  .np-info h2{font-size:clamp(1.35rem,3.4vw,1.8rem);font-weight:800;letter-spacing:-.03em;line-height:1.25;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .np-info p{font-size:.9rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .np-progress{display:flex;align-items:center;gap:12px;width:100%;max-width:440px;font-size:.76rem;color:var(--text-3);font-variant-numeric:tabular-nums}
+  .np-bar{flex:1;height:5px;border-radius:999px;background:var(--accent-soft);position:relative;cursor:pointer}
+  .np-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:var(--accent);width:0%;transition:width .12s linear}
+  .np-controls{display:flex;align-items:center;gap:18px}
+  .np-btn{width:52px;height:52px;border-radius:50%;border:1px solid var(--border);background:color-mix(in srgb,var(--surface) 70%,transparent);color:var(--text);cursor:pointer;display:grid;place-items:center;transition:background .2s,color .2s,transform .12s,border-color .2s}
+  .np-btn:hover{background:var(--surface);border-color:var(--accent);color:var(--accent)}
+  .np-btn:active{transform:scale(.94)}
+  .np-btn.np-main{width:66px;height:66px;background:var(--accent);color:#fff;border-color:transparent;box-shadow:0 12px 30px rgba(45,90,74,.3)}
+  .np-btn.np-main:hover{opacity:.92;color:#fff}
+  .now-playing.closing .np-vinyl,
+  .now-playing.closing .np-info,
+  .now-playing.closing .np-progress,
+  .now-playing.closing .np-controls,
+  .now-playing.closing .np-close,
+  .now-playing.closing .np-backdrop{opacity:0;transition:opacity .18s ease}
+
+  .settings-modal{position:fixed;inset:0;z-index:400;display:grid;place-items:center;padding:24px}
+  .settings-modal[hidden]{display:none}
+  .settings-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45);animation:fadeIn .2s ease}
+  .settings-panel{position:relative;width:min(600px,100%);max-height:calc(100vh - 48px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-md);animation:modalIn .25s ease}
+  .settings-close{position:absolute;top:14px;right:16px;width:32px;height:32px;border-radius:50%;border:none;background:transparent;color:var(--text-3);font-size:1.4rem;line-height:1;cursor:pointer;transition:all .2s}
+  .settings-close:hover{background:var(--accent-soft);color:var(--text)}
+  .settings-panel h3{font-size:1.15rem;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+  .settings-sub{font-size:.82rem;color:var(--text-2);line-height:1.6;margin-bottom:18px}
+
+  .settings-tabs{display:flex;gap:2px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+  .settings-tab{padding:8px 14px;border:none;background:none;color:var(--text-2);font-size:.84rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .2s,border-color .2s;letter-spacing:.01em}
+  .settings-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .settings-tab:hover{color:var(--text)}
+
+  .settings-label{display:block;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:7px}
+  .settings-input{width:100%;font-family:var(--font);font-size:.84rem;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none;transition:border-color .2s}
+  .settings-input:focus{border-color:var(--accent)}
+  .settings-hint{font-size:.74rem;color:var(--text-3);margin-top:6px;line-height:1.5}
+  .settings-hint code{background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:.9em;font-family:var(--mono)}
+  .settings-actions{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:24px;padding-top:18px;border-top:1px solid var(--border)}
+  .settings-status{font-size:.78rem;margin-right:auto;align-self:center}
+  .settings-status.ok{color:#22c55e}
+  .settings-status.err{color:#c0392b}
+
+  .protocol-list{display:flex;flex-direction:column;gap:10px}
+  .protocol-card{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg);cursor:pointer;transition:all .18s;text-align:left;width:100%;color:inherit}
+  .protocol-card:hover{border-color:var(--accent);background:var(--surface)}
+  .protocol-card.active{border-color:var(--accent);background:var(--accent-soft)}
+  .protocol-icon{width:40px;height:40px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:.82rem}
+  .protocol-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .protocol-name{font-size:.9rem;font-weight:700;color:var(--text)}
+  .protocol-desc{font-size:.76rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .protocol-status{font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:999px;flex-shrink:0;letter-spacing:.02em}
+  .protocol-status.ok{background:rgba(34,197,94,.12);color:#22c55e}
+  .protocol-status.none{background:var(--accent-soft);color:var(--text-3)}
+  .protocol-back{background:none;border:none;color:var(--text-3);font-size:.8rem;cursor:pointer;padding:0;margin-bottom:14px}
+  .protocol-back:hover{color:var(--accent)}
+  .protocol-form h4{font-size:1rem;font-weight:700;margin-bottom:6px}
+  #pf-fields{display:flex;flex-direction:column;gap:14px;margin-top:16px}
+
+  .doc-panel{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:18px 20px;max-height:calc(100vh - 280px);overflow-y:auto}
+  .doc-panel pre{margin:0;font-family:var(--mono);font-size:.76rem;line-height:1.7;white-space:pre-wrap;word-break:break-word;color:var(--text-2)}
+
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+
+  .state{padding:48px 0;text-align:center;color:var(--text-3);font-size:.9rem;line-height:1.9}
+  .state.error{color:#c0392b}
+  .state code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:5px;font-size:.85em;font-family:var(--mono)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 26px;border-radius:999px;font-size:.9rem;font-weight:600;transition:transform .15s,box-shadow .15s,background .2s;cursor:pointer;border:none}
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:var(--shadow-sm)}
+  .btn-primary:hover{box-shadow:var(--shadow-md)}
+  .btn-sm{padding:8px 18px;font-size:.84rem}
+  .site-footer{border-top:1px solid var(--border);padding:32px 0}
+  .footer-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:.8rem;color:var(--text-3)}
+  .footer-links{display:flex;gap:20px}
+  .footer-links a:hover{color:var(--text)}
+  .footer-links button{background:none;border:none;color:inherit;font-family:inherit;font-size:inherit;cursor:pointer;padding:0}
+  .footer-links button:hover{color:var(--text)}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+  @media (max-width:1024px){
+    .audio-layout{grid-template-columns:minmax(0,1fr) 280px;gap:28px}
+    .hero-cover{width:136px;height:136px}
+  }
+  @media (max-width:900px){
+    .audio-layout{grid-template-columns:1fr;gap:22px}
+    .sidebar{position:static;flex-direction:row;flex-wrap:wrap}
+    .sidebar .side-card{flex:1 1 260px}
+  }
+  @media (max-width:820px){
+    .player-inner{grid-template-columns:1fr;height:auto;padding:12px 0;gap:8px}
+    .pb-right{display:none}
+    .pb-track{justify-content:center}
+    .pb-info{text-align:center}
+    .pb-center{width:100%}
+  }
+  @media (max-width:640px){
+    :root{--header-h:58px;--subnav-h:48px}
+    .subnav-meta{display:none}
+    .live-badge{display:none}
+    .site-brand{font-size:1.2rem}
+    .hero{flex-direction:column;align-items:stretch;gap:16px;padding:20px}
+    .hero-cover{width:100%;height:170px}
+    .hero h2{font-size:1.3rem}
+    .track-item{gap:12px;padding:10px}
+    .track-cover{width:44px;height:44px}
+    .track-title{font-size:.9rem}
+    .sidebar{flex-direction:column}
+    .sidebar .side-card{flex:1 1 auto}
+    .footer-inner{flex-direction:column;align-items:flex-start}
+    .settings-panel{padding:22px}
+    .np-close{top:14px;right:14px;width:38px;height:38px}
+    .np-content{gap:18px}
+    .np-progress{max-width:100%}
+    .doc-panel{max-height:calc(100vh - 240px);padding:14px 16px}
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="#" class="site-brand">YAO<span>NET</span></a>
+    <div class="header-right">
+      <span class="live-badge"><span class="live-dot"></span><span id="live-text">待机</span></span>
+      <button class="settings-btn" id="settings-btn" type="button" aria-label="音源设置">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="subnav">
+  <div class="container subnav-inner">
+    <div class="cat-tabs" id="tabs" aria-label="分类"></div>
+    <div class="subnav-meta" id="meta">未配置音源</div>
+  </div>
+</div>
+
+<main class="container audio-layout">
+  <div class="main-col">
+    <div class="search-bar" id="search-bar" hidden>
+      <input class="search-input" id="search-input" type="search" placeholder="搜索曲目">
+      <button class="btn btn-primary btn-sm" id="search-btn" type="button">搜索</button>
+    </div>
+
+    <section class="hero" id="hero" aria-live="polite">
+      <div class="state">尚未配置音源。请通过右上角设置选择协议并填写端点参数。</div>
+    </section>
+
+    <div class="track-list" id="list" aria-busy="false">
+      <div class="state">完成音源配置后，曲目将在此处显示。<br>协议规范参见设置中的「技术文档」。</div>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="side-card">
+      <h3>曲目速览</h3>
+      <div class="rank-list" id="rank-list">
+        <div class="state" style="padding:8px 0">暂无曲目</div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <h3>分类统计</h3>
+      <div class="source-list" id="source-list">
+        <div class="state" style="padding:8px 0">暂无分类数据</div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <h3>说明</h3>
+      <p class="about-text">本播放器采用协议驱动架构。播放器仅按协议请求 <code>/search</code> 与 <code>/url</code> 接口，内容解析与地址获取由端点完成。音源配置、当前曲目及播放进度将自动保存至本地。</p>
+    </div>
+  </aside>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <span>© YAONET · 协议驱动的音频播放器</span>
+    <div class="footer-links">
+      <button type="button" id="footer-settings-link">音源设置</button>
+    </div>
+  </div>
+</footer>
+
+<div class="player-bar" id="player-bar">
+  <div class="container player-inner">
+    <div class="pb-track">
+      <div class="pb-cover" id="pb-cover" role="button" tabindex="0" aria-label="展开全屏播放"><span>♪</span></div>
+      <div class="pb-info">
+        <div class="pb-title" id="pb-title">未在播放</div>
+        <div class="pb-artist" id="pb-artist">请从曲目列表中选择</div>
+      </div>
+    </div>
+
+    <div class="pb-center">
+      <div class="pb-controls">
+        <button class="pb-btn" id="btn-prev" type="button" aria-label="上一首">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12l-9-6z"/></svg>
+        </button>
+        <button class="pb-btn pb-play" id="btn-play" type="button" aria-label="播放">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button class="pb-btn" id="btn-next" type="button" aria-label="下一首">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l9 6-9 6z"/></svg>
+        </button>
+      </div>
+      <div class="pb-progress">
+        <span id="cur-time">0:00</span>
+        <div class="pb-bar" id="seek-bar"><div class="pb-bar-fill" id="seek-fill"></div></div>
+        <span id="dur-time">0:00</span>
+      </div>
+    </div>
+
+    <div class="pb-right">
+      <button class="pb-btn" id="btn-shuffle" type="button" aria-label="随机播放">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>
+          <polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
+          <line x1="4" y1="4" x2="9" y2="9"/>
+        </svg>
+      </button>
+      <div class="pb-vol">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+        <input type="range" id="vol" min="0" max="1" step="0.01" value="1" aria-label="音量">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="now-playing" id="now-playing" hidden>
+  <div class="np-backdrop" data-np-close></div>
+  <button class="np-close" type="button" data-np-close aria-label="收起">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>
+    </svg>
+  </button>
+  <div class="np-content">
+    <div class="np-art">
+      <div class="np-cover" id="np-cover"></div>
+      <div class="np-vinyl"><div class="np-vinyl-disc" id="np-vinyl-disc"></div></div>
+    </div>
+    <div class="np-info">
+      <h2 id="np-title">—</h2>
+      <p id="np-artist">—</p>
+    </div>
+    <div class="np-progress">
+      <span id="np-cur">0:00</span>
+      <div class="np-bar" id="np-bar"><div class="np-bar-fill" id="np-fill"></div></div>
+      <span id="np-dur">0:00</span>
+    </div>
+    <div class="np-controls">
+      <button class="np-btn" id="np-prev" type="button" aria-label="上一首">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12l-9-6z"/></svg>
+      </button>
+      <button class="np-btn np-main" id="np-play" type="button" aria-label="播放">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button class="np-btn" id="np-next" type="button" aria-label="下一首">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l9 6-9 6z"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="settings-modal" id="settings-modal" hidden>
+  <div class="settings-backdrop" data-settings-close></div>
+  <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <button class="settings-close" type="button" data-settings-close aria-label="关闭">×</button>
+    <h3 id="settings-title">音源</h3>
+    <p class="settings-sub">本播放器不内置音源解析逻辑。请配置一个符合协议的端点，播放器将按协议请求数据并播放音频。</p>
+
+    <div class="settings-tabs" id="settings-tabs">
+      <button class="settings-tab active" type="button" data-tab="config">音源配置</button>
+      <button class="settings-tab" type="button" data-tab="docs">技术文档</button>
+    </div>
+
+    <div class="settings-tab-content" data-content="config">
+      <div class="protocol-list" id="protocol-list"></div>
+      <div class="protocol-form" id="protocol-form" hidden>
+        <button class="protocol-back" type="button" id="protocol-back">← 返回协议列表</button>
+        <h4 id="pf-title">—</h4>
+        <p class="settings-hint" id="pf-desc"></p>
+        <div id="pf-fields"></div>
+        <div class="settings-actions">
+          <span class="settings-status" id="settings-status"></span>
+          <button class="btn btn-primary btn-sm" id="pf-test" type="button">测试连接</button>
+          <button class="btn btn-primary btn-sm" id="pf-save" type="button">保存并应用</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-tab-content" data-content="docs" hidden>
+      <div class="doc-panel">
+        <pre id="doc-pre"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<audio id="player" preload="metadata"></audio>
+
+<script>
+(function(){
+  'use strict';
+
+  var PALETTES = [
+    ['#2d5a4a','#7fbfa8'],
+    ['#4a3f5e','#9b8ec4'],
+    ['#5e3f3a','#c49b8e'],
+    ['#3a4a5e','#8ea9c4'],
+    ['#5e4a3a','#c4ab8e'],
+    ['#3a5e4a','#8ec4a9']
+  ];
+
+  var PROTOCOLS = [
+    {
+      id: 'static',
+      name: '静态清单 manifest.json',
+      desc: '同目录下的静态音频清单，无需后端服务',
+      icon: 'M',
+      fields: [
+        { key: 'url', label: '清单地址', placeholder: '/manifest.json', required: true }
+      ],
+      search: null,
+      url: null
+    },
+    {
+      id: 'yasp',
+      name: 'HTTP 端点（YASP v1）',
+      desc: '实现 /search 与 /url 两个接口的任意 HTTP 服务',
+      icon: 'H',
+      fields: [
+        { key: 'base', label: 'API Base', placeholder: 'https://your-server.com/api', required: true },
+        { key: 'token', label: 'Token（可选）', placeholder: '', required: false }
+      ],
+      search: function(cfg, kw, page){
+        return cfg.base + '/search?keyword=' + encodeURIComponent(kw) + '&page=' + page +
+          (cfg.token ? '&token=' + encodeURIComponent(cfg.token) : '');
+      },
+      url: function(cfg, song){
+        return cfg.base + '/url?id=' + encodeURIComponent(song.id) +
+          '&source=' + encodeURIComponent(song.source || '') +
+          (cfg.token ? '&token=' + encodeURIComponent(cfg.token) : '');
+      }
+    }
+  ];
+
+  var DOC_TEXT = [
+    'YAONET Audio Source Protocol v1（YASP v1）',
+    '──────────────────────────────────────────────',
+    '',
+    '概述',
+    '──────────────────────────────────────────────',
+    '',
+    '本协议定义播放器与音源端点之间的最小交互规范。',
+    '端点只需实现两个 HTTP GET 接口，即可被播放器接入。',
+    '播放器不执行任何脚本，不承担内容解析职责，',
+    '仅按协议发起请求、获取音频地址并播放。',
+    '',
+    '',
+    '1. 搜索接口',
+    '──────────────────────────────────────────────',
+    '',
+    'GET {base}/search?keyword={keyword}&page={page}',
+    '',
+    '参数：',
+    '  keyword    搜索关键词。空字符串表示请求默认列表。',
+    '  page       页码，从 1 开始。',
+    '',
+    '响应：200 application/json',
+    '',
+    '{',
+    '  "songs": [',
+    '    {',
+    '      "id":       "唯一标识（必填）",',
+    '      "title":    "曲目标题（必填）",',
+    '      "artist":   "艺术家（可选）",',
+    '      "album":    "专辑（可选）",',
+    '      "source":   "来源标识（可选，用于 /url 请求）",',
+    '      "duration": 240,',
+    '      "cover":    "封面地址（可选）",',
+    '      "url":      "直接播放地址（可选）"',
+    '    }',
+    '  ]',
+    '}',
+    '',
+    '说明：',
+    '  · 若曲目已包含 url 字段，播放器将直接使用该地址播放，不再请求 /url 接口。',
+    '  · 若 url 缺失，播放器将在播放时请求第 2 节定义的 /url 接口获取播放地址。',
+    '  · source 字段将原样传递给 /url 接口，供端点内部区分来源。',
+    '',
+    '',
+    '2. 播放地址接口',
+    '──────────────────────────────────────────────',
+    '',
+    'GET {base}/url?id={id}&source={source}',
+    '',
+    '参数：',
+    '  id         /search 接口返回的曲目 id',
+    '  source     /search 接口返回的曲目 source（可选，可能为空）',
+    '',
+    '响应：200 application/json',
+    '',
+    '{',
+    '  "url": "https://.../audio.mp3"',
+    '}',
+    '',
+    '若端点无法获取播放地址，返回非 200 状态码，播放器将向用户提示失败。',
+    '',
+    '',
+    '3. 跨域要求',
+    '──────────────────────────────────────────────',
+    '',
+    '端点必须返回以下响应头，否则浏览器将拦截请求：',
+    '',
+    '  Access-Control-Allow-Origin: *',
+    '',
+    '若端点需要鉴权，可通过查询参数（如 token）或自定义请求头实现，',
+    '但需正确处理预检请求（OPTIONS）。',
+    '',
+    '',
+    '4. 静态清单模式',
+    '──────────────────────────────────────────────',
+    '',
+    '在页面同目录放置 manifest.json：',
+    '',
+    '{',
+    '  "tracks": [',
+    '    {',
+    '      "id":       "001",',
+    '      "title":    "曲目标题",',
+    '      "artist":   "艺术家",',
+    '      "album":    "专辑",',
+    '      "category": "分类",',
+    '      "desc":     "简介",',
+    '      "src":      "/audio/001.mp3"',
+    '    }',
+    '  ]',
+    '}',
+    '',
+    '音频服务器要求：',
+    '  · 正确返回 Content-Type（如 audio/mpeg）',
+    '  · 支持 Range 请求（进度拖动依赖此特性）',
+    '',
+    '',
+    '5. 服务端示例（Cloudflare Worker）',
+    '──────────────────────────────────────────────',
+    '',
+    'export default {',
+    '  async fetch(req) {',
+    '    const url = new URL(req.url);',
+    '    const cors = {',
+    '      \'Access-Control-Allow-Origin\': \'*\',',
+    '      \'Content-Type\': \'application/json\'',
+    '    };',
+    '',
+    '    if (url.pathname.endsWith(\'/search\')) {',
+    '      const kw = url.searchParams.get(\'keyword\') || \'\';',
+    '      return new Response(JSON.stringify({',
+    '        songs: [',
+    '          { id: \'demo1\', title: \'搜索结果 · \' + kw, source: \'demo\' }',
+    '        ]',
+    '      }), { headers: cors });',
+    '    }',
+    '',
+    '    if (url.pathname.endsWith(\'/url\')) {',
+    '      return new Response(JSON.stringify({',
+    '        url: \'https://example.com/audio.mp3\'',
+    '      }), { headers: cors });',
+    '    }',
+    '',
+    '    return new Response(\'Not found\', { status: 404, headers: cors });',
+    '  }',
+    '};',
+    '',
+    '',
+    '6. 关于第三方音源',
+    '──────────────────────────────────────────────',
+    '',
+    '部分第三方音源（如洛雪、青听等）以脚本或规则文件形式分发，',
+    '设计为在其对应客户端内部执行，不属于标准 HTTP 接口，',
+    '浏览器环境无法直接运行。',
+    '',
+    '如需接入此类音源，应自行实现一个服务端，',
+    '将对应音源能力封装为第 1、2 节定义的 HTTP 接口，',
+    '并将该服务地址配置为「HTTP 端点（YASP v1）」的 API Base。',
+    '',
+    '本播放器不内置任何第三方音源，亦不执行任何外部脚本。'
+  ].join('\n');
+
+  var listEl    = document.getElementById('list');
+  var heroEl    = document.getElementById('hero');
+  var tabsEl    = document.getElementById('tabs');
+  var metaEl    = document.getElementById('meta');
+  var rankEl    = document.getElementById('rank-list');
+  var sourceEl  = document.getElementById('source-list');
+  var liveText  = document.getElementById('live-text');
+  var searchBar = document.getElementById('search-bar');
+  var searchInput = document.getElementById('search-input');
+  var searchBtn = document.getElementById('search-btn');
+
+  var audio     = document.getElementById('player');
+  var playerBar = document.getElementById('player-bar');
+  var pbCover   = document.getElementById('pb-cover');
+  var pbTitle   = document.getElementById('pb-title');
+  var pbArtist  = document.getElementById('pb-artist');
+  var btnPlay   = document.getElementById('btn-play');
+  var btnPrev   = document.getElementById('btn-prev');
+  var btnNext   = document.getElementById('btn-next');
+  var btnShuffle= document.getElementById('btn-shuffle');
+  var seekBar   = document.getElementById('seek-bar');
+  var seekFill  = document.getElementById('seek-fill');
+  var curTimeEl = document.getElementById('cur-time');
+  var durTimeEl = document.getElementById('dur-time');
+  var volEl     = document.getElementById('vol');
+
+  var npModal     = document.getElementById('now-playing');
+  var npCover     = document.getElementById('np-cover');
+  var npVinylDisc = document.getElementById('np-vinyl-disc');
+  var npTitle     = document.getElementById('np-title');
+  var npArtist    = document.getElementById('np-artist');
+  var npBar       = document.getElementById('np-bar');
+  var npFill      = document.getElementById('np-fill');
+  var npCur       = document.getElementById('np-cur');
+  var npDur       = document.getElementById('np-dur');
+  var npPlayBtn   = document.getElementById('np-play');
+  var npPrevBtn   = document.getElementById('np-prev');
+  var npNextBtn   = document.getElementById('np-next');
+
+  var settingsBtn   = document.getElementById('settings-btn');
+  var settingsModal = document.getElementById('settings-modal');
+  var settingsTabs  = document.getElementById('settings-tabs');
+  var settingsStatus= document.getElementById('settings-status');
+  var protocolList  = document.getElementById('protocol-list');
+  var protocolForm  = document.getElementById('protocol-form');
+  var protocolBack  = document.getElementById('protocol-back');
+  var pfTitle       = document.getElementById('pf-title');
+  var pfDesc        = document.getElementById('pf-desc');
+  var pfFields      = document.getElementById('pf-fields');
+  var pfTest        = document.getElementById('pf-test');
+  var pfSave        = document.getElementById('pf-save');
+  var docPre        = document.getElementById('doc-pre');
+  var footerSettingsLink = document.getElementById('footer-settings-link');
+
+  var ICON_PLAY  = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+  var ICON_PLAY_L  = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE_L = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+
+  docPre.textContent = DOC_TEXT;
+
+  var tracks = [], filtered = [], activeCat = '全部';
+  var currentId = null, isPlaying = false, shuffleOn = false, npOpen = false;
+
+  var SOURCE_KEY = 'yaonet_source_v3';
+  var PLAYER_KEY = 'yaonet_player_state_v1';
+
+  var sourceState = { protocol: 'static', configs: {} };
+  var editingProtocol = null;
+
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function fmt(s){
+    if (!isFinite(s) || s < 0) return '0:00';
+    var m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+  function coverGradient(id){
+    var i = 0;
+    for (var k = 0; k < tracks.length; k++){ if (tracks[k].id === id){ i = k; break; } }
+    var p = PALETTES[i % PALETTES.length];
+    return 'linear-gradient(135deg,' + p[0] + ',' + p[1] + ')';
+  }
+  function getTrack(id){
+    for (var i = 0; i < tracks.length; i++){ if (tracks[i].id === id) return tracks[i]; }
+    return null;
+  }
+  function indexInFiltered(id){
+    for (var i = 0; i < filtered.length; i++){ if (filtered[i].id === id) return i; }
+    return -1;
+  }
+
+  function loadSourceState(){
+    try{
+      var raw = localStorage.getItem(SOURCE_KEY);
+      if (raw){
+        var obj = JSON.parse(raw);
+        if (obj && obj.protocol) sourceState = obj;
+      }
+    }catch(e){}
+    if (!sourceState.configs) sourceState.configs = {};
+  }
+  function saveSourceState(){
+    try{ localStorage.setItem(SOURCE_KEY, JSON.stringify(sourceState)); }catch(e){}
+  }
+  function getProtocol(id){
+    for (var i = 0; i < PROTOCOLS.length; i++){ if (PROTOCOLS[i].id === id) return PROTOCOLS[i]; }
+    return null;
+  }
+  function isConfigured(p){
+    var cfg = sourceState.configs[p.id];
+    if (!cfg) return false;
+    for (var i = 0; i < p.fields.length; i++){
+      if (p.fields[i].required && !cfg[p.fields[i].key]) return false;
+    }
+    return true;
+  }
+
+  var lastSaveTime = 0;
+
+  function savePlayerState(immediate){
+    var now = Date.now();
+    if (!immediate && now - lastSaveTime < 3000) return;
+    lastSaveTime = now;
+
+    var state = {
+      trackId: currentId || null,
+      currentTime: (audio && isFinite(audio.currentTime)) ? audio.currentTime : 0,
+      volume: audio ? audio.volume : 1,
+      shuffle: shuffleOn,
+      protocol: sourceState.protocol,
+      savedAt: now
+    };
+    try{ localStorage.setItem(PLAYER_KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  function loadPlayerState(){
+    try{
+      var raw = localStorage.getItem(PLAYER_KEY);
+      if (raw) return JSON.parse(raw);
+    }catch(e){}
+    return null;
+  }
+
+  function applyRestoredPlayerState(){
+    var state = loadPlayerState();
+    if (!state) return;
+
+    if (state.protocol && state.protocol !== sourceState.protocol) return;
+
+    if (typeof state.volume === 'number' && isFinite(state.volume)){
+      audio.volume = Math.max(0, Math.min(1, state.volume));
+      volEl.value = audio.volume;
+    }
+
+    if (state.shuffle){
+      shuffleOn = true;
+      btnShuffle.classList.add('on');
+    }
+
+    if (!state.trackId) return;
+    var t = getTrack(state.trackId);
+    if (!t) return;
+
+    currentId = t.id;
+    updatePlayerBar();
+    renderHero();
+    renderList();
+    liveText.textContent = '已暂停 · ' + t.title;
+
+    if (t._needsResolve || !t.src) return;
+
+    audio.src = t.src;
+    var seekTo = state.currentTime || 0;
+
+    var onMeta = function(){
+      audio.removeEventListener('loadedmetadata', onMeta);
+      if (seekTo > 0 && isFinite(audio.duration) && seekTo < audio.duration - 0.5){
+        try{ audio.currentTime = seekTo; }catch(e){}
+        curTimeEl.textContent = fmt(seekTo);
+        seekFill.style.width = (seekTo / audio.duration * 100) + '%';
+      }
+    };
+    audio.addEventListener('loadedmetadata', onMeta);
+  }
+
+  function normalizeSongs(rawSongs){
+    var out = [];
+    for (var i = 0; i < rawSongs.length; i++){
+      var s = rawSongs[i];
+      out.push({
+        id: s.id || ('s' + i),
+        title: s.title || '未命名',
+        artist: s.artist || '',
+        album: s.album || '',
+        category: s.source || s.category || '在线',
+        desc: s.desc || s.album || s.artist || '',
+        src: s.url || s.src || '',
+        _needsResolve: !(s.url || s.src)
+      });
+    }
+    return out;
+  }
+
+  function searchByProtocol(cfg, p, keyword){
+    var url = p.search(cfg, keyword, 1);
+    return fetch(url, { cache: 'no-cache' })
+      .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(d){
+        var songs = (d && d.songs) || [];
+        return normalizeSongs(songs);
+      });
+  }
+
+  function loadTracksByProtocol(){
+    var pid = sourceState.protocol;
+    var p = getProtocol(pid);
+    var cfg = sourceState.configs[pid] || {};
+
+    if (!p || !isConfigured(p)) return Promise.resolve([]);
+
+    if (p.id === 'static' || !p.search){
+      return fetch(cfg.url, { cache: 'no-cache' })
+        .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function(d){
+          if (d && Array.isArray(d.tracks)) return normalizeSongs(d.tracks);
+          return [];
+        })
+        .catch(function(){ return []; });
+    }
+
+    return searchByProtocol(cfg, p, '').catch(function(){ return []; });
+  }
+
+  function updateSearchVisibility(){
+    var p = getProtocol(sourceState.protocol);
+    searchBar.hidden = !(p && p.search && isConfigured(p));
+  }
+
+  function refreshLibrary(){
+    listEl.setAttribute('aria-busy', 'true');
+    loadTracksByProtocol().then(function(data){
+      tracks = data;
+      activeCat = '全部';
+      computeFiltered();
+      renderTabs();
+      if (!getTrack(currentId)){
+        currentId = filtered[0] ? filtered[0].id : (tracks[0] ? tracks[0].id : null);
+      }
+      renderHero();
+      renderList();
+      renderRank();
+      renderSources();
+      updateMeta();
+      updatePlayerBar();
+      syncPlayUI();
+      updateSearchVisibility();
+      applyRestoredPlayerState();
+    });
+  }
+
+  function computeFiltered(){
+    if (activeCat === '全部'){ filtered = tracks.slice(); }
+    else {
+      filtered = [];
+      for (var i = 0; i < tracks.length; i++){
+        if (tracks[i].category === activeCat) filtered.push(tracks[i]);
+      }
+    }
+  }
+
+  function renderTabs(){
+    var set = {};
+    for (var i = 0; i < tracks.length; i++){
+      if (tracks[i].category) set[tracks[i].category] = true;
+    }
+    var cats = ['全部'];
+    for (var k in set){ if (Object.prototype.hasOwnProperty.call(set,k)) cats.push(k); }
+    if (cats.indexOf(activeCat) === -1) activeCat = '全部';
+
+    var html = '';
+    for (var j = 0; j < cats.length; j++){
+      var c = cats[j];
+      html += '<button type="button" class="cat-tab' + (c === activeCat ? ' active' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>';
+    }
+    tabsEl.innerHTML = html;
+  }
+
+  function renderHero(){
+    var t = getTrack(currentId) || filtered[0] || tracks[0];
+    if (!t){
+      heroEl.innerHTML = '<div class="state">尚未配置音源。请通过右上角设置选择协议并填写端点参数。</div>';
+      return;
+    }
+    var playingThis = (t.id === currentId && isPlaying);
+    var status = (t.id === currentId) ? (isPlaying ? '正在播放' : '已暂停') : '未播放';
+
+    heroEl.innerHTML =
+      '<div class="hero-cover" style="background:' + coverGradient(t.id) + '"><span>♪</span></div>' +
+      '<div class="hero-body">' +
+        '<div class="hero-meta">' +
+          '<span class="tag">' + esc(t.category || '') + '</span>' +
+          '<span>' + esc(t.artist || '') + '</span>' +
+          (t.album ? '<span>·</span><span>' + esc(t.album) + '</span>' : '') +
+        '</div>' +
+        '<h2>' + esc(t.title) + '</h2>' +
+        '<p>' + esc(t.desc || '') + '</p>' +
+        '<div class="hero-actions">' +
+          '<button class="btn btn-primary btn-sm hero-play" type="button" data-id="' + esc(t.id) + '">' +
+            (playingThis ? '暂停' : '播放') +
+          '</button>' +
+          '<span class="hero-status">' + status + '</span>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderList(){
+    if (!filtered.length){
+      listEl.innerHTML = '<div class="state">完成音源配置后，曲目将在此处显示。<br>协议规范参见设置中的「技术文档」。</div>';
+      listEl.setAttribute('aria-busy', 'false');
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < filtered.length; i++){
+      var t = filtered[i];
+      var active = (t.id === currentId);
+      html +=
+        '<button class="track-item' + (active ? ' active' : '') + (active && isPlaying ? ' playing' : '') + '" type="button" data-id="' + esc(t.id) + '">' +
+          '<span class="track-cover" style="background:' + coverGradient(t.id) + '"><span>♪</span></span>' +
+          '<span class="track-body">' +
+            '<span class="track-title">' + esc(t.title) + '</span>' +
+            '<span class="track-meta">' + esc(t.artist || '') + (t.album ? ' · ' + esc(t.album) : '') + '</span>' +
+          '</span>' +
+          (active ? '<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>' : '') +
+          (t.category ? '<span class="tag">' + esc(t.category) + '</span>' : '') +
+        '</button>';
+    }
+    listEl.innerHTML = html;
+    listEl.setAttribute('aria-busy', 'false');
+  }
+
+  function renderRank(){
+    if (!tracks.length){
+      rankEl.innerHTML = '<div class="state" style="padding:8px 0">暂无曲目</div>';
+      return;
+    }
+    var sorted = tracks.slice().sort(function(a, b){
+      return (b.title || '').localeCompare(a.title || '');
+    }).slice(0, 6);
+
+    var html = '';
+    for (var i = 0; i < sorted.length; i++){
+      var t = sorted[i];
+      html +=
+        '<button class="rank-item" type="button" data-id="' + esc(t.id) + '">' +
+          '<span class="rank-num">' + (i + 1 < 10 ? '0' : '') + (i + 1) + '</span>' +
+          '<span class="rank-name">' + esc(t.title) + '</span>' +
+          '<span class="rank-count">' + esc(t.category || '') + '</span>' +
+        '</button>';
+    }
+    rankEl.innerHTML = html;
+  }
+
+  function renderSources(){
+    if (!tracks.length){
+      sourceEl.innerHTML = '<div class="state" style="padding:8px 0">暂无分类数据</div>';
+      return;
+    }
+    var map = {};
+    for (var i = 0; i < tracks.length; i++){
+      var c = tracks[i].category || '未分类';
+      map[c] = (map[c] || 0) + 1;
+    }
+    var rows = [];
+    for (var k in map){ if (Object.prototype.hasOwnProperty.call(map, k)) rows.push([k, map[k]]); }
+    rows.sort(function(a, b){ return b[1] - a[1]; });
+
+    var html = '';
+    for (var j = 0; j < rows.length; j++){
+      html += '<div class="source-row"><span>' + esc(rows[j][0]) + '</span><span>' + rows[j][1] + '</span></div>';
+    }
+    sourceEl.innerHTML = html;
+  }
+
+  function updateMeta(){
+    metaEl.textContent = tracks.length
+      ? (tracks.length + ' 首 · ' + filtered.length + ' 条当前分类')
+      : '未配置音源';
+  }
+
+  function syncPlayUI(){
+    btnPlay.innerHTML = isPlaying ? ICON_PAUSE : ICON_PLAY;
+    btnPlay.setAttribute('aria-label', isPlaying ? '暂停' : '播放');
+
+    var t = getTrack(currentId);
+    if (isPlaying && t){ liveText.textContent = '正在播放 · ' + t.title; }
+    else if (t){ liveText.textContent = '已暂停 · ' + t.title; }
+    else { liveText.textContent = '待机'; }
+
+    renderHero();
+    renderList();
+    syncNowPlaying();
+  }
+
+  function syncNowPlaying(){
+    if (!npOpen) return;
+    npPlayBtn.innerHTML = isPlaying ? ICON_PAUSE_L : ICON_PLAY_L;
+    npPlayBtn.setAttribute('aria-label', isPlaying ? '暂停' : '播放');
+    npModal.classList.toggle('is-playing', isPlaying);
+  }
+
+  function updatePlayerBar(){
+    var t = getTrack(currentId);
+    if (!t){
+      pbTitle.textContent = '未在播放';
+      pbArtist.textContent = '请从曲目列表中选择';
+      pbCover.style.background = 'var(--accent-soft)';
+      return;
+    }
+    pbTitle.textContent = t.title;
+    pbArtist.textContent = (t.artist || '') + (t.album ? ' · ' + t.album : '');
+    pbCover.style.background = coverGradient(t.id);
+  }
+
+  function updateProgress(){
+    var d = audio.duration, c = audio.currentTime;
+    if (isFinite(d) && d > 0){
+      var p = (c / d) * 100;
+      seekFill.style.width = p + '%';
+      npFill.style.width = p + '%';
+    }
+    curTimeEl.textContent = fmt(c);
+    npCur.textContent = fmt(c);
+    if (isFinite(d)){
+      durTimeEl.textContent = fmt(d);
+      npDur.textContent = fmt(d);
+    }
+  }
+
+  function resolveAndPlay(song){
+    var p = getProtocol(sourceState.protocol);
+    var cfg = sourceState.configs[sourceState.protocol] || {};
+    if (!p || !p.url){ alert('当前协议不支持获取播放地址。'); return; }
+
+    var url = p.url(cfg, song);
+    liveText.textContent = '正在获取播放地址…';
+
+    fetch(url, { cache: 'no-cache' })
+      .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(d){
+        if (!d || !d.url) throw new Error('端点未返回播放地址');
+        song.src = d.url;
+        song._needsResolve = false;
+        audio.src = song.src;
+        audio.play().catch(function(){});
+        updatePlayerBar();
+        syncPlayUI();
+        savePlayerState(true);
+      })
+      .catch(function(e){
+        alert('无法获取播放地址：' + e.message);
+        liveText.textContent = '获取播放地址失败';
+      });
+  }
+
+  function playTrack(id, forcePlay){
+    var t = getTrack(id);
+    if (!t) return;
+
+    if (id === currentId && !forcePlay){ togglePlay(); return; }
+
+    if (t._needsResolve){
+      currentId = id;
+      updatePlayerBar();
+      syncPlayUI();
+      resolveAndPlay(t);
+      return;
+    }
+
+    currentId = id;
+    audio.src = t.src;
+    audio.play().catch(function(){});
+    updatePlayerBar();
+    syncPlayUI();
+    savePlayerState(true);
+  }
+
+  function togglePlay(){
+    if (!currentId){
+      if (filtered.length) playTrack(filtered[0].id);
+      return;
+    }
+    var t = getTrack(currentId);
+    if (t && t._needsResolve){ resolveAndPlay(t); return; }
+
+    if (audio.paused){
+      if (!audio.src && t && t.src) audio.src = t.src;
+      audio.play().catch(function(){});
+    } else {
+      audio.pause();
+    }
+  }
+
+  function nextTrack(){
+    if (!filtered.length) return;
+    var i = indexInFiltered(currentId), n;
+    if (shuffleOn){
+      n = Math.floor(Math.random() * filtered.length);
+    } else {
+      n = (i + 1) % filtered.length;
+      if (i === -1) n = 0;
+    }
+    playTrack(filtered[n].id);
+  }
+
+  function prevTrack(){
+    if (!filtered.length) return;
+    var i = indexInFiltered(currentId), n;
+    if (shuffleOn){
+      n = Math.floor(Math.random() * filtered.length);
+    } else {
+      n = (i - 1 + filtered.length) % filtered.length;
+      if (i === -1) n = 0;
+    }
+    playTrack(filtered[n].id);
+  }
+
+  function updateNowPlayingContent(t){
+    npCover.style.background = coverGradient(t.id);
+    npVinylDisc.style.setProperty('--vinyl-label', coverGradient(t.id));
+    npTitle.textContent = t.title || '—';
+    npArtist.textContent = ((t.artist || '') + (t.album ? ' · ' + t.album : '')) || '—';
+  }
+
+  function openNowPlaying(){
+    if (npOpen) return;
+    var t = getTrack(currentId);
+    if (!t){
+      var first = filtered[0] || tracks[0];
+      if (!first) return;
+      currentId = first.id;
+      t = first;
+      updatePlayerBar();
+      syncPlayUI();
+    }
+
+    updateNowPlayingContent(t);
+    npOpen = true;
+    npModal.hidden = false;
+    npModal.classList.remove('closing');
+    document.body.style.overflow = 'hidden';
+    syncNowPlaying();
+
+    var firstRect = pbCover.getBoundingClientRect();
+    var lastRect  = npCover.getBoundingClientRect();
+
+    if (firstRect.width && lastRect.width){
+      var dx = firstRect.left - lastRect.left;
+      var dy = firstRect.top - lastRect.top;
+      var sx = firstRect.width / lastRect.width;
+      var sy = firstRect.height / lastRect.height;
+
+      npCover.style.transformOrigin = 'top left';
+      var anim = npCover.animate([
+        { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')' },
+        { transform: 'translate(0,0) scale(1,1)' }
+      ], { duration: 540, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+      anim.onfinish = function(){
+        npCover.style.transformOrigin = '';
+        anim.cancel();
+      };
+    }
+  }
+
+  function closeNowPlaying(){
+    if (!npOpen) return;
+    npOpen = false;
+    npModal.classList.add('closing');
+
+    function finish(){
+      npModal.hidden = true;
+      npModal.classList.remove('closing', 'is-playing');
+      document.body.style.overflow = '';
+      npCover.style.transformOrigin = '';
+    }
+
+    var firstRect = pbCover.getBoundingClientRect();
+    var lastRect  = npCover.getBoundingClientRect();
+
+    if (firstRect.width && lastRect.width){
+      var dx = firstRect.left - lastRect.left;
+      var dy = firstRect.top - lastRect.top;
+      var sx = firstRect.width / lastRect.width;
+      var sy = firstRect.height / lastRect.height;
+
+      npCover.style.transformOrigin = 'top left';
+      var anim = npCover.animate([
+        { transform: 'translate(0,0) scale(1,1)' },
+        { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')' }
+      ], { duration: 400, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
+      anim.onfinish = function(){
+        finish();
+        anim.cancel();
+      };
+    } else {
+      finish();
+    }
+  }
+
+  function renderProtocolList(){
+    var html = '';
+    for (var i = 0; i < PROTOCOLS.length; i++){
+      var p = PROTOCOLS[i];
+      var ok = isConfigured(p);
+      var active = sourceState.protocol === p.id;
+      html +=
+        '<button class="protocol-card' + (active ? ' active' : '') + '" type="button" data-pid="' + p.id + '">' +
+          '<span class="protocol-icon">' + esc(p.icon) + '</span>' +
+          '<span class="protocol-body">' +
+            '<span class="protocol-name">' + esc(p.name) + '</span>' +
+            '<span class="protocol-desc">' + esc(p.desc) + '</span>' +
+          '</span>' +
+          '<span class="protocol-status ' + (ok ? 'ok' : 'none') + '">' + (ok ? '已配置' : '未配置') + '</span>' +
+        '</button>';
+    }
+    protocolList.innerHTML = html;
+  }
+
+  function openProtocolForm(pid){
+    var p = getProtocol(pid);
+    if (!p) return;
+    editingProtocol = pid;
+
+    protocolList.hidden = true;
+    protocolForm.hidden = false;
+    pfTitle.textContent = p.name;
+    pfDesc.textContent = p.desc;
+
+    var cfg = sourceState.configs[pid] || {};
+    var html = '';
+    for (var i = 0; i < p.fields.length; i++){
+      var f = p.fields[i];
+      html +=
+        '<div>' +
+          '<label class="settings-label" for="pf-' + f.key + '">' + esc(f.label) + '</label>' +
+          '<input class="settings-input" id="pf-' + f.key + '" data-key="' + esc(f.key) + '" type="text" ' +
+            'placeholder="' + esc(f.placeholder || '') + '" value="' + esc(cfg[f.key] || '') + '">' +
+        '</div>';
+    }
+    pfFields.innerHTML = html;
+    settingsStatus.textContent = '';
+    settingsStatus.className = 'settings-status';
+  }
+
+  function collectFormConfig(){
+    var cfg = {};
+    var inputs = pfFields.querySelectorAll('input');
+    for (var i = 0; i < inputs.length; i++){
+      cfg[inputs[i].getAttribute('data-key')] = inputs[i].value.trim();
+    }
+    return cfg;
+  }
+
+  function testConnection(){
+    var p = getProtocol(editingProtocol);
+    var cfg = collectFormConfig();
+    if (!p) return;
+
+    if (!p.search){
+      settingsStatus.className = 'settings-status ok';
+      settingsStatus.textContent = '此协议无需测试，可直接保存。';
+      return;
+    }
+    for (var i = 0; i < p.fields.length; i++){
+      if (p.fields[i].required && !cfg[p.fields[i].key]){
+        settingsStatus.className = 'settings-status err';
+        settingsStatus.textContent = '请填写必填项：' + p.fields[i].label;
+        return;
+      }
+    }
+
+    settingsStatus.className = 'settings-status';
+    settingsStatus.textContent = '正在测试连接…';
+
+    var url = p.search(cfg, 'test', 1);
+    fetch(url, { cache: 'no-cache' })
+      .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(data){
+        var n = (data && data.songs && data.songs.length) || 0;
+        settingsStatus.className = 'settings-status ok';
+        settingsStatus.textContent = '连接成功，返回 ' + n + ' 条记录。';
+      })
+      .catch(function(e){
+        settingsStatus.className = 'settings-status err';
+        settingsStatus.textContent = '连接失败：' + e.message + '。请检查跨域配置与端点路径。';
+      });
+  }
+
+  function saveProtocol(){
+    var p = getProtocol(editingProtocol);
+    if (!p) return;
+    var cfg = collectFormConfig();
+
+    for (var i = 0; i < p.fields.length; i++){
+      if (p.fields[i].required && !cfg[p.fields[i].key]){
+        settingsStatus.className = 'settings-status err';
+        settingsStatus.textContent = '请填写必填项：' + p.fields[i].label;
+        return;
+      }
+    }
+
+    sourceState.configs[p.id] = cfg;
+    sourceState.protocol = p.id;
+    saveSourceState();
+
+    try{ localStorage.removeItem(PLAYER_KEY); }catch(e){}
+    currentId = null;
+    audio.pause();
+    audio.removeAttribute('src');
+
+    settingsStatus.className = 'settings-status ok';
+    settingsStatus.textContent = '配置已保存，正在刷新曲库…';
+    renderProtocolList();
+
+    setTimeout(function(){
+      closeSettings();
+      refreshLibrary();
+    }, 500);
+  }
+
+  function switchSettingsTab(name){
+    var tabs = settingsTabs.querySelectorAll('.settings-tab');
+    for (var i = 0; i < tabs.length; i++){
+      tabs[i].classList.toggle('active', tabs[i].getAttribute('data-tab') === name);
+    }
+    var contents = settingsModal.querySelectorAll('.settings-tab-content');
+    for (var j = 0; j < contents.length; j++){
+      contents[j].hidden = contents[j].getAttribute('data-content') !== name;
+    }
+    if (name === 'config'){
+      protocolList.hidden = false;
+      protocolForm.hidden = true;
+    }
+  }
+
+  function openSettings(){
+    renderProtocolList();
+    switchSettingsTab('config');
+    settingsStatus.textContent = '';
+    settingsStatus.className = 'settings-status';
+    settingsModal.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSettings(){
+    settingsModal.hidden = true;
+    if (!npOpen) document.body.style.overflow = '';
+  }
+
+  audio.addEventListener('play', function(){ isPlaying = true; syncPlayUI(); });
+  audio.addEventListener('pause', function(){
+    isPlaying = false;
+    syncPlayUI();
+    savePlayerState(true);
+  });
+  audio.addEventListener('ended', function(){
+    savePlayerState(true);
+    nextTrack();
+  });
+  audio.addEventListener('loadedmetadata', function(){
+    durTimeEl.textContent = fmt(audio.duration);
+    npDur.textContent = fmt(audio.duration);
+  });
+  audio.addEventListener('timeupdate', function(){
+    updateProgress();
+    savePlayerState(false);
+  });
+
+  btnPlay.addEventListener('click', togglePlay);
+  btnPrev.addEventListener('click', prevTrack);
+  btnNext.addEventListener('click', nextTrack);
+  btnShuffle.addEventListener('click', function(){
+    shuffleOn = !shuffleOn;
+    btnShuffle.classList.toggle('on', shuffleOn);
+    savePlayerState(true);
+  });
+
+  seekBar.addEventListener('click', function(e){
+    var rect = seekBar.getBoundingClientRect();
+    var ratio = (e.clientX - rect.left) / rect.width;
+    ratio = Math.max(0, Math.min(1, ratio));
+    if (isFinite(audio.duration) && audio.duration > 0){
+      audio.currentTime = ratio * audio.duration;
+    }
+  });
+
+  volEl.addEventListener('input', function(){
+    audio.volume = parseFloat(volEl.value);
+    savePlayerState(true);
+  });
+
+  pbCover.addEventListener('click', openNowPlaying);
+  pbCover.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openNowPlaying(); }
+  });
+
+  npModal.addEventListener('click', function(e){
+    if (e.target.closest('[data-np-close]')) closeNowPlaying();
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && npOpen) closeNowPlaying();
+    else if (e.key === 'Escape' && !settingsModal.hidden) closeSettings();
+  });
+  npPlayBtn.addEventListener('click', togglePlay);
+  npPrevBtn.addEventListener('click', prevTrack);
+  npNextBtn.addEventListener('click', nextTrack);
+  npBar.addEventListener('click', function(e){
+    var rect = npBar.getBoundingClientRect();
+    var ratio = (e.clientX - rect.left) / rect.width;
+    ratio = Math.max(0, Math.min(1, ratio));
+    if (isFinite(audio.duration) && audio.duration > 0){
+      audio.currentTime = ratio * audio.duration;
+    }
+  });
+
+  tabsEl.addEventListener('click', function(e){
+    var btn = e.target.closest('.cat-tab');
+    if (!btn) return;
+    activeCat = btn.getAttribute('data-cat');
+    computeFiltered();
+    renderTabs();
+    renderList();
+    renderHero();
+    updateMeta();
+  });
+
+  listEl.addEventListener('click', function(e){
+    var item = e.target.closest('.track-item');
+    if (!item) return;
+    playTrack(item.getAttribute('data-id'));
+  });
+
+  heroEl.addEventListener('click', function(e){
+    var btn = e.target.closest('.hero-play');
+    if (!btn) return;
+    var id = btn.getAttribute('data-id');
+    if (id === currentId) togglePlay();
+    else playTrack(id);
+  });
+
+  rankEl.addEventListener('click', function(e){
+    var btn = e.target.closest('.rank-item');
+    if (!btn) return;
+    playTrack(btn.getAttribute('data-id'));
+  });
+
+  function doSearch(){
+    var p = getProtocol(sourceState.protocol);
+    var cfg = sourceState.configs[sourceState.protocol] || {};
+    if (!p || !p.search) return;
+
+    var kw = searchInput.value.trim();
+    listEl.setAttribute('aria-busy', 'true');
+    liveText.textContent = '正在搜索…';
+
+    searchByProtocol(cfg, p, kw)
+      .then(function(data){
+        tracks = data;
+        activeCat = '全部';
+        computeFiltered();
+        renderTabs();
+        if (tracks.length) currentId = filtered[0] ? filtered[0].id : tracks[0].id;
+        renderHero();
+        renderList();
+        renderRank();
+        renderSources();
+        updateMeta();
+        updatePlayerBar();
+        syncPlayUI();
+      })
+      .catch(function(e){
+        alert('搜索请求失败：' + e.message);
+        liveText.textContent = '搜索失败';
+      });
+  }
+  searchBtn.addEventListener('click', doSearch);
+  searchInput.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') doSearch();
+  });
+
+  settingsBtn.addEventListener('click', openSettings);
+  footerSettingsLink.addEventListener('click', function(e){
+    e.preventDefault();
+    openSettings();
+  });
+  settingsModal.addEventListener('click', function(e){
+    if (e.target.closest('[data-settings-close]')) closeSettings();
+  });
+  settingsTabs.addEventListener('click', function(e){
+    var btn = e.target.closest('.settings-tab');
+    if (!btn) return;
+    switchSettingsTab(btn.getAttribute('data-tab'));
+  });
+
+  protocolList.addEventListener('click', function(e){
+    var card = e.target.closest('.protocol-card');
+    if (!card) return;
+    openProtocolForm(card.getAttribute('data-pid'));
+  });
+
+  protocolBack.addEventListener('click', function(){
+    protocolForm.hidden = true;
+    protocolList.hidden = false;
+    settingsStatus.textContent = '';
+    settingsStatus.className = 'settings-status';
+  });
+
+  pfTest.addEventListener('click', testConnection);
+  pfSave.addEventListener('click', saveProtocol);
+
+  window.addEventListener('beforeunload', function(){ savePlayerState(true); });
+  window.addEventListener('pagehide', function(){ savePlayerState(true); });
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'hidden') savePlayerState(true);
+  });
+
+  function adjustBodyPadding(){
+    document.body.style.paddingBottom = (playerBar.offsetHeight + 24) + 'px';
+  }
+  window.addEventListener('resize', adjustBodyPadding);
+
+  loadSourceState();
+  refreshLibrary();
+  adjustBodyPadding();
+  updateSearchVisibility();
+})();
+</script>
+</body>
+</html>
