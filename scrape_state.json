@@ -1,1 +1,13 @@
-{}
+{
+  "audio/Higher - Tobu.aac": {
+    "acoustid_used": false,
+    "album": "Best of Tobu 2023 - Ultimate Electronic Video Gaming Mix",
+    "artist": "Tobu",
+    "cover": "Higher - Tobu.jpg",
+    "lyrics": null,
+    "mb_recording": "0aabe96b-d152-4285-b074-95aee50368d9",
+    "mb_release": "4bea6e3f-c731-42f2-9fa0-10bfdbe705c2",
+    "status": "ok",
+    "title": "Higher"
+  }
+}
