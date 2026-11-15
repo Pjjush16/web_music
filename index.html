@@ -170,7 +170,7 @@
     width:42px;height:42px;border-radius:50%;
     border:1px solid rgba(255,255,255,.15);
     background:rgba(255,255,255,.1);
-    color:rgba(255,255,255,.8);cursor:pointer;
+    color:rgba(255,255,255,.7);cursor:pointer;
     display:grid;place-items:center;
     transition:all .2s;
     backdrop-filter:blur(10px);
@@ -249,8 +249,10 @@
   .np-vinyl-disc::after{content:'';position:absolute;width:8%;height:8%;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:#0a0a0a;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
 
   .np-info{text-align:center;max-width:100%;padding:0 12px;margin-bottom:24px;}
-  .np-info h2{font-size:clamp(1.3rem,3.2vw,1.7rem);font-weight:800;letter-spacing:-.03em;line-height:1.2;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .np-info p{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* 歌名：淡银色 */
+  .np-info h2{font-size:clamp(1.3rem,3.2vw,1.7rem);font-weight:800;letter-spacing:-.03em;line-height:1.2;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e0e0e0;text-shadow:0 2px 10px rgba(0,0,0,0.2);}
+  /* 歌手：浅灰色 */
+  .np-info p{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(255,255,255,0.5);}
 
   /* 歌词视图 */
   .np-view-lyrics {
@@ -266,14 +268,15 @@
   .np-view-lyrics.active { opacity: 1; pointer-events: auto; }
   .np-view-lyrics::-webkit-scrollbar { display: none; }
 
-  .lyric-line{font-size:1.1rem;line-height:1.6;text-align:center;padding:12px 0;transition:color .3s,transform .3s,font-size .3s;font-weight:600}
-  .lyric-line.active{font-size:1.25rem;font-weight:800;transform:scale(1.02)}
+  /* 歌词：暗灰到亮灰 */
+  .lyric-line{font-size:1.1rem;line-height:1.6;color:rgba(255,255,255,0.3);text-align:center;padding:12px 0;transition:color .3s,transform .3s,font-size .3s;font-weight:600}
+  .lyric-line.active{color:rgba(255,255,255,0.85);font-size:1.25rem;font-weight:800;transform:scale(1.02)}
 
   /* 进度条 */
-  .np-progress-row{display:flex;align-items:center;gap:12px;width:100%;max-width:320px;font-size:.75rem;font-variant-numeric:tabular-nums;margin-bottom:16px;}
-  .np-bar{flex:1;height:4px;border-radius:999px;position:relative;cursor:pointer;overflow:hidden}
-  .np-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;width:0%;transition:width .1s linear}
-  .np-bar-fill::after { content:''; position:absolute; right:0; top:50%; transform:translateY(-50%); width:8px; height:8px; border-radius:50%; opacity:0; transition:opacity .2s; }
+  .np-progress-row{display:flex;align-items:center;gap:12px;width:100%;max-width:320px;font-size:.75rem;color:rgba(255,255,255,0.4);font-variant-numeric:tabular-nums;margin-bottom:16px;}
+  .np-bar{flex:1;height:4px;border-radius:999px;background:rgba(255,255,255,0.15);position:relative;cursor:pointer;overflow:hidden}
+  .np-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:rgba(255,255,255,0.8);width:0%;transition:width .1s linear}
+  .np-bar-fill::after { content:''; position:absolute; right:0; top:50%; transform:translateY(-50%); width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.8); opacity:0; transition:opacity .2s; }
   .np-bar:hover .np-bar-fill::after { opacity:1; }
 
   /* 三个控制按钮 */
@@ -281,46 +284,14 @@
   .np-btn{
     width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,0.1);
     background:rgba(255,255,255,0.1);
-    color:#fff;cursor:pointer;display:grid;place-items:center;
+    color:rgba(255,255,255,0.8);cursor:pointer;display:grid;place-items:center;
     transition:background .2s,color .2s,transform .12s,border-color .2s;
   }
-  .np-btn:hover{background:rgba(255,255,255,0.2);border-color:transparent}
+  .np-btn:hover{background:rgba(255,255,255,0.2);border-color:transparent;color:#fff}
   .np-btn:active{transform:scale(.94)}
   .np-btn.np-main{width:64px;height:64px;background:var(--accent);color:#fff;border-color:transparent;box-shadow:0 12px 30px rgba(45,90,74,.3)}
   .np-btn.np-main:hover{opacity:.92;color:#fff}
 
-  /* ==================== 动态文字颜色 ==================== */
-  /* 默认深色背景下的白色文字 */
-  .np-content.text-light .np-info h2 { color: #ffffff; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-  .np-content.text-light .np-info p { color: rgba(255,255,255,0.7); }
-  .np-content.text-light .lyric-line { color: rgba(255,255,255,0.4); }
-  .np-content.text-light .lyric-line.active { color: #ffffff; }
-  .np-content.text-light .np-progress-row { color: rgba(255,255,255,0.6); }
-  .np-content.text-light .np-bar { background: rgba(255,255,255,0.15); }
-  .np-content.text-light .np-bar-fill { background: #fff; }
-  .np-content.text-light .np-bar-fill::after { background: #fff; }
-  
-  /* 亮色背景下的黑色文字 */
-  .np-content.text-dark .np-info h2 { color: #1a1a1a; text-shadow: 0 2px 10px rgba(255,255,255,0.3); }
-  .np-content.text-dark .np-info p { color: rgba(26,26,26,0.7); }
-  .np-content.text-dark .lyric-line { color: rgba(0,0,0,0.4); }
-  .np-content.text-dark .lyric-line.active { color: #1a1a1a; }
-  .np-content.text-dark .np-progress-row { color: rgba(26,26,26,0.6); }
-  .np-content.text-dark .np-bar { background: rgba(0,0,0,0.1); }
-  .np-content.text-dark .np-bar-fill { background: #1a1a1a; }
-  .np-content.text-dark .np-bar-fill::after { background: #1a1a1a; }
-
-  /* 顶部图标的黑白切换 */
-  .now-playing.text-dark .np-icon-btn {
-    color: #1a1a1a;
-    background: rgba(255,255,255,0.6);
-    border-color: rgba(0,0,0,0.1);
-  }
-  .now-playing.text-dark .np-icon-btn:hover {
-    background: rgba(255,255,255,0.9);
-    color: #000;
-  }
-  
   .now-playing.closing .np-content,
   .now-playing.closing .np-spectrum,
   .now-playing.closing .np-icon-btn,
@@ -470,8 +441,8 @@
 
   <canvas class="np-spectrum" id="np-spectrum"></canvas>
 
-  <!-- 绝对居中的内容区，默认给 text-light（白字） -->
-  <div class="np-content text-light" id="np-content">
+  <!-- 绝对居中的内容区 -->
+  <div class="np-content" id="np-content">
     
     <!-- 封面视图 -->
     <div class="np-view-cover" id="np-view-cover">
@@ -744,24 +715,9 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     spectrumColor = [r, g, b];
     spectrumColorLight = lightenColor([r,g,b], 70);
     
-    // 深色背景渐变始终不变
+    // 背景深色渐变保持
     var darkR = Math.floor(r * 0.35), darkG = Math.floor(g * 0.35), darkB = Math.floor(b * 0.35);
     npBackdrop.style.background = `radial-gradient(circle at 50% 10%, rgba(${r},${g},${b}, 0.45) 0%, rgba(${darkR},${darkG},${darkB}, 0.85) 40%, #0f0f0f 90%)`;
-    
-    // 计算提取主色的亮度
-    var luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    
-    if (luminance > 0.65) {
-      // 背景偏亮：文字切换为黑色
-      npContent.classList.remove('text-light');
-      npContent.classList.add('text-dark');
-      npModal.classList.add('text-dark');
-    } else {
-      // 背景偏暗：文字切换为白色
-      npContent.classList.remove('text-dark');
-      npContent.classList.add('text-light');
-      npModal.classList.remove('text-dark');
-    }
     
     npVinylDisc.style.setProperty('--vinyl-label', `rgb(${r},${g},${b})`);
   }
@@ -1354,4 +1310,110 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
       npViewCover.classList.add('hidden');
       npViewLyrics.classList.remove('hidden');
       void npViewLyrics.offsetWidth;
-      npViewLy
+      npViewLyrics.classList.add('active');
+      npToggleLyricsBtn.classList.add('active');
+      if (isPlaying) updateLyricsHighlight(audio.currentTime);
+    }
+  });
+
+  seekBar.addEventListener('click', e => {
+    var rect = seekBar.getBoundingClientRect(), ratio = (e.clientX - rect.left) / rect.width;
+    if (isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
+  });
+  npBar.addEventListener('click', e => {
+    var rect = npBar.getBoundingClientRect(), ratio = (e.clientX - rect.left) / rect.width;
+    if (isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
+  });
+
+  tabsEl.addEventListener('click', e => {
+    var btn = e.target.closest('.cat-tab');
+    if (!btn) return;
+    activeCat = btn.getAttribute('data-cat');
+    renderTabs();
+    filterAndRenderCards();
+  });
+
+  pbCover.addEventListener('click', () => {
+    if (!currentId) return;
+    npOpen = true;
+    npModal.hidden = false;
+    npModal.classList.remove('closing');
+    document.body.style.overflow = 'hidden';
+    
+    npViewCover.classList.remove('hidden');
+    npViewLyrics.classList.add('hidden');
+    npViewLyrics.classList.remove('active');
+    npToggleLyricsBtn.classList.remove('active');
+
+    if (isPlaying || isSpectrumRunning) startSpectrum();
+    else drawSpectrum(npSpectrumCanvas, npSpectrumCtx, visData, true);
+  });
+
+  npModal.addEventListener('click', e => {
+    if (e.target.closest('[data-np-close]')) {
+      npOpen = false;
+      npModal.classList.add('closing');
+      setTimeout(() => {
+        npModal.hidden = true;
+        npModal.classList.remove('closing');
+        document.body.style.overflow = '';
+      }, 200);
+    }
+  });
+  
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === 'Escape') {
+      if(npOpen) {
+        npOpen = false;
+        npModal.classList.add('closing');
+        setTimeout(() => { npModal.hidden = true; npModal.classList.remove('closing'); document.body.style.overflow = ''; }, 200);
+      } else if (!settingsModal.hidden) settingsModal.hidden = true;
+    }
+    if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+    if (e.key === 'ArrowRight' && !npOpen) nextTrack();
+    if (e.key === 'ArrowLeft' && !npOpen) prevTrack();
+  });
+
+  // 设置面板
+  function updateManifestHints(){
+    var raw = (sourceState.manifestUrl || '').trim();
+    var resolved = raw ? absoluteUrl(raw) : absoluteUrl('./manifest.json');
+    settingsCurrent.innerHTML = `<strong>当前生效地址</strong>${resolved}`;
+  }
+
+  settingsBtn.addEventListener('click', () => { settingsModal.hidden = false; settingsStatus.textContent = ''; updateManifestHints(); });
+  settingsModal.addEventListener('click', e => { if(e.target.closest('[data-settings-close]')) settingsModal.hidden = true; });
+  settingsTabs.addEventListener('click', e => {
+    var btn = e.target.closest('.settings-tab'); if(!btn) return;
+    var name = btn.getAttribute('data-tab');
+    settingsModal.querySelectorAll('.settings-tab').forEach(b => b.classList.toggle('active', b === btn));
+    settingsModal.querySelectorAll('.settings-tab-content').forEach(c => c.hidden = c.getAttribute('data-content') !== name);
+  });
+
+  pfSave.addEventListener('click', () => {
+    sourceState.manifestUrl = manifestUrlEl.value.trim();
+    try { localStorage.setItem(SOURCE_KEY, JSON.stringify(sourceState)); } catch(e){}
+    settingsModal.hidden = true;
+    refreshLibrary();
+  });
+
+  window.addEventListener('resize', () => {
+    update3D();
+    drawSpectrum(npSpectrumCanvas, npSpectrumCtx, visData, true);
+    drawSpectrum(barSpectrumCanvas, barSpectrumCtx, visData, false);
+  });
+
+  // 启动
+  initTheme();
+  try {
+    var raw = localStorage.getItem(SOURCE_KEY);
+    if (raw) sourceState = JSON.parse(raw);
+  } catch(e){}
+  manifestUrlEl.value = sourceState.manifestUrl || '';
+  
+  refreshLibrary();
+})();
+</script>
+</body>
+</html>
