@@ -15,7 +15,7 @@
     --font:'Manrope',system-ui,-apple-system,sans-serif;
     --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
     --shadow-sm:0 1px 2px rgba(0,0,0,.04);--shadow-md:0 8px 30px rgba(0,0,0,.06);
-    --max-width:1200px;--header-h:64px;--subnav-h:52px;--player-h:92px;
+    --max-width:1200px;--header-h:64px;--subnav-h:52px;
   }
   @media (prefers-color-scheme:dark){
     :root{--bg:#0f0f0f;--surface:#1a1a1a;--text:#f0f0f0;--text-2:#a0a0a0;--text-3:#6e6e6e;
@@ -29,7 +29,7 @@
   button{font-family:var(--font)}
   .container{max-width:var(--max-width);margin:0 auto;padding:0 24px}
 
-  /* 基础页面样式（主界面） */
+  /* ==================== 主页面样式 ==================== */
   .site-header{position:sticky;top:0;z-index:100;backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);background:color-mix(in srgb,var(--bg) 80%,transparent);border-bottom:1px solid var(--border)}
   .header-inner{display:flex;align-items:center;justify-content:space-between;height:var(--header-h)}
   .site-brand{font-size:1.32rem;font-weight:800;letter-spacing:-.03em;display:inline-flex;align-items:baseline}
@@ -102,7 +102,7 @@
   .current-manifest{font-size:.78rem;color:var(--text-3);word-break:break-all;line-height:1.6}
   .current-manifest strong{color:var(--text-2);font-weight:600}
 
-  /* ==================== 底部播放条 ==================== */
+  /* ==================== 底栏 Dock 模式 (两行布局) ==================== */
   .player-bar{
     position:fixed;left:0;right:0;bottom:0;z-index:150;
     background:color-mix(in srgb,var(--surface) 94%,transparent);
@@ -111,6 +111,7 @@
     border-top:1px solid var(--border);
     box-shadow:0 -8px 30px rgba(0,0,0,.06);
     overflow:hidden;
+    padding: 8px 0 12px;
   }
   .bar-spectrum{
     display:block;position:absolute;left:0;right:0;bottom:0;width:100%;height:56px;
@@ -119,19 +120,25 @@
     mask-image:linear-gradient(to top, black 35%, transparent 100%);
   }
   .player-inner{
-    position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.7fr) minmax(0,1fr);
-    align-items:center;gap:24px;height:var(--player-h);
+    position:relative;z-index:1;
+    max-width:var(--max-width);margin:0 auto;padding:0 24px;
+    display:flex;flex-direction:column;gap:8px;
   }
-  .pb-track{display:flex;align-items:center;gap:12px;min-width:0}
-  .pb-cover{width:52px;height:52px;border-radius:11px;flex-shrink:0;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);background:var(--accent-soft);display:grid;place-items:center;cursor:pointer;transition:transform .18s,box-shadow .18s}
-  .pb-cover:hover{transform:scale(1.07);box-shadow:var(--shadow-md)}
+  
+  /* 第一行：信息+控件+其他 */
+  .pb-row-top{
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .pb-track{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+  .pb-cover{width:44px;height:44px;border-radius:10px;flex-shrink:0;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);background:var(--accent-soft);display:grid;place-items:center;cursor:pointer;transition:transform .18s,box-shadow .18s}
+  .pb-cover:hover{transform:scale(1.06);box-shadow:var(--shadow-md)}
   .pb-cover:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-  .pb-cover::before{content:'♪';color:rgba(255,255,255,.9);font-size:1.25rem;line-height:1;transform:translateY(-1px);position:absolute}
+  .pb-cover::before{content:'♪';color:rgba(255,255,255,.9);font-size:1.1rem;line-height:1;transform:translateY(-1px);position:absolute}
   .pb-cover img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
-  .pb-info{min-width:0}
-  .pb-title{font-size:.9rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pb-artist{font-size:.76rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pb-center{display:flex;flex-direction:column;gap:4px;align-items:center;min-width:0}
+  .pb-info{min-width:0;display:flex;flex-direction:column;justify-content:center}
+  .pb-title{font-size:.9rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+  .pb-artist{font-size:.75rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+
   .pb-controls{display:flex;align-items:center;gap:8px}
   .pb-btn{width:36px;height:36px;border-radius:50%;border:none;background:transparent;color:var(--text-2);display:grid;place-items:center;cursor:pointer;transition:background .18s,color .18s,transform .12s}
   .pb-btn:hover{background:var(--accent-soft);color:var(--accent)}
@@ -139,36 +146,186 @@
   .pb-btn.on{color:var(--accent);background:var(--accent-soft)}
   .pb-play{width:44px;height:44px;background:var(--accent);color:#fff}
   .pb-play:hover{background:var(--accent);color:#fff;opacity:.9}
-  .pb-progress{display:flex;align-items:center;gap:10px;width:100%;font-size:.72rem;color:var(--text-3);font-variant-numeric:tabular-nums}
-  .pb-bar{flex:1;height:5px;border-radius:999px;background:var(--accent-soft);position:relative;cursor:pointer}
-  .pb-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:var(--accent);width:0%;transition:width .12s linear}
-  .pb-right{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+  
+  .pb-right{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex:1}
   .pb-vol{display:flex;align-items:center;gap:8px;color:var(--text-3)}
-  .pb-vol input{width:88px;accent-color:var(--accent);cursor:pointer}
+  .pb-vol input{width:80px;accent-color:var(--accent);cursor:pointer}
 
-  /* ==================== 全屏 Now Playing ==================== */
-  .now-playing{position:fixed;inset:0;z-index:300;overflow:hidden;background:#0f0f0f}
+  /* 第二行：进度条 */
+  .pb-row-bottom{
+    display:flex;align-items:center;gap:12px;
+    font-size:.72rem;color:var(--text-3);font-variant-numeric:tabular-nums;
+    padding:0 4px;
+  }
+  .pb-bar{flex:1;height:4px;border-radius:999px;background:var(--accent-soft);position:relative;cursor:pointer;overflow:hidden;}
+  .pb-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:var(--accent);width:0%;transition:width .12s linear}
+  .pb-bar-fill::after {
+    content:''; position:absolute; right:0; top:50%; transform:translateY(-50%);
+    width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 4px rgba(0,0,0,.2);
+    opacity:0; transition:opacity .2s;
+  }
+  .pb-bar:hover .pb-bar-fill::after { opacity:1; }
+
+  /* ==================== 全屏 Now Playing (专业版) ==================== */
+  .now-playing{position:fixed;inset:0;z-index:300;overflow:hidden;display:flex;flex-direction:column}
   .now-playing[hidden]{display:none}
+  
+  /* 沉浸式动态背景 */
   .np-backdrop{
     position:absolute;inset:0;
-    background:#0f0f0f; /* 默认背景，JS 会动态覆盖 */
+    background:#0f0f0f;
     transition:background .8s ease;
     animation:npFade .4s ease both;
   }
   @keyframes npFade{from{opacity:0}to{opacity:1}}
-  .np-close{
-    position:absolute;top:22px;right:24px;z-index:5;
-    width:42px;height:42px;border-radius:50%;
-    border:1px solid rgba(255,255,255,.15);
-    background:rgba(255,255,255,.1);
-    color:rgba(255,255,255,.8);cursor:pointer;
-    display:grid;place-items:center;
-    transition:background .2s,color .2s,transform .15s;
-    backdrop-filter:blur(4px);
+  
+  /* 顶部导航 */
+  .np-header{
+    position:relative;z-index:10;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 24px;
+    color:#fff;
   }
-  .np-close:hover{background:rgba(255,255,255,.2);color:#fff;transform:scale(1.05)}
+  .np-header-left,.np-header-right{display:flex;align-items:center;gap:16px;min-width:80px}
+  .np-header-right{justify-content:flex-end}
+  .np-icon-btn{
+    background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.8);cursor:pointer;
+    width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+    transition:background .2s,color .2s;backdrop-filter:blur(4px);
+  }
+  .np-icon-btn:hover{background:rgba(255,255,255,.2);color:#fff}
+  
+  .np-header-title{
+    flex:1;text-align:center;min-width:0;
+    opacity:0;transition:opacity .3s;
+  }
+  .np-header-title.show{opacity:1}
+  .np-header-title h3{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .np-header-title p{font-size:.75rem;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  /* 频谱：强制 100% 宽度，贴屏幕底部 */
+  /* 主内容区 */
+  .np-main{
+    position:relative;z-index:5;
+    flex:1;display:flex;flex-direction:column;
+    padding:10px 32px 0;
+    max-width:600px;margin:0 auto;width:100%;
+    min-height:0;
+  }
+
+  /* 封面视图 */
+  .np-view-cover{
+    flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    min-height:0;padding-bottom:20px;
+    transition:opacity .3s,transform .3s;
+  }
+  .np-view-cover.hidden{opacity:0;pointer-events:none;transform:scale(.95)}
+  
+  .np-art{display:flex;align-items:center;justify-content:center;position:relative;width:100%}
+  .np-cover{
+    width:min(320px,65vw);height:min(320px,65vw);
+    border-radius:24px;position:relative;z-index:2;
+    box-shadow:0 20px 60px rgba(0,0,0,.35),0 4px 16px rgba(0,0,0,.2);
+    display:grid;place-items:center;background:var(--accent-soft);
+    will-change:transform;overflow:hidden;
+  }
+  .np-cover::before{content:'♪';color:rgba(255,255,255,.9);font-size:clamp(3rem,8vw,4rem);line-height:1;transform:translateY(-4%);position:absolute}
+  .np-cover img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
+  
+  /* 黑胶 */
+  .np-vinyl{
+    width:min(300px,60vw);height:min(300px,60vw);
+    margin-left:calc(min(300px,60vw) * -0.55);
+    position:relative;z-index:1;
+    animation:vinylIn .55s cubic-bezier(.22,1,.36,1) .08s both;
+  }
+  @keyframes vinylIn{from{transform:translateX(-45%) scale(.84) rotate(-18deg);opacity:0}to{transform:translateX(0) scale(1) rotate(0);opacity:1}}
+  .np-vinyl-disc{
+    width:100%;height:100%;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.1),transparent 46%),repeating-radial-gradient(circle at center,#1d1d1d 0 1px,#0d0d0d 1px 3px);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 28px 70px rgba(0,0,0,.4);
+    position:relative;animation:spin 12s linear infinite;animation-play-state:paused;
+  }
+  .now-playing.is-playing .np-vinyl-disc{animation-play-state:running}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .np-vinyl-disc::before{content:'';position:absolute;width:40%;height:40%;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--vinyl-label,var(--accent));box-shadow:inset 0 0 0 1px rgba(0,0,0,.22)}
+  .np-vinyl-disc::after{content:'';position:absolute;width:6%;height:6%;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:#0a0a0a}
+
+  .np-info{text-align:left;width:100%;max-width:320px;margin-top:30px}
+  .np-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+  .np-title-row h2{font-size:1.4rem;font-weight:800;letter-spacing:-.02em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;color:#fff}
+  .np-like-btn{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;padding:4px;transition:color .2s}
+  .np-like-btn:hover{color:#fff}
+  .np-info p{font-size:.9rem;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
+
+  /* 歌词视图 */
+  .np-view-lyrics{
+    position:absolute;inset:60px 32px 140px;
+    display:flex;flex-direction:column;
+    opacity:0;pointer-events:none;
+    transition:opacity .3s;
+    overflow-y:auto;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+    mask-image:linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+    padding:40px 0;
+  }
+  .np-view-lyrics.hidden{display:none}
+  .np-view-lyrics.active{opacity:1;pointer-events:auto}
+  .np-view-lyrics::-webkit-scrollbar{display:none}
+  
+  .lyric-line{
+    font-size:1.1rem;line-height:1.6;color:rgba(255,255,255,.4);
+    text-align:center;padding:14px 0;transition:color .3s,transform .3s,font-size .3s;
+    font-weight:600;
+  }
+  .lyric-line.active{
+    color:#fff;font-size:1.25rem;font-weight:800;transform:scale(1.02);
+  }
+
+  /* 底部功能区 */
+  .np-footer{
+    position:relative;z-index:10;
+    padding:0 32px 30px;
+    max-width:600px;margin:0 auto;width:100%;
+  }
+  
+  /* 操作按钮行 */
+  .np-actions{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:24px;
+  }
+  .np-action-btn{
+    background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    font-size:.75rem;font-weight:600;transition:color .2s;padding:8px;
+  }
+  .np-action-btn:hover{color:#fff}
+  .np-action-btn.active{color:var(--accent)}
+  .np-action-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* 进度条区域 */
+  .np-progress-row{display:flex;align-items:center;gap:12px;font-size:.75rem;color:rgba(255,255,255,.5);font-variant-numeric:tabular-nums;margin-bottom:16px}
+  .np-bar{flex:1;height:4px;border-radius:999px;background:rgba(255,255,255,.2);position:relative;cursor:pointer;overflow:hidden}
+  .np-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:#fff;width:0%;transition:width .1s linear}
+  .np-bar-fill::after { content:''; position:absolute; right:0; top:50%; transform:translateY(-50%); width:8px; height:8px; border-radius:50%; background:#fff; opacity:0; transition:opacity .2s; }
+  .np-bar:hover .np-bar-fill::after { opacity:1; }
+
+  /* 播放控制 */
+  .np-controls{display:flex;align-items:center;justify-content:space-between}
+  .np-btn{
+    background:none;border:none;color:rgba(255,255,255,.8);cursor:pointer;
+    width:44px;height:44px;display:grid;place-items:center;border-radius:50%;
+    transition:color .2s,transform .1s;
+  }
+  .np-btn:hover{color:#fff}
+  .np-btn:active{transform:scale(.92)}
+  .np-btn.np-main{
+    width:64px;height:64px;
+    background:#fff;color:#1a1a1a;
+    box-shadow:0 8px 24px rgba(0,0,0,.3);
+  }
+  .np-btn.np-main:hover{opacity:.9;color:#1a1a1a}
+
+  /* 底部全宽频谱 */
   .np-spectrum{
     display:block;position:absolute;left:0;right:0;bottom:0;width:100%;height:160px;
     pointer-events:none;z-index:1;
@@ -176,108 +333,10 @@
     mask-image:linear-gradient(to top, black 20%, transparent 100%);
   }
 
-  .np-content{
-    position:absolute;inset:0;z-index:2;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:24px;
-    padding-bottom:160px; /* 为底部频谱留出空间 */
-    pointer-events:none; /* 让点击穿透到背景 */
-  }
-
-  .np-inner{
-    display:flex;flex-direction:column;align-items:center;
-    gap:16px;
-    width:100%;max-width:720px;max-height:100%;
-    pointer-events:auto; /* 内部元素可点击 */
-  }
-
-  .np-art{display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
-  .np-cover{
-    width:min(280px,50vw);height:min(280px,50vw);
-    border-radius:min(20px,4vw);
-    position:relative;z-index:2;
-    box-shadow:0 30px 80px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.2);
-    display:grid;place-items:center;
-    background:var(--accent-soft);
-    will-change:transform;
-    overflow:hidden;
-  }
-  .np-cover::before{content:'♪';color:rgba(255,255,255,.9);font-size:clamp(2.4rem,7vw,3.6rem);line-height:1;transform:translateY(-4%);position:absolute}
-  .np-cover img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
-
-  .np-vinyl{
-    width:min(260px,48vw);height:min(260px,48vw);
-    margin-left:calc(min(260px,48vw) * -0.5);
-    position:relative;z-index:1;
-    animation:vinylIn .55s cubic-bezier(.22,1,.36,1) .08s both;
-  }
-  @keyframes vinylIn{from{transform:translateX(-45%) scale(.84) rotate(-18deg);opacity:0}to{transform:translateX(0) scale(1) rotate(0);opacity:1}}
-  .np-vinyl-disc{
-    width:100%;height:100%;border-radius:50%;
-    background:
-      radial-gradient(circle at 35% 30%,rgba(255,255,255,.10),transparent 46%),
-      repeating-radial-gradient(circle at center,#1d1d1d 0 1px,#0d0d0d 1px 3px);
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 28px 70px rgba(0,0,0,.5);
-    position:relative;
-    animation:spin 10s linear infinite;
-    animation-play-state:paused;
-  }
-  .now-playing.is-playing .np-vinyl-disc{animation-play-state:running}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .np-vinyl-disc::before{content:'';position:absolute;width:37%;height:37%;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--vinyl-label,var(--accent));box-shadow:inset 0 0 0 1px rgba(0,0,0,.22),0 2px 10px rgba(0,0,0,.3)}
-  .np-vinyl-disc::after{content:'';position:absolute;width:7%;height:7%;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:#0a0a0a;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
-
-  .np-info{text-align:center;max-width:100%;padding:0 12px;flex-shrink:0}
-  .np-info h2{
-    font-size:clamp(1.3rem,3vw,1.6rem);font-weight:800;letter-spacing:-.03em;line-height:1.2;
-    margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;
-  }
-  .np-info p{font-size:.85rem;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-  /* 沉浸式歌词区 */
-  .np-lyrics{
-    width:100%;max-width:480px;height:110px;
-    overflow-y:auto;overflow-x:hidden;
-    scrollbar-width:none;-ms-overflow-style:none;
-    text-align:center;
-    -webkit-mask-image:linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-    mask-image:linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-    scroll-behavior:smooth;
-    padding:0 12px;flex-shrink:0;
-  }
-  .np-lyrics::-webkit-scrollbar{display:none}
-  .np-lyric-line{
-    font-size:.95rem;line-height:2.2;color:rgba(255,255,255,.4);
-    padding:2px 0;transition:all .3s cubic-bezier(0.25, 1, 0.5, 1);
-    transform-origin:center;
-  }
-  .np-lyric-line.active{
-    color:#fff;font-weight:700;transform:scale(1.06);
-    text-shadow:0 2px 10px rgba(0,0,0,.5);
-  }
-  .np-lyrics-empty{text-align:center;color:rgba(255,255,255,.3);font-size:.85rem;padding-top:36px;}
-
-  .np-controls{display:flex;align-items:center;gap:24px;flex-shrink:0;margin-top:4px}
-  .np-btn{
-    width:52px;height:52px;border-radius:50%;
-    border:1px solid rgba(255,255,255,.15);
-    background:rgba(255,255,255,.08);
-    color:rgba(255,255,255,.8);cursor:pointer;
-    display:grid;place-items:center;
-    transition:all .2s;backdrop-filter:blur(4px);
-  }
-  .np-btn:hover{background:rgba(255,255,255,.2);color:#fff;transform:scale(1.05)}
-  .np-btn:active{transform:scale(.94)}
-  .np-btn.np-main{
-    width:64px;height:64px;
-    background:#fff;color:#1a1a1a;border-color:transparent;
-    box-shadow:0 10px 30px rgba(0,0,0,.3);
-  }
-  .np-btn.np-main:hover{background:#f0f0f0;transform:scale(1.05);color:#1a1a1a}
-
-  .now-playing.closing .np-inner,
+  .now-playing.closing .np-main,
+  .now-playing.closing .np-footer,
+  .now-playing.closing .np-header,
   .now-playing.closing .np-spectrum,
-  .now-playing.closing .np-close,
   .now-playing.closing .np-backdrop{opacity:0;transition:opacity .2s ease}
 
   /* ==================== 设置弹窗 ==================== */
@@ -340,14 +399,21 @@
     .sidebar .side-card{flex:1 1 260px}
   }
   @media (max-width:820px){
-    .player-inner{grid-template-columns:1fr;height:auto;padding:12px 0;gap:8px}
-    .pb-right{display:none}
-    .pb-track{justify-content:center}
-    .pb-info{text-align:center}
-    .pb-center{width:100%}
+    .player-bar{ padding: 8px 0 10px; }
     .bar-spectrum{height:44px}
-    .np-spectrum{height:120px}
-    .np-content{padding-bottom:120px}
+    .pb-right{display:none}
+    
+    .np-main{padding:0 20px}
+    .np-footer{padding:0 20px 20px}
+    .np-view-lyrics{inset:60px 20px 120px}
+    .np-cover{width:min(280px,75vw);height:min(280px,75vw)}
+    .np-vinyl{width:min(260px,70vw);height:min(260px,70vw);margin-left:calc(min(260px,70vw) * -0.55)}
+    .np-title-row h2{font-size:1.2rem}
+    .np-spectrum{height:100px}
+    .np-actions{padding:0 10px}
+    .np-actions .np-action-btn{font-size:.7rem}
+    .np-actions svg{width:20px;height:20px}
+    .np-header-title h3{font-size:.9rem}
   }
   @media (max-width:640px){
     :root{--header-h:58px;--subnav-h:48px}
@@ -365,10 +431,7 @@
     .footer-inner{flex-direction:column;align-items:flex-start}
     .settings-panel{padding:22px}
     .np-close{top:14px;right:14px;width:38px;height:38px}
-    .np-inner{gap:12px}
-    .np-lyrics{height:90px}
-    .np-spectrum{height:100px}
-    .np-content{padding-bottom:100px}
+    .np-spectrum{height:90px}
     .doc-panel{max-height:calc(100vh - 240px);padding:14px 16px}
   }
 </style>
@@ -439,18 +502,21 @@
   </div>
 </footer>
 
+<!-- ==================== 底栏 (双行模式) ==================== -->
 <div class="player-bar" id="player-bar">
   <canvas class="bar-spectrum" id="bar-spectrum"></canvas>
-  <div class="container player-inner">
-    <div class="pb-track">
-      <div class="pb-cover" id="pb-cover" role="button" tabindex="0" aria-label="展开全屏播放"></div>
-      <div class="pb-info">
-        <div class="pb-title" id="pb-title">未在播放</div>
-        <div class="pb-artist" id="pb-artist">请从曲目列表中选择</div>
+  <div class="player-inner">
+    
+    <!-- 第一行：信息 + 控件 + 右侧操作 -->
+    <div class="pb-row-top">
+      <div class="pb-track">
+        <div class="pb-cover" id="pb-cover" role="button" tabindex="0" aria-label="展开全屏播放"></div>
+        <div class="pb-info">
+          <div class="pb-title" id="pb-title">未在播放</div>
+          <div class="pb-artist" id="pb-artist">请从曲目列表中选择</div>
+        </div>
       </div>
-    </div>
 
-    <div class="pb-center">
       <div class="pb-controls">
         <button class="pb-btn" id="btn-prev" type="button" aria-label="上一首">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12l-9-6z"/></svg>
@@ -462,67 +528,142 @@
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l9 6-9 6z"/></svg>
         </button>
       </div>
-      <div class="pb-progress">
-        <span id="cur-time">0:00</span>
-        <div class="pb-bar" id="seek-bar"><div class="pb-bar-fill" id="seek-fill"></div></div>
-        <span id="dur-time">0:00</span>
+
+      <div class="pb-right">
+        <button class="pb-btn" id="btn-shuffle" type="button" aria-label="随机播放">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>
+            <polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
+            <line x1="4" y1="4" x2="9" y2="9"/>
+          </svg>
+        </button>
+        <div class="pb-vol">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+          <input type="range" id="vol" min="0" max="1" step="0.01" value="1" aria-label="音量">
+        </div>
       </div>
     </div>
 
-    <div class="pb-right">
-      <button class="pb-btn" id="btn-shuffle" type="button" aria-label="随机播放">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>
-          <polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
-          <line x1="4" y1="4" x2="9" y2="9"/>
-        </svg>
-      </button>
-      <div class="pb-vol">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-        <input type="range" id="vol" min="0" max="1" step="0.01" value="1" aria-label="音量">
-      </div>
+    <!-- 第二行：进度条 -->
+    <div class="pb-row-bottom">
+      <span id="cur-time">0:00</span>
+      <div class="pb-bar" id="seek-bar"><div class="pb-bar-fill" id="seek-fill"></div></div>
+      <span id="dur-time">0:00</span>
     </div>
+
   </div>
 </div>
 
-<!-- 全屏 Now Playing -->
+<!-- ==================== 全屏 Now Playing (专业版) ==================== -->
 <div class="now-playing" id="now-playing" hidden>
-  <div class="np-backdrop" data-np-close></div>
-  <button class="np-close" type="button" data-np-close aria-label="收起">
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-      <line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>
-    </svg>
-  </button>
-
+  <div class="np-backdrop"></div>
+  
   <canvas class="np-spectrum" id="np-spectrum"></canvas>
 
-  <div class="np-content">
-    <div class="np-inner">
+  <!-- 顶部导航 -->
+  <div class="np-header">
+    <div class="np-header-left">
+      <button class="np-icon-btn" data-np-close aria-label="收起">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+    </div>
+    <div class="np-header-title" id="np-header-title">
+      <h3 id="np-header-name">—</h3>
+      <p id="np-header-artist">—</p>
+    </div>
+    <div class="np-header-right">
+      <button class="np-icon-btn" data-np-close aria-label="关闭">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- 主视图 -->
+  <div class="np-main">
+    
+    <!-- 封面视图 -->
+    <div class="np-view-cover" id="np-view-cover">
       <div class="np-art">
         <div class="np-cover" id="np-cover"></div>
         <div class="np-vinyl"><div class="np-vinyl-disc" id="np-vinyl-disc"></div></div>
       </div>
-      
       <div class="np-info">
-        <h2 id="np-title">—</h2>
+        <div class="np-title-row">
+          <h2 id="np-title">—</h2>
+          <button class="np-like-btn" aria-label="收藏">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </button>
+        </div>
         <p id="np-artist">—</p>
       </div>
+    </div>
 
-      <div class="np-lyrics" id="np-lyrics">
-        <div class="np-lyrics-empty">暂无歌词</div>
+    <!-- 歌词视图 -->
+    <div class="np-view-lyrics hidden" id="np-view-lyrics">
+      <div id="np-lyrics-content" style="padding-bottom:50%">
+        <div class="lyric-line active">暂无歌词</div>
       </div>
+    </div>
 
-      <div class="np-controls">
-        <button class="np-btn" id="np-prev" type="button" aria-label="上一首">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12l-9-6z"/></svg>
-        </button>
-        <button class="np-btn np-main" id="np-play" type="button" aria-label="播放">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        </button>
-        <button class="np-btn" id="np-next" type="button" aria-label="下一首">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l9 6-9 6z"/></svg>
-        </button>
-      </div>
+  </div>
+
+  <!-- 底部控件区 -->
+  <div class="np-footer">
+    
+    <!-- 操作按钮行 -->
+    <div class="np-actions">
+      <button class="np-action-btn" aria-label="下载">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>下载</span>
+      </button>
+      <button class="np-action-btn" id="np-toggle-lyrics" aria-label="歌词">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h6"/></svg>
+        <span>词</span>
+      </button>
+      <button class="np-action-btn" aria-label="评论">
+        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        <span>评论</span>
+      </button>
+      <button class="np-action-btn" aria-label="更多">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        <span>更多</span>
+      </button>
+    </div>
+
+    <!-- 进度条 -->
+    <div class="np-progress-row">
+      <span id="np-cur">0:00</span>
+      <div class="np-bar" id="np-bar"><div class="np-bar-fill" id="np-fill"></div></div>
+      <span id="np-dur">0:00</span>
+    </div>
+
+    <!-- 播放控制 -->
+    <div class="np-controls">
+      <button class="np-btn" id="np-mode" aria-label="播放模式">
+        <svg id="np-icon-mode-seq" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <svg id="np-icon-mode-one" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M4 6h16M4 12h16M4 18h16"/><path d="M12 8v8M10 10l2-2 2 2" stroke="var(--accent)"/></svg>
+        <svg id="np-icon-mode-shuffle" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+      </button>
+      
+      <button class="np-btn" id="np-prev" aria-label="上一首">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12l-9-6z"/></svg>
+      </button>
+      
+      <button class="np-btn np-main" id="np-play" aria-label="播放">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      
+      <button class="np-btn" id="np-next" aria-label="下一首">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l9 6-9 6z"/></svg>
+      </button>
+      
+      <button class="np-btn" aria-label="播放列表">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
     </div>
   </div>
 </div>
@@ -607,15 +748,7 @@
     'lyrics 字段支持三种形式：',
     '  1. 完整 URL 或相对路径，播放器会拉取该文件内容；',
     '  2. 内联的 LRC 文本（例如包含 [00:12.34] 标记）；',
-    '  3. 纯文本，播放器会按行切分显示。',
-    '',
-    '',
-    '音频文件要求',
-    '──────────────────────────────────────────────',
-    '',
-    '  · Content-Type 正确，如 audio/mpeg。',
-    '',
-    '  · 支持 Range 请求。'
+    '  3. 纯文本，播放器会按行切分显示。'
   ].join('\n');
 
   var listEl    = document.getElementById('list');
@@ -642,16 +775,38 @@
   var durTimeEl = document.getElementById('dur-time');
   var volEl     = document.getElementById('vol');
 
+  // Now Playing DOM
   var npModal     = document.getElementById('now-playing');
   var npBackdrop  = document.querySelector('.np-backdrop');
   var npCover     = document.getElementById('np-cover');
   var npVinylDisc = document.getElementById('np-vinyl-disc');
   var npTitle     = document.getElementById('np-title');
   var npArtist    = document.getElementById('np-artist');
-  var npLyricsEl  = document.getElementById('np-lyrics');
+  
+  var npHeaderTitle = document.getElementById('np-header-title');
+  var npHeaderName  = document.getElementById('np-header-name');
+  var npHeaderArt   = document.getElementById('np-header-artist');
+
+  var npBar       = document.getElementById('np-bar');
+  var npFill      = document.getElementById('np-fill');
+  var npCur       = document.getElementById('np-cur');
+  var npDur       = document.getElementById('np-dur');
   var npPlayBtn   = document.getElementById('np-play');
   var npPrevBtn   = document.getElementById('np-prev');
   var npNextBtn   = document.getElementById('np-next');
+  var npModeBtn   = document.getElementById('np-mode');
+  
+  // 全屏视图切换
+  var npViewCover = document.getElementById('np-view-cover');
+  var npViewLyrics= document.getElementById('np-view-lyrics');
+  var npLyricsCont= document.getElementById('np-lyrics-content');
+  var npToggleLyricsBtn = document.getElementById('np-toggle-lyrics');
+
+  // 播放模式图标
+  var modeIcons = {
+    bar: [document.getElementById('icon-mode-seq'), document.getElementById('icon-mode-one'), document.getElementById('icon-mode-shuffle')],
+    np: [document.getElementById('np-icon-mode-seq'), document.getElementById('np-icon-mode-one'), document.getElementById('np-icon-mode-shuffle')]
+  };
 
   var settingsBtn   = document.getElementById('settings-btn');
   var settingsModal = document.getElementById('settings-modal');
@@ -666,14 +821,19 @@
 
   var ICON_PLAY  = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
   var ICON_PAUSE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
-  var ICON_PLAY_L  = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-  var ICON_PAUSE_L = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+  var ICON_PLAY_L  = '<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE_L = '<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
 
   docPre.textContent = DOC_TEXT;
 
   var tracks = [], filtered = [], activeCat = '全部';
-  var currentId = null, isPlaying = false, shuffleOn = false, npOpen = false;
+  var currentId = null, isPlaying = false, npOpen = false;
+  
+  // 0=顺序, 1=单曲, 2=随机
+  var playMode = 0; 
+
   var currentManifestUrl = '';
+  
   var currentLyrics = [];
   var currentLyricIndex = -1;
 
@@ -706,20 +866,17 @@
     for (var i = 0; i < filtered.length; i++){ if (filtered[i].id === id) return i; }
     return -1;
   }
-
   function absoluteUrl(url){
     if (!url) return '';
     try { return new URL(url, location.href).href; }
     catch(e){ return url; }
   }
-
   function resolveAsset(url, base){
     if (!url) return '';
     if (/^[a-z][a-z0-9+.-]*:/i.test(url) || url.indexOf('//') === 0) return url;
     try { return new URL(url, base).href; }
     catch(e){ return url; }
   }
-
   function isSameOriginUrl(url){
     if (!url) return true;
     try { return new URL(url, location.href).origin === location.origin; }
@@ -750,9 +907,7 @@
           result.push({ time: time, text: content });
         }
       } else {
-        // 无时间轴，作纯文本处理
         if (!result.length) {
-           // 如果没解析出时间轴，用特殊标记
            return text.split('\n').filter(l=>l.trim()).map(l => ({ time: -1, text: l.trim() }));
         }
       }
@@ -763,29 +918,21 @@
   function loadLyrics(track) {
     currentLyrics = [];
     currentLyricIndex = -1;
-    npLyricsEl.innerHTML = '<div class="np-lyrics-empty">暂无歌词</div>';
+    npLyricsCont.innerHTML = '<div class="lyric-line active">暂无歌词</div>';
     
     if (!track || !track.lyrics) return;
     
     var lStr = track.lyrics;
-    // 粗略判断是否为 LRC/内联文本，还是 URL 路径
     if (lStr.indexOf('[') === 0 || lStr.indexOf('\n') !== -1 || lStr.length > 150) {
       renderLyrics(parseLRC(lStr));
     } else {
       fetch(lStr)
-        .then(r => {
-          if (!r.ok) throw new Error();
-          return r.text();
-        })
+        .then(r => { if (!r.ok) throw new Error(); return r.text(); })
         .then(text => {
-          if (currentId === track.id) {
-            renderLyrics(parseLRC(text));
-          }
+          if (currentId === track.id) renderLyrics(parseLRC(text));
         })
         .catch(e => {
-          if (currentId === track.id) {
-            npLyricsEl.innerHTML = '<div class="np-lyrics-empty">歌词加载失败或跨域</div>';
-          }
+          if (currentId === track.id) npLyricsCont.innerHTML = '<div class="lyric-line active">歌词加载失败或跨域限制</div>';
         });
     }
   }
@@ -794,20 +941,20 @@
     currentLyrics = lyrics;
     currentLyricIndex = -1;
     if (!lyrics.length) {
-      npLyricsEl.innerHTML = '<div class="np-lyrics-empty">暂无歌词</div>';
+      npLyricsCont.innerHTML = '<div class="lyric-line active">纯音乐，请欣赏</div>';
       return;
     }
     var html = '';
     for (var i = 0; i < lyrics.length; i++) {
-      html += '<div class="np-lyric-line" data-index="' + i + '">' + esc(lyrics[i].text) + '</div>';
+      html += '<div class="lyric-line" data-index="' + i + '">' + esc(lyrics[i].text) + '</div>';
     }
-    npLyricsEl.innerHTML = html;
+    npLyricsCont.innerHTML = html;
     updateLyricsHighlight(audio.currentTime);
   }
 
   function updateLyricsHighlight(currentTime) {
     if (!currentLyrics.length) return;
-    if (currentLyrics[0].time === -1) return; // 纯文本，不处理高亮
+    if (currentLyrics[0].time === -1) return;
 
     var idx = -1;
     for (var i = 0; i < currentLyrics.length; i++) {
@@ -820,32 +967,45 @@
 
     if (idx !== currentLyricIndex) {
       currentLyricIndex = idx;
-      var lines = npLyricsEl.querySelectorAll('.np-lyric-line');
+      var lines = npLyricsCont.querySelectorAll('.lyric-line');
       for (var j = 0; j < lines.length; j++) {
-        if (j === idx) {
-          lines[j].classList.add('active');
-        } else {
-          lines[j].classList.remove('active');
-        }
+        if (j === idx) lines[j].classList.add('active');
+        else lines[j].classList.remove('active');
       }
       
-      // 自动滚动
       if (idx >= 0 && lines[idx]) {
         var lineEl = lines[idx];
-        var top = lineEl.offsetTop - npLyricsEl.offsetHeight / 2 + lineEl.offsetHeight / 2;
-        npLyricsEl.scrollTo({ top: top, behavior: 'smooth' });
+        var top = lineEl.offsetTop - npViewLyrics.offsetHeight / 2 + lineEl.offsetHeight / 2;
+        npViewLyrics.scrollTo({ top: top, behavior: 'smooth' });
       }
     }
   }
 
-  // ==================== 取色逻辑 ====================
+  function toggleLyricsView() {
+    if (npViewCover.classList.contains('hidden')) {
+      // 切回封面
+      npViewLyrics.classList.remove('active');
+      setTimeout(() => npViewLyrics.classList.add('hidden'), 300);
+      npViewCover.classList.remove('hidden');
+      npToggleLyricsBtn.classList.remove('active');
+      npHeaderTitle.classList.remove('show');
+    } else {
+      // 切到歌词
+      npViewCover.classList.add('hidden');
+      npViewLyrics.classList.remove('hidden');
+      void npViewLyrics.offsetWidth; // 强制重绘
+      npViewLyrics.classList.add('active');
+      npToggleLyricsBtn.classList.add('active');
+      npHeaderTitle.classList.add('show');
+      
+      if (isPlaying) updateLyricsHighlight(audio.currentTime);
+    }
+  }
+
+  // ==================== 动态背景取色 ====================
 
   function lightenColor(rgb, amount){
-    return [
-      Math.min(255, rgb[0] + amount),
-      Math.min(255, rgb[1] + amount),
-      Math.min(255, rgb[2] + amount)
-    ];
+    return [Math.min(255, rgb[0] + amount), Math.min(255, rgb[1] + amount), Math.min(255, rgb[2] + amount)];
   }
 
   function extractColorFromImage(url, callback){
@@ -865,9 +1025,9 @@
           var pr=data[i], pg=data[i+1], pb=data[i+2], pa=data[i+3];
           if (pa < 128) continue;
           var mx = Math.max(pr,pg,pb), mn = Math.min(pr,pg,pb);
-          if (mx - mn < 25) continue; // 跳过灰度色
+          if (mx - mn < 25) continue;
           var br = (pr+pg+pb)/3;
-          if (br < 25 || br > 235) continue; // 跳过极黑极白
+          if (br < 25 || br > 235) continue;
           r+=pr; g+=pg; b+=pb; n++;
         }
         if (n === 0) return callback(null);
@@ -885,28 +1045,19 @@
     spectrumColor = [r, g, b];
     spectrumColorLight = lightenColor([r,g,b], 70);
     
-    // 动态背景渐变（深色、沉浸式）
-    // 将主色变暗，混合深底色
-    var darkR = Math.floor(r * 0.35);
-    var darkG = Math.floor(g * 0.35);
-    var darkB = Math.floor(b * 0.35);
+    // 沉浸式背景渐变
+    var darkR = Math.floor(r * 0.35), darkG = Math.floor(g * 0.35), darkB = Math.floor(b * 0.35);
+    npBackdrop.style.background = `radial-gradient(circle at 50% 10%, rgba(${r},${g},${b}, 0.45) 0%, rgba(${darkR},${darkG},${darkB}, 0.85) 40%, #0f0f0f 90%)`;
     
-    // 背景基底渐变
-    npBackdrop.style.background = `radial-gradient(circle at 50% 10%, rgba(${r},${g},${b}, 0.4) 0%, rgba(${darkR},${darkG},${darkB}, 0.8) 40%, #0f0f0f 90%)`;
-    
-    // 唱片中心色
+    // 黑胶中心色
     npVinylDisc.style.setProperty('--vinyl-label', `rgb(${r},${g},${b})`);
   }
 
   function updateTrackColors(track) {
-    // 默认色
     applyColors(45, 90, 74);
     if (!track || !track.cover) return;
-    
     extractColorFromImage(track.cover, function(rgb){
-      if (rgb) {
-        applyColors(rgb[0], rgb[1], rgb[2]);
-      }
+      if (rgb) applyColors(rgb[0], rgb[1], rgb[2]);
     });
   }
 
@@ -1025,10 +1176,7 @@
         listEl.innerHTML = '<div class="state">' + esc(hint) + '</div>';
         listEl.setAttribute('aria-busy', 'false');
         rankEl.innerHTML = ''; sourceEl.innerHTML = '';
-        renderTabs();
-        updatePlayerBar();
-        syncPlayUI();
-        updateManifestHints();
+        renderTabs(); updatePlayerBar(); syncPlayUI(); updateManifestHints();
       });
   }
 
@@ -1143,6 +1291,23 @@
 
   // ==================== 播放控制 ====================
 
+  function updateModeUI() {
+    modeIcons.bar[0].style.display = playMode === 0 ? 'block' : 'none';
+    modeIcons.bar[1].style.display = playMode === 1 ? 'block' : 'none';
+    modeIcons.bar[2].style.display = playMode === 2 ? 'block' : 'none';
+    btnShuffle.classList.toggle('on', playMode !== 0);
+    
+    modeIcons.np[0].style.display = playMode === 0 ? 'block' : 'none';
+    modeIcons.np[1].style.display = playMode === 1 ? 'block' : 'none';
+    modeIcons.np[2].style.display = playMode === 2 ? 'block' : 'none';
+  }
+
+  function toggleMode() {
+    playMode = (playMode + 1) % 3;
+    updateModeUI();
+    savePlayerState(true);
+  }
+
   function syncPlayUI(){
     btnPlay.innerHTML = isPlaying ? ICON_PAUSE : ICON_PLAY;
     btnPlay.setAttribute('aria-label', isPlaying ? '暂停' : '播放');
@@ -1183,11 +1348,16 @@
 
   function updateProgress(){
     var d = audio.duration, c = audio.currentTime;
-    if (isFinite(d) && d > 0) seekFill.style.width = (c / d * 100) + '%';
+    if (isFinite(d) && d > 0){
+      seekFill.style.width = (c / d * 100) + '%';
+      npFill.style.width = (c / d * 100) + '%';
+    }
     curTimeEl.textContent = fmt(c);
-    if (isFinite(d)) durTimeEl.textContent = fmt(d);
-    
-    // 同步歌词高亮
+    npCur.textContent = fmt(c);
+    if (isFinite(d)){
+      durTimeEl.textContent = fmt(d);
+      npDur.textContent = fmt(d);
+    }
     updateLyricsHighlight(c);
   }
 
@@ -1220,7 +1390,7 @@
   function nextTrack(){
     if (!filtered.length) return;
     var i = indexInFiltered(currentId), n;
-    if (shuffleOn) n = Math.floor(Math.random() * filtered.length);
+    if (playMode === 2) n = Math.floor(Math.random() * filtered.length);
     else { n = (i + 1) % filtered.length; if (i === -1) n = 0; }
     playTrack(filtered[n].id, filtered.length === 1);
   }
@@ -1228,7 +1398,7 @@
   function prevTrack(){
     if (!filtered.length) return;
     var i = indexInFiltered(currentId), n;
-    if (shuffleOn) n = Math.floor(Math.random() * filtered.length);
+    if (playMode === 2) n = Math.floor(Math.random() * filtered.length);
     else { n = (i - 1 + filtered.length) % filtered.length; if (i === -1) n = 0; }
     playTrack(filtered[n].id, filtered.length === 1);
   }
@@ -1240,8 +1410,12 @@
     npCover.style.background = coverGradient(t.id);
     if (t.cover) npCover.innerHTML = '<img src="' + esc(t.cover) + '" alt="" onerror="this.remove()">';
     else npCover.innerHTML = '';
+    
     npTitle.textContent = t.title || '—';
-    npArtist.textContent = ((t.artist || '') + (t.album ? ' · ' + t.album : '')) || '—';
+    npArtist.innerHTML = esc(t.artist || '') + (t.album ? ' <span style="opacity:0.5;font-size:.8em">· ' + esc(t.album) + '</span>' : '');
+    
+    npHeaderName.textContent = t.title || '—';
+    npHeaderArt.textContent = t.artist || '—';
   }
 
   function openNowPlaying(){
@@ -1258,6 +1432,13 @@
     updateTrackColors(t);
     loadLyrics(t);
     
+    // 重置视图状态
+    npViewCover.classList.remove('hidden');
+    npViewLyrics.classList.add('hidden');
+    npViewLyrics.classList.remove('active');
+    npToggleLyricsBtn.classList.remove('active');
+    npHeaderTitle.classList.remove('show');
+
     npOpen = true;
     npModal.hidden = false;
     npModal.classList.remove('closing');
@@ -1265,13 +1446,17 @@
     syncNowPlaying();
 
     if (isPlaying) startSpectrum();
-
+    
+    // 封面位移动画
     var firstRect = pbCover.getBoundingClientRect();
     var lastRect  = npCover.getBoundingClientRect();
 
     if (firstRect.width && lastRect.width){
-      var dx = firstRect.left - lastRect.left, dy = firstRect.top - lastRect.top;
-      var sx = firstRect.width / lastRect.width, sy = firstRect.height / lastRect.height;
+      var dx = firstRect.left - lastRect.left;
+      var dy = firstRect.top - lastRect.top;
+      var sx = firstRect.width / lastRect.width;
+      var sy = firstRect.height / lastRect.height;
+
       npCover.style.transformOrigin = 'top left';
       var anim = npCover.animate([
         { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')' },
@@ -1296,16 +1481,21 @@
     var firstRect = pbCover.getBoundingClientRect();
     var lastRect  = npCover.getBoundingClientRect();
 
-    if (firstRect.width && lastRect.width){
-      var dx = firstRect.left - lastRect.left, dy = firstRect.top - lastRect.top;
-      var sx = firstRect.width / lastRect.width, sy = firstRect.height / lastRect.height;
+    if (firstRect.width && lastRect.width && !npViewCover.classList.contains('hidden')){
+      var dx = firstRect.left - lastRect.left;
+      var dy = firstRect.top - lastRect.top;
+      var sx = firstRect.width / lastRect.width;
+      var sy = firstRect.height / lastRect.height;
+
       npCover.style.transformOrigin = 'top left';
       var anim = npCover.animate([
         { transform: 'translate(0,0) scale(1,1)' },
         { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')' }
       ], { duration: 400, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
       anim.onfinish = function(){ finish(); anim.cancel(); };
-    } else finish();
+    } else {
+      finish();
+    }
   }
 
   // ==================== 频谱动画 ====================
@@ -1375,7 +1565,6 @@
     if (!data || !data.length) return;
 
     var usable = Math.floor(data.length * 0.7);
-    // 动态铺满：全屏 8px/柱，底栏 5px/柱
     var targetBarW = isFullScreen ? 8 : 5;
     var bars = Math.floor(w / targetBarW);
     if (usable < bars) bars = usable;
@@ -1387,8 +1576,8 @@
     var bw = actualBarW - gap;
 
     var grad = ctx.createLinearGradient(0, h, 0, 0);
-    grad.addColorStop(0, 'rgba(' + spectrumColor.join(',') + ',0.6)');
-    grad.addColorStop(1, 'rgba(' + spectrumColorLight.join(',') + ',0.2)');
+    grad.addColorStop(0, 'rgba(' + spectrumColor.join(',') + ',0.65)');
+    grad.addColorStop(1, 'rgba(' + spectrumColorLight.join(',') + ',0.25)');
     ctx.fillStyle = grad;
 
     for (var i=0;i<bars;i++){
@@ -1398,7 +1587,7 @@
         if (idx < usable){ sum += data[idx]; cnt++; }
       }
       var v = cnt ? sum / cnt / 255 : 0;
-      v = Math.pow(v, 0.35); // 夸张度
+      v = Math.pow(v, 0.35);
       var bh = Math.max(2, Math.min(h * 1.15, v * h * 1.25));
       ctx.fillRect(i*actualBarW + gap/2, h - bh, bw, bh);
     }
@@ -1457,7 +1646,7 @@
       trackId: currentId || null,
       currentTime: (audio && isFinite(audio.currentTime)) ? audio.currentTime : 0,
       volume: audio ? audio.volume : 1,
-      shuffle: shuffleOn,
+      playMode: playMode,
       savedAt: now
     };
     try{ localStorage.setItem(PLAYER_KEY, JSON.stringify(state)); }catch(e){}
@@ -1473,7 +1662,10 @@
         audio.volume = Math.max(0, Math.min(1, state.volume));
         volEl.value = audio.volume;
       }
-      if (state.shuffle){ shuffleOn = true; btnShuffle.classList.add('on'); }
+      if (typeof state.playMode === 'number') {
+        playMode = state.playMode;
+        updateModeUI();
+      }
       if (!state.trackId) return;
       
       var t = getTrack(state.trackId);
@@ -1561,7 +1753,7 @@
   btnPlay.addEventListener('click', togglePlay);
   btnPrev.addEventListener('click', prevTrack);
   btnNext.addEventListener('click', nextTrack);
-  btnShuffle.addEventListener('click', function(){ shuffleOn = !shuffleOn; btnShuffle.classList.toggle('on', shuffleOn); savePlayerState(true); });
+  btnShuffle.addEventListener('click', toggleMode);
   seekBar.addEventListener('click', function(e){
     var rect = seekBar.getBoundingClientRect(), ratio = (e.clientX - rect.left) / rect.width;
     if (isFinite(audio.duration) && audio.duration > 0) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
@@ -1576,6 +1768,14 @@
   npPlayBtn.addEventListener('click', togglePlay);
   npPrevBtn.addEventListener('click', prevTrack);
   npNextBtn.addEventListener('click', nextTrack);
+  npModeBtn.addEventListener('click', toggleMode);
+  npToggleLyricsBtn.addEventListener('click', toggleLyricsView);
+
+  // 全屏进度条点击
+  npBar.addEventListener('click', function(e) {
+    var rect = npBar.getBoundingClientRect(), ratio = (e.clientX - rect.left) / rect.width;
+    if (isFinite(audio.duration) && audio.duration > 0) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
+  });
 
   tabsEl.addEventListener('click', function(e){
     var btn = e.target.closest('.cat-tab'); if (!btn) return;
