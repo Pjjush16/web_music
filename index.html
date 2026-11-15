@@ -2,459 +2,582 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YAONET · 音频播放器</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* ==================== 主题变量 ==================== */
-  :root {
-    --bg: #f7f6f3;
-    --surface: #ffffff;
-    --surface-glass: rgba(255, 255, 255, 0.85);
-    --text: #1a1a1a;
-    --text-2: #5f5f5f;
-    --text-3: #8a8a8a;
-    --border: rgba(0, 0, 0, 0.07);
-    --accent: #2d5a4a;
-    --accent-soft: #e8efec;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.06);
-    --radius-lg: 18px;
-    --radius-md: 14px;
-    --radius-sm: 10px;
-    --font: 'Manrope', system-ui, -apple-system, sans-serif;
-    --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  :root{
+    --bg:#f7f6f3;--surface:#fff;--text:#1a1a1a;--text-2:#5f5f5f;--text-3:#8a8a8a;
+    --border:rgba(0,0,0,.07);--accent:#2d5a4a;--accent-soft:#e8efec;
+    --radius-lg:18px;--radius-md:14px;--radius-sm:10px;
+    --font:'Manrope',system-ui,-apple-system,sans-serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.04);--shadow-md:0 8px 30px rgba(0,0,0,.06);
+    --max-width:1200px;--header-h:64px;--subnav-h:52px;
   }
-  
-  :root[data-theme="dark"] {
-    --bg: #0f0f0f;
-    --surface: #1a1a1a;
-    --surface-glass: rgba(26, 26, 26, 0.85);
-    --text: #f0f0f0;
-    --text-2: #a0a0a0;
-    --text-3: #6e6e6e;
-    --border: rgba(255, 255, 255, 0.08);
-    --accent: #7fbfa8;
-    --accent-soft: #1f2e29;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.4);
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#0f0f0f;--surface:#1a1a1a;--text:#f0f0f0;--text-2:#a0a0a0;--text-3:#6e6e6e;
+      --border:rgba(255,255,255,.08);--accent:#7fbfa8;--accent-soft:#1f2e29;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.3);--shadow-md:0 8px 30px rgba(0,0,0,.4);}
   }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; overflow: hidden; }
-  body {
-    font-family: var(--font); background: var(--bg); color: var(--text);
-    line-height: 1.65; -webkit-font-smoothing: antialiased;
-    user-select: none; transition: background 0.3s, color 0.3s;
-  }
-  a { color: inherit; text-decoration: none; }
-  button { font-family: inherit; border: none; background: none; color: inherit; cursor: pointer; outline: none; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.65;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font-family:var(--font)}
+  .container{max-width:var(--max-width);margin:0 auto;padding:0 24px}
 
   /* ==================== 主页面样式 ==================== */
-  .app-wrapper {
-    display: flex; flex-direction: column; height: 100%; padding-bottom: 110px;
-  }
+  .site-header{position:sticky;top:0;z-index:100;backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);background:color-mix(in srgb,var(--bg) 80%,transparent);border-bottom:1px solid var(--border)}
+  .header-inner{display:flex;align-items:center;justify-content:space-between;height:var(--header-h)}
+  .site-brand{font-size:1.32rem;font-weight:800;letter-spacing:-.03em;display:inline-flex;align-items:baseline}
+  .site-brand span{color:var(--accent)}
+  .header-right{display:flex;align-items:center;gap:14px}
+  .live-badge{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;color:var(--text-2);max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.15);animation:pulse 2s infinite;flex-shrink:0}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .settings-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text-2);cursor:pointer;display:grid;place-items:center;transition:background .2s,color .2s,transform .15s;flex-shrink:0}
+  .settings-btn:hover{background:var(--surface);color:var(--text);transform:rotate(18deg)}
+  .settings-btn:active{transform:scale(.94)}
 
-  .site-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 24px; z-index: 100; flex-shrink: 0;
+  .subnav{position:sticky;top:var(--header-h);z-index:90;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);border-bottom:1px solid var(--border)}
+  .subnav-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;height:var(--subnav-h)}
+  .cat-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+  .cat-tabs::-webkit-scrollbar{display:none}
+  .cat-tab{flex-shrink:0;font-size:.86rem;font-weight:600;padding:7px 15px;border-radius:999px;color:var(--text-2);border:none;background:transparent;cursor:pointer;transition:all .18s;white-space:nowrap}
+  .cat-tab:hover{color:var(--text);background:var(--surface)}
+  .cat-tab.active{background:var(--accent);color:#fff}
+  .subnav-meta{font-size:.76rem;color:var(--text-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+  .audio-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:36px;padding-top:26px;padding-bottom:64px;align-items:start;animation:fadeUp .5s ease both}
+  .main-col{min-width:0}
+
+  .hero{display:flex;gap:26px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:26px 30px;box-shadow:var(--shadow-sm);margin-bottom:22px;transition:box-shadow .2s,border-color .2s}
+  .hero:hover{box-shadow:var(--shadow-md);border-color:color-mix(in srgb,var(--accent) 22%,var(--border))}
+  .hero-cover{width:158px;height:158px;border-radius:16px;flex-shrink:0;position:relative;overflow:hidden;box-shadow:0 14px 34px rgba(45,90,74,.22);display:grid;place-items:center}
+  .hero-cover::before{content:'♪';color:rgba(255,255,255,.9);font-size:2.6rem;line-height:1;transform:translateY(-2px);position:absolute}
+  .hero-cover img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
+  .hero-body{min-width:0;flex:1}
+  .hero-meta{display:flex;align-items:center;gap:10px;font-size:.76rem;color:var(--text-3);margin-bottom:11px;flex-wrap:wrap}
+  .hero h2{font-size:clamp(1.4rem,2.6vw,1.85rem);font-weight:800;letter-spacing:-.03em;line-height:1.25;margin-bottom:8px}
+  .hero p{font-size:.9rem;color:var(--text-2);line-height:1.65;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:16px}
+  .hero-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .hero-status{font-size:.78rem;color:var(--text-3);font-variant-numeric:tabular-nums}
+
+  .track-list{display:flex;flex-direction:column;gap:2px}
+  .track-item{display:flex;align-items:center;gap:16px;padding:12px 14px;border-radius:var(--radius-md);border:1px solid transparent;background:transparent;cursor:pointer;text-align:left;width:100%;color:inherit;transition:background .18s,border-color .18s}
+  .track-item:hover{background:color-mix(in srgb,var(--accent) 5%,transparent);border-color:var(--border)}
+  .track-item.active{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 26%,transparent)}
+  .track-cover{width:50px;height:50px;border-radius:11px;flex-shrink:0;position:relative;overflow:hidden;display:grid;place-items:center;box-shadow:var(--shadow-sm)}
+  .track-cover::before{content:'♪';color:rgba(255,255,255,.85);font-size:1.15rem;line-height:1;transform:translateY(-1px);position:absolute}
+  .track-cover img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
+  .track-body{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+  .track-title{font-size:.95rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+  .track-meta{font-size:.78rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tag{font-size:.64rem;font-weight:700;letter-spacing:.05em;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);line-height:1.6;white-space:nowrap;flex-shrink:0}
+  .eq{display:inline-flex;align-items:flex-end;gap:2px;height:16px;width:16px;flex-shrink:0}
+  .eq i{display:block;width:3px;border-radius:2px;background:var(--accent);animation:eq 1s ease-in-out infinite}
+  .eq i:nth-child(2){animation-delay:.2s}
+  .eq i:nth-child(3){animation-delay:.4s}
+  .track-item:not(.playing) .eq i{animation-play-state:paused;opacity:.45}
+  @keyframes eq{0%,100%{height:4px}50%{height:14px}}
+
+  .sidebar{display:flex;flex-direction:column;gap:18px;position:sticky;top:calc(var(--header-h) + var(--subnav-h) + 16px)}
+  .side-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px 22px;box-shadow:var(--shadow-sm)}
+  .side-card h3{font-size:.88rem;font-weight:700;letter-spacing:.02em;margin-bottom:14px;color:var(--text)}
+  .about-text{font-size:.82rem;color:var(--text-2);line-height:1.7}
+  .about-text code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:5px;font-size:.85em;font-family:var(--mono)}
+  .rank-list{display:flex;flex-direction:column;gap:1px}
+  .rank-item{display:flex;align-items:center;gap:12px;padding:7px 0;font-size:.86rem;background:none;border:none;cursor:pointer;text-align:left;width:100%;color:inherit;transition:color .2s}
+  .rank-num{width:20px;font-weight:800;color:var(--text-3);font-variant-numeric:tabular-nums;flex-shrink:0;font-size:.82rem}
+  .rank-item:nth-child(-n+3) .rank-num{color:var(--accent)}
+  .rank-name{flex:1;color:var(--text-2);transition:color .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rank-item:hover .rank-name{color:var(--accent)}
+  .rank-count{font-size:.74rem;color:var(--text-3);font-variant-numeric:tabular-nums;flex-shrink:0}
+  .source-list{display:flex;flex-direction:column;gap:1px}
+  .source-row{display:flex;justify-content:space-between;align-items:center;font-size:.83rem;padding:6px 0;color:var(--text-2)}
+  .source-row span:last-child{color:var(--text-3);font-size:.74rem;font-variant-numeric:tabular-nums}
+  .current-manifest{font-size:.78rem;color:var(--text-3);word-break:break-all;line-height:1.6}
+  .current-manifest strong{color:var(--text-2);font-weight:600}
+
+  /* ==================== 底栏 Dock 模式 (两行布局) ==================== */
+  .player-bar{
+    position:fixed;left:0;right:0;bottom:0;z-index:150;
+    background:color-mix(in srgb,var(--surface) 94%,transparent);
+    backdrop-filter:blur(18px) saturate(180%);
+    -webkit-backdrop-filter:blur(18px) saturate(180%);
+    border-top:1px solid var(--border);
+    box-shadow:0 -8px 30px rgba(0,0,0,.06);
+    overflow:hidden;
+    padding: 8px 0 12px;
   }
-  .site-brand { font-size: 1.4rem; font-weight: 800; letter-spacing: -.03em; }
-  .site-brand span { color: var(--accent); }
+  .bar-spectrum{
+    display:block;position:absolute;left:0;right:0;bottom:0;width:100%;height:56px;
+    pointer-events:none;z-index:0;
+    -webkit-mask-image:linear-gradient(to top, black 35%, transparent 100%);
+    mask-image:linear-gradient(to top, black 35%, transparent 100%);
+  }
+  .player-inner{
+    position:relative;z-index:1;
+    max-width:var(--max-width);margin:0 auto;padding:0 24px;
+    display:flex;flex-direction:column;gap:8px;
+  }
   
-  .settings-btn {
-    width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
-    background: var(--surface); border: 1px solid var(--border); color: var(--text-2);
-    box-shadow: var(--shadow-sm); transition: all 0.2s;
+  /* 第一行：信息+控件+其他 */
+  .pb-row-top{
+    display:flex;align-items:center;justify-content:space-between;
   }
-  .settings-btn:hover { transform: rotate(18deg); color: var(--text); }
-  .settings-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; }
+  .pb-track{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+  .pb-cover{width:44px;height:44px;border-radius:10px;flex-shrink:0;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);background:var(--accent-soft);display:grid;place-items:center;cursor:pointer;transition:transform .18s,box-shadow .18s}
+  .pb-cover:hover{transform:scale(1.06);box-shadow:var(--shadow-md)}
+  .pb-cover:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .pb-cover::before{content:'♪';color:rgba(255,255,255,.9);font-size:1.1rem;line-height:1;transform:translateY(-1px);position:absolute}
+  .pb-cover img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
+  .pb-info{min-width:0;display:flex;flex-direction:column;justify-content:center}
+  .pb-title{font-size:.9rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+  .pb-artist{font-size:.75rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
 
-  .subnav {
-    padding: 0 24px 12px; display: flex; overflow-x: auto; scrollbar-width: none; flex-shrink: 0;
-  }
-  .subnav::-webkit-scrollbar { display: none; }
-  .cat-tab {
-    flex-shrink: 0; font-size: 0.9rem; font-weight: 600; padding: 8px 18px;
-    border-radius: 999px; color: var(--text-2); transition: all 0.2s; margin-right: 8px;
-  }
-  .cat-tab:hover { color: var(--text); }
-  .cat-tab.active { background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
-  [data-theme="dark"] .cat-tab.active { color: #0f0f0f; }
-
-  /* ==================== 3D 无限唱片墙 ==================== */
-  .main-stage {
-    flex: 1; display: flex; align-items: center; justify-content: center;
-    overflow: hidden; position: relative;
-  }
-
-  .cover-stage {
-    width: 100%; height: 360px; position: relative;
-    perspective: 1200px;
-    display: flex; align-items: center;
-    cursor: grab;
-  }
-  .cover-stage:active { cursor: grabbing; }
-
-  .cover-track {
-    display: flex; align-items: center; gap: 24px;
-    padding: 0 calc(50vw - 120px);
-    height: 100%; overflow-x: auto; scrollbar-width: none;
-    transform-style: preserve-3d;
-    scroll-snap-type: none; 
-  }
-  .cover-track::-webkit-scrollbar { display: none; }
-
-  .cover-card {
-    flex-shrink: 0; width: 240px; height: 240px; border-radius: 20px;
-    position: relative; background: var(--surface);
-    box-shadow: var(--shadow-md); border: 1px solid var(--border);
-    transform-style: preserve-3d;
-    will-change: transform, opacity;
-    overflow: hidden;
-  }
-  .cover-card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-  .cover-card.no-cover { display: grid; place-items: center; font-size: 3rem; color: var(--text-3); background: var(--accent-soft); }
-  .cover-card.is-centered { box-shadow: 0 0 0 3px var(--accent), var(--shadow-md); }
-
-  /* ==================== 底栏 Dock ==================== */
-  .player-bar {
-    position: absolute; left: 0; right: 0; bottom: 0; z-index: 150;
-    background: var(--surface-glass);
-    backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border-top: 1px solid var(--border);
-    padding: 12px 24px 16px;
-    display: flex; flex-direction: column; gap: 10px;
-    box-shadow: 0 -4px 24px rgba(0,0,0,0.04);
-  }
-  [data-theme="dark"] .player-bar { box-shadow: 0 -4px 24px rgba(0,0,0,0.3); }
-
-  .bar-spectrum {
-    position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 56px;
-    pointer-events: none; z-index: -1;
-    -webkit-mask-image: linear-gradient(to top, black 30%, transparent 100%);
-    mask-image: linear-gradient(to top, black 30%, transparent 100%);
-  }
-
-  .pb-row-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-  .pb-track { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+  .pb-controls{display:flex;align-items:center;gap:8px}
+  .pb-btn{width:36px;height:36px;border-radius:50%;border:none;background:transparent;color:var(--text-2);display:grid;place-items:center;cursor:pointer;transition:background .18s,color .18s,transform .12s}
+  .pb-btn:hover{background:var(--accent-soft);color:var(--accent)}
+  .pb-btn:active{transform:scale(.94)}
+  .pb-btn.on{color:var(--accent);background:var(--accent-soft)}
+  .pb-play{width:44px;height:44px;background:var(--accent);color:#fff}
+  .pb-play:hover{background:var(--accent);color:#fff;opacity:.9}
   
-  .pb-cover {
-    width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
-    background: var(--accent-soft); display: grid; place-items: center;
-    overflow: hidden; box-shadow: var(--shadow-sm); cursor: pointer;
-    transition: transform 0.2s;
+  .pb-right{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex:1}
+  .pb-vol{display:flex;align-items:center;gap:8px;color:var(--text-3)}
+  .pb-vol input{width:80px;accent-color:var(--accent);cursor:pointer}
+
+  /* 第二行：进度条 */
+  .pb-row-bottom{
+    display:flex;align-items:center;gap:12px;
+    font-size:.72rem;color:var(--text-3);font-variant-numeric:tabular-nums;
+    padding:0 4px;
   }
-  .pb-cover:hover { transform: scale(1.05); }
-  .pb-cover img { width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1; }
-  .pb-cover::before { content: '♪'; position: absolute; font-size: 1.2rem; color: var(--text-3); z-index: 0; }
-
-  .pb-info { display: flex; flex-direction: column; min-width: 0; }
-  .pb-title { font-size: 0.95rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); line-height: 1.3; }
-  .pb-artist { font-size: 0.8rem; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
-
-  .pb-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .pb-btn { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--text-2); transition: all 0.2s; }
-  .pb-btn:hover { color: var(--text); background: var(--border); }
-  .pb-btn:active { transform: scale(0.92); }
-  .pb-play { width: 44px; height: 44px; background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(45,90,74,0.3); }
-  [data-theme="dark"] .pb-play { color: #0f0f0f; }
-  .pb-play:hover { transform: scale(1.05); background: var(--accent); color: #fff; }
-
-  .pb-row-bottom {
-    display: flex; align-items: center; gap: 12px;
-    font-size: 0.75rem; color: var(--text-3); font-variant-numeric: tabular-nums; padding: 0 4px;
+  .pb-bar{flex:1;height:4px;border-radius:999px;background:var(--accent-soft);position:relative;cursor:pointer;overflow:hidden;}
+  .pb-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:var(--accent);width:0%;transition:width .12s linear}
+  .pb-bar-fill::after {
+    content:''; position:absolute; right:0; top:50%; transform:translateY(-50%);
+    width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 4px rgba(0,0,0,.2);
+    opacity:0; transition:opacity .2s;
   }
-  .pb-bar { flex: 1; height: 4px; border-radius: 999px; background: var(--border); position: relative; cursor: pointer; overflow: hidden; }
-  .pb-bar-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 999px; background: var(--text); width: 0%; transition: width 0.1s linear; }
+  .pb-bar:hover .pb-bar-fill::after { opacity:1; }
 
-  /* ==================== 全屏 Now Playing (严谨比例重构) ==================== */
-  .now-playing { position: fixed; inset: 0; z-index: 300; overflow: hidden; display: flex; flex-direction: column; }
-  .now-playing[hidden] { display: none; }
+  /* ==================== 全屏 Now Playing (专业版) ==================== */
+  .now-playing{position:fixed;inset:0;z-index:300;overflow:hidden;display:flex;flex-direction:column}
+  .now-playing[hidden]{display:none}
   
-  .np-backdrop {
-    position: absolute; inset: 0;
-    background: #0f0f0f;
-    transition: background 0.8s ease;
-    animation: npFade 0.4s ease both;
+  /* 沉浸式动态背景 */
+  .np-backdrop{
+    position:absolute;inset:0;
+    background:#0f0f0f;
+    transition:background .8s ease;
+    animation:npFade .4s ease both;
   }
-  @keyframes npFade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes npFade{from{opacity:0}to{opacity:1}}
   
-  /* 顶部导航：左上角清空，右上角操作区 */
-  .np-header {
-    position: relative; z-index: 10; display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 24px; color: #fff; flex-shrink: 0;
+  /* 顶部导航 */
+  .np-header{
+    position:relative;z-index:10;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 24px;
+    color:#fff;
   }
-  .np-header-left, .np-header-right { display: flex; align-items: center; gap: 12px; min-width: 80px; }
-  .np-header-right { justify-content: flex-end; }
-  
-  .np-header-title { flex: 1; text-align: center; min-width: 0; }
-  .np-header-title h3 { font-size: 0.95rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .np-header-title p { font-size: 0.75rem; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  
-  .np-icon-btn {
-    background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.8); cursor: pointer;
-    width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
-    transition: background 0.2s, color 0.2s; backdrop-filter: blur(4px);
+  .np-header-left,.np-header-right{display:flex;align-items:center;gap:16px;min-width:80px}
+  .np-header-right{justify-content:flex-end}
+  .np-icon-btn{
+    background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.8);cursor:pointer;
+    width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+    transition:background .2s,color .2s;backdrop-filter:blur(4px);
   }
-  .np-icon-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
-  .np-icon-btn.active { color: var(--accent); background: rgba(255,255,255,0.2); }
+  .np-icon-btn:hover{background:rgba(255,255,255,.2);color:#fff}
+  
+  .np-header-title{
+    flex:1;text-align:center;min-width:0;
+    opacity:0;transition:opacity .3s;
+  }
+  .np-header-title.show{opacity:1}
+  .np-header-title h3{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .np-header-title p{font-size:.75rem;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  /* 中间主视图区：弹性占据剩余高度 */
-  .np-main {
-    position: relative; z-index: 5; flex: 1;
-    display: flex; flex-direction: column;
-    padding: 10px 32px; max-width: 600px; margin: 0 auto; width: 100%;
-    min-height: 0; 
+  /* 主内容区 */
+  .np-main{
+    position:relative;z-index:5;
+    flex:1;display:flex;flex-direction:column;
+    padding:10px 32px 0;
+    max-width:600px;margin:0 auto;width:100%;
+    min-height:0;
   }
 
   /* 封面视图 */
-  .np-view-cover {
-    flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
-    min-height: 0; transition: opacity 0.3s, transform 0.3s;
+  .np-view-cover{
+    flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    min-height:0;padding-bottom:20px;
+    transition:opacity .3s,transform .3s;
   }
-  .np-view-cover.hidden { opacity: 0; pointer-events: none; transform: scale(0.95); }
+  .np-view-cover.hidden{opacity:0;pointer-events:none;transform:scale(.95)}
   
-  .np-art { display: flex; align-items: center; justify-content: center; position: relative; width: 100%; }
-  .np-cover {
-    width: min(320px, 65vw); height: min(320px, 65vw); border-radius: 24px; position: relative; z-index: 2;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 4px 16px rgba(0,0,0,0.2);
-    display: grid; place-items: center; background: var(--accent-soft); will-change: transform; overflow: hidden;
+  .np-art{display:flex;align-items:center;justify-content:center;position:relative;width:100%}
+  .np-cover{
+    width:min(320px,65vw);height:min(320px,65vw);
+    border-radius:24px;position:relative;z-index:2;
+    box-shadow:0 20px 60px rgba(0,0,0,.35),0 4px 16px rgba(0,0,0,.2);
+    display:grid;place-items:center;background:var(--accent-soft);
+    will-change:transform;overflow:hidden;
   }
-  .np-cover::before { content: '♪'; color: rgba(255,255,255,0.9); font-size: clamp(3rem,8vw,4rem); position: absolute; }
-  .np-cover img { width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1; }
+  .np-cover::before{content:'♪';color:rgba(255,255,255,.9);font-size:clamp(3rem,8vw,4rem);line-height:1;transform:translateY(-4%);position:absolute}
+  .np-cover img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
   
-  .np-vinyl {
-    width: min(300px, 60vw); height: min(300px, 60vw); margin-left: calc(min(300px, 60vw) * -0.55);
-    position: relative; z-index: 1; animation: vinylIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+  /* 黑胶 */
+  .np-vinyl{
+    width:min(300px,60vw);height:min(300px,60vw);
+    margin-left:calc(min(300px,60vw) * -0.55);
+    position:relative;z-index:1;
+    animation:vinylIn .55s cubic-bezier(.22,1,.36,1) .08s both;
   }
-  @keyframes vinylIn { from { transform: translateX(-45%) scale(0.84) rotate(-18deg); opacity: 0; } to { transform: translateX(0) scale(1) rotate(0); opacity: 1; } }
-  .np-vinyl-disc {
-    width: 100%; height: 100%; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.1), transparent 46%), repeating-radial-gradient(circle at center, #1d1d1d 0 1px, #0d0d0d 1px 3px);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), 0 28px 70px rgba(0,0,0,0.4);
-    position: relative; animation: spin 12s linear infinite; animation-play-state: paused;
+  @keyframes vinylIn{from{transform:translateX(-45%) scale(.84) rotate(-18deg);opacity:0}to{transform:translateX(0) scale(1) rotate(0);opacity:1}}
+  .np-vinyl-disc{
+    width:100%;height:100%;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.1),transparent 46%),repeating-radial-gradient(circle at center,#1d1d1d 0 1px,#0d0d0d 1px 3px);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 28px 70px rgba(0,0,0,.4);
+    position:relative;animation:spin 12s linear infinite;animation-play-state:paused;
   }
-  .now-playing.is-playing .np-vinyl-disc { animation-play-state: running; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .np-vinyl-disc::before {
-    content: ''; position: absolute; width: 40%; height: 40%; border-radius: 50%; top: 50%; left: 50%;
-    transform: translate(-50%, -50%); background: var(--vinyl-label, #333); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.22);
-  }
-  .np-vinyl-disc::after {
-    content: ''; position: absolute; width: 6%; height: 6%; border-radius: 50%; top: 50%; left: 50%;
-    transform: translate(-50%, -50%); background: #0a0a0a;
-  }
+  .now-playing.is-playing .np-vinyl-disc{animation-play-state:running}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .np-vinyl-disc::before{content:'';position:absolute;width:40%;height:40%;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--vinyl-label,var(--accent));box-shadow:inset 0 0 0 1px rgba(0,0,0,.22)}
+  .np-vinyl-disc::after{content:'';position:absolute;width:6%;height:6%;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:#0a0a0a}
 
-  .np-info { text-align: left; width: 100%; max-width: 320px; margin-top: 30px; }
-  .np-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
-  .np-title-row h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; color: #fff; }
-  .np-info p { font-size: 0.9rem; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .np-info{text-align:left;width:100%;max-width:320px;margin-top:30px}
+  .np-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+  .np-title-row h2{font-size:1.4rem;font-weight:800;letter-spacing:-.02em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;color:#fff}
+  .np-like-btn{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;padding:4px;transition:color .2s}
+  .np-like-btn:hover{color:#fff}
+  .np-info p{font-size:.9rem;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
 
   /* 歌词视图 */
-  .np-view-lyrics {
-    position: absolute; inset: 0; display: flex; flex-direction: column;
-    opacity: 0; pointer-events: none; transition: opacity 0.3s;
-    overflow-y: auto; scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
-    mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
-    padding: 40px 0;
+  .np-view-lyrics{
+    position:absolute;inset:60px 32px 140px;
+    display:flex;flex-direction:column;
+    opacity:0;pointer-events:none;
+    transition:opacity .3s;
+    overflow-y:auto;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+    mask-image:linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+    padding:40px 0;
   }
-  .np-view-lyrics.hidden { display: none; }
-  .np-view-lyrics.active { opacity: 1; pointer-events: auto; }
-  .np-view-lyrics::-webkit-scrollbar { display: none; }
+  .np-view-lyrics.hidden{display:none}
+  .np-view-lyrics.active{opacity:1;pointer-events:auto}
+  .np-view-lyrics::-webkit-scrollbar{display:none}
   
-  .lyric-line {
-    font-size: 1.1rem; line-height: 1.6; color: rgba(255,255,255,0.4);
-    text-align: center; padding: 14px 0; transition: color 0.3s, transform 0.3s, font-size 0.3s; font-weight: 600;
+  .lyric-line{
+    font-size:1.1rem;line-height:1.6;color:rgba(255,255,255,.4);
+    text-align:center;padding:14px 0;transition:color .3s,transform .3s,font-size .3s;
+    font-weight:600;
   }
-  .lyric-line.active { color: #fff; font-size: 1.25rem; font-weight: 800; transform: scale(1.02); }
-
-  /* 底部固定控制区 */
-  .np-footer {
-    position: relative; z-index: 10; padding: 0 32px 40px;
-    max-width: 600px; margin: 0 auto; width: 100%; flex-shrink: 0;
+  .lyric-line.active{
+    color:#fff;font-size:1.25rem;font-weight:800;transform:scale(1.02);
   }
 
-  /* 进度条 */
-  .np-progress-row { display: flex; align-items: center; gap: 12px; font-size: 0.75rem; color: rgba(255,255,255,0.5); font-variant-numeric: tabular-nums; margin-bottom: 24px; }
-  .np-bar { flex: 1; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.2); position: relative; cursor: pointer; overflow: hidden; }
-  .np-bar-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 999px; background: #fff; width: 0%; transition: width 0.1s linear; }
-  .np-bar-fill::after { content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 8px; height: 8px; border-radius: 50%; background: #fff; opacity: 0; transition: opacity 0.2s; }
-  .np-bar:hover .np-bar-fill::after { opacity: 1; }
+  /* 底部功能区 */
+  .np-footer{
+    position:relative;z-index:10;
+    padding:0 32px 30px;
+    max-width:600px;margin:0 auto;width:100%;
+  }
+  
+  /* 操作按钮行 */
+  .np-actions{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:24px;
+  }
+  .np-action-btn{
+    background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    font-size:.75rem;font-weight:600;transition:color .2s;padding:8px;
+  }
+  .np-action-btn:hover{color:#fff}
+  .np-action-btn.active{color:var(--accent)}
+  .np-action-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
-  /* 播放控制（完美等距布局） */
-  .np-controls { display: flex; align-items: center; justify-content: space-between; padding: 0 10px; }
-  .np-btn { background: none; border: none; color: rgba(255,255,255,0.8); cursor: pointer; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; transition: color 0.2s, transform 0.1s; }
-  .np-btn:hover { color: #fff; }
-  .np-btn:active { transform: scale(0.92); }
-  .np-btn.np-main { width: 64px; height: 64px; background: #fff; color: #1a1a1a; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
-  .np-btn.np-main:hover { opacity: 0.9; color: #1a1a1a; }
+  /* 进度条区域 */
+  .np-progress-row{display:flex;align-items:center;gap:12px;font-size:.75rem;color:rgba(255,255,255,.5);font-variant-numeric:tabular-nums;margin-bottom:16px}
+  .np-bar{flex:1;height:4px;border-radius:999px;background:rgba(255,255,255,.2);position:relative;cursor:pointer;overflow:hidden}
+  .np-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:#fff;width:0%;transition:width .1s linear}
+  .np-bar-fill::after { content:''; position:absolute; right:0; top:50%; transform:translateY(-50%); width:8px; height:8px; border-radius:50%; background:#fff; opacity:0; transition:opacity .2s; }
+  .np-bar:hover .np-bar-fill::after { opacity:1; }
 
-  /* 全屏频谱 */
-  .np-spectrum {
-    display: block; position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 160px;
-    pointer-events: none; z-index: 1;
-    -webkit-mask-image: linear-gradient(to top, black 20%, transparent 100%);
-    mask-image: linear-gradient(to top, black 20%, transparent 100%);
+  /* 播放控制 */
+  .np-controls{display:flex;align-items:center;justify-content:space-between}
+  .np-btn{
+    background:none;border:none;color:rgba(255,255,255,.8);cursor:pointer;
+    width:44px;height:44px;display:grid;place-items:center;border-radius:50%;
+    transition:color .2s,transform .1s;
+  }
+  .np-btn:hover{color:#fff}
+  .np-btn:active{transform:scale(.92)}
+  .np-btn.np-main{
+    width:64px;height:64px;
+    background:#fff;color:#1a1a1a;
+    box-shadow:0 8px 24px rgba(0,0,0,.3);
+  }
+  .np-btn.np-main:hover{opacity:.9;color:#1a1a1a}
+
+  /* 底部全宽频谱 */
+  .np-spectrum{
+    display:block;position:absolute;left:0;right:0;bottom:0;width:100%;height:160px;
+    pointer-events:none;z-index:1;
+    -webkit-mask-image:linear-gradient(to top, black 20%, transparent 100%);
+    mask-image:linear-gradient(to top, black 20%, transparent 100%);
   }
 
   .now-playing.closing .np-main,
   .now-playing.closing .np-footer,
   .now-playing.closing .np-header,
   .now-playing.closing .np-spectrum,
-  .now-playing.closing .np-backdrop { opacity: 0; transition: opacity 0.2s ease; }
+  .now-playing.closing .np-backdrop{opacity:0;transition:opacity .2s ease}
 
   /* ==================== 设置弹窗 ==================== */
-  .settings-modal { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: 24px; }
-  .settings-modal[hidden] { display: none; }
-  .settings-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); animation: fadeIn 0.2s ease; }
-  .settings-panel {
-    position: relative; width: min(500px, 100%); max-height: calc(100vh - 48px); overflow-y: auto;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 28px;
-    box-shadow: var(--shadow-md); animation: modalIn 0.3s ease;
+  .settings-modal{position:fixed;inset:0;z-index:400;display:grid;place-items:center;padding:24px}
+  .settings-modal[hidden]{display:none}
+  .settings-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45);animation:fadeIn .2s ease}
+  .settings-panel{position:relative;width:min(600px,100%);max-height:calc(100vh - 48px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-md);animation:modalIn .25s ease}
+  .settings-close{position:absolute;top:14px;right:16px;width:32px;height:32px;border-radius:50%;border:none;background:transparent;color:var(--text-3);font-size:1.4rem;line-height:1;cursor:pointer;transition:all .2s}
+  .settings-close:hover{background:var(--accent-soft);color:var(--text)}
+  .settings-panel h3{font-size:1.15rem;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+  .settings-sub{font-size:.82rem;color:var(--text-2);line-height:1.6;margin-bottom:18px}
+
+  .settings-tabs{display:flex;gap:2px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+  .settings-tab{padding:8px 14px;border:none;background:none;color:var(--text-2);font-size:.84rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .2s,border-color .2s;letter-spacing:.01em}
+  .settings-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .settings-tab:hover{color:var(--text)}
+
+  .settings-label{display:block;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:7px}
+  .settings-input{width:100%;font-family:var(--font);font-size:.84rem;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none;transition:border-color .2s}
+  .settings-input:focus{border-color:var(--accent)}
+  .settings-hint{font-size:.74rem;color:var(--text-3);margin-top:6px;line-height:1.5}
+  .settings-hint code{background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:.9em;font-family:var(--mono)}
+  .settings-current{font-size:.74rem;color:var(--text-3);margin-top:10px;padding:8px 12px;background:var(--accent-soft);border-radius:var(--radius-sm);line-height:1.6;word-break:break-all}
+  .settings-current strong{color:var(--accent);font-weight:700}
+  .settings-actions{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:24px;padding-top:18px;border-top:1px solid var(--border)}
+  .settings-status{font-size:.78rem;margin-right:auto;align-self:center;line-height:1.5}
+  .settings-status.ok{color:#22c55e}
+  .settings-status.err{color:#c0392b}
+
+  .doc-panel{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:18px 20px;max-height:calc(100vh - 280px);overflow-y:auto}
+  .doc-panel pre{margin:0;font-family:var(--mono);font-size:.76rem;line-height:1.7;white-space:pre-wrap;word-break:break-word;color:var(--text-2)}
+
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+
+  .state{padding:48px 0;text-align:center;color:var(--text-3);font-size:.9rem;line-height:1.9}
+  .state.error{color:#c0392b}
+  .state code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:5px;font-size:.85em;font-family:var(--mono)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 26px;border-radius:999px;font-size:.9rem;font-weight:600;transition:transform .15s,box-shadow .15s,background .2s;cursor:pointer;border:none}
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:var(--shadow-sm)}
+  .btn-primary:hover{box-shadow:var(--shadow-md)}
+  .btn-sm{padding:8px 18px;font-size:.84rem}
+  .site-footer{border-top:1px solid var(--border);padding:32px 0}
+  .footer-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:.8rem;color:var(--text-3)}
+  .footer-links{display:flex;gap:20px}
+  .footer-links a:hover{color:var(--text)}
+  .footer-links button{background:none;border:none;color:inherit;font-family:inherit;font-size:inherit;cursor:pointer;padding:0}
+  .footer-links button:hover{color:var(--text)}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+  @media (max-width:1024px){
+    .audio-layout{grid-template-columns:minmax(0,1fr) 280px;gap:28px}
+    .hero-cover{width:136px;height:136px}
   }
-  .settings-close { position: absolute; top: 16px; right: 20px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: var(--text-3); font-size: 1.4rem; transition: all 0.2s; }
-  .settings-close:hover { background: var(--border); color: var(--text); }
-  .settings-panel h3 { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 6px; }
-  .settings-sub { font-size: 0.85rem; color: var(--text-2); line-height: 1.6; margin-bottom: 20px; }
-  
-  .settings-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
-  .settings-tab { padding: 10px 16px; font-size: 0.85rem; font-weight: 600; color: var(--text-2); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; }
-  .settings-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-  .settings-tab:hover { color: var(--text); }
-
-  .settings-label { display: block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-3); margin-bottom: 8px; }
-  .settings-input { width: 100%; font-family: inherit; font-size: 0.85rem; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none; transition: border-color 0.2s; }
-  .settings-input:focus { border-color: var(--accent); }
-  .settings-hint { font-size: 0.75rem; color: var(--text-3); margin-top: 8px; line-height: 1.5; }
-  
-  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
-  .settings-row:last-child { border-bottom: none; }
-  .settings-row-title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
-  .settings-row-desc { font-size: 0.75rem; color: var(--text-3); margin-top: 4px; }
-  
-  .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); transition: .3s; border-radius: 24px; }
-  .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-  input:checked + .slider { background-color: var(--accent); }
-  input:checked + .slider:before { transform: translateX(20px); }
-
-  .settings-actions { display: flex; gap: 12px; justify-content: flex-end; align-items: center; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); }
-  .settings-status { font-size: 0.8rem; margin-right: auto; align-self: center; }
-  .settings-status.ok { color: #22c55e; }
-  .settings-status.err { color: #ef4444; }
-  
-  .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: 999px; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { transform: scale(1.02); opacity: 0.9; }
-
-  .doc-panel { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; max-height: 300px; overflow-y: auto; }
-  .doc-panel pre { margin: 0; font-family: ui-monospace, monospace; font-size: 0.8rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; color: var(--text-2); }
-
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes modalIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: none; } }
-
-  @media (max-width: 820px) {
-    .pb-cover { width: 40px; height: 40px; }
-    .pb-title { font-size: 0.85rem; }
-    .pb-artist { font-size: 0.75rem; }
-    .pb-controls { gap: 4px; }
-    .pb-play { width: 42px; height: 42px; }
+  @media (max-width:900px){
+    .audio-layout{grid-template-columns:1fr;gap:22px}
+    .sidebar{position:static;flex-direction:row;flex-wrap:wrap}
+    .sidebar .side-card{flex:1 1 260px}
+  }
+  @media (max-width:820px){
+    .player-bar{ padding: 8px 0 10px; }
+    .bar-spectrum{height:44px}
+    .pb-right{display:none}
     
-    .cover-stage { height: 280px; }
-    .cover-track { padding: 0 calc(50vw - 100px); gap: 16px;}
-    .cover-card { width: 200px; height: 200px; }
-    
-    .np-main { padding: 0 20px; }
-    .np-footer { padding: 0 20px 30px; }
-    .np-view-lyrics { inset: 0; }
-    .np-cover { width: min(280px, 75vw); height: min(280px, 75vw); }
-    .np-vinyl { width: min(260px, 70vw); height: min(260px, 70vw); margin-left: calc(min(260px, 70vw) * -0.55); }
-    .np-spectrum { height: 100px; }
-    
-    .np-btn { width: 44px; height: 44px; }
-    .np-btn.np-main { width: 60px; height: 60px; }
-    .np-title-row h2 { font-size: 1.2rem; }
+    .np-main{padding:0 20px}
+    .np-footer{padding:0 20px 20px}
+    .np-view-lyrics{inset:60px 20px 120px}
+    .np-cover{width:min(280px,75vw);height:min(280px,75vw)}
+    .np-vinyl{width:min(260px,70vw);height:min(260px,70vw);margin-left:calc(min(260px,70vw) * -0.55)}
+    .np-title-row h2{font-size:1.2rem}
+    .np-spectrum{height:100px}
+    .np-actions{padding:0 10px}
+    .np-actions .np-action-btn{font-size:.7rem}
+    .np-actions svg{width:20px;height:20px}
+    .np-header-title h3{font-size:.9rem}
+  }
+  @media (max-width:640px){
+    :root{--header-h:58px;--subnav-h:48px}
+    .subnav-meta{display:none}
+    .live-badge{display:none}
+    .site-brand{font-size:1.2rem}
+    .hero{flex-direction:column;align-items:stretch;gap:16px;padding:20px}
+    .hero-cover{width:100%;height:170px}
+    .hero h2{font-size:1.3rem}
+    .track-item{gap:12px;padding:10px}
+    .track-cover{width:44px;height:44px}
+    .track-title{font-size:.9rem}
+    .sidebar{flex-direction:column}
+    .sidebar .side-card{flex:1 1 auto}
+    .footer-inner{flex-direction:column;align-items:flex-start}
+    .settings-panel{padding:22px}
+    .np-close{top:14px;right:14px;width:38px;height:38px}
+    .np-spectrum{height:90px}
+    .doc-panel{max-height:calc(100vh - 240px);padding:14px 16px}
   }
 </style>
 </head>
 <body>
 
-<div class="app-wrapper">
-  
-  <header class="site-header">
-    <div class="site-brand">YAO<span>NET</span></div>
-    <button class="settings-btn" id="settings-btn" aria-label="设置">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
-  </header>
-
-  <nav class="subnav" id="tabs"></nav>
-
-  <main class="main-stage">
-    <div class="cover-stage" id="cover-stage">
-      <div class="cover-track" id="cover-track"></div>
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="#" class="site-brand">YAO<span>NET</span></a>
+    <div class="header-right">
+      <span class="live-badge"><span class="live-dot"></span><span id="live-text">待机</span></span>
+      <button class="settings-btn" id="settings-btn" type="button" aria-label="清单设置">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
     </div>
-  </main>
+  </div>
+</header>
 
+<div class="subnav">
+  <div class="container subnav-inner">
+    <div class="cat-tabs" id="tabs" aria-label="分类"></div>
+    <div class="subnav-meta" id="meta">正在加载清单…</div>
+  </div>
 </div>
 
-<!-- ==================== 底栏 ==================== -->
+<main class="container audio-layout">
+  <div class="main-col">
+    <section class="hero" id="hero" aria-live="polite">
+      <div class="state">正在读取清单…</div>
+    </section>
+
+    <div class="track-list" id="list" aria-busy="true">
+      <div class="state">正在读取清单…</div>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="side-card">
+      <h3>曲目速览</h3>
+      <div class="rank-list" id="rank-list">
+        <div class="state" style="padding:8px 0">暂无曲目</div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <h3>分类统计</h3>
+      <div class="source-list" id="source-list">
+        <div class="state" style="padding:8px 0">暂无分类数据</div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <h3>当前清单</h3>
+      <div class="current-manifest" id="current-manifest">未加载</div>
+    </div>
+  </aside>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <span>© YAONET · JSON 清单驱动的音频播放器</span>
+    <div class="footer-links">
+      <button type="button" id="footer-settings-link">清单设置</button>
+    </div>
+  </div>
+</footer>
+
+<!-- ==================== 底栏 (双行模式) ==================== -->
 <div class="player-bar" id="player-bar">
   <canvas class="bar-spectrum" id="bar-spectrum"></canvas>
-  <div class="pb-row-top">
-    <div class="pb-track">
-      <div class="pb-cover" id="pb-cover">
-        <img id="pb-cover-img" src="" alt="" style="display:none">
+  <div class="player-inner">
+    
+    <!-- 第一行：信息 + 控件 + 右侧操作 -->
+    <div class="pb-row-top">
+      <div class="pb-track">
+        <div class="pb-cover" id="pb-cover" role="button" tabindex="0" aria-label="展开全屏播放"></div>
+        <div class="pb-info">
+          <div class="pb-title" id="pb-title">未在播放</div>
+          <div class="pb-artist" id="pb-artist">请从曲目列表中选择</div>
+        </div>
       </div>
-      <div class="pb-info">
-        <div class="pb-title" id="pb-title">未在播放</div>
-        <div class="pb-artist" id="pb-artist">请选择曲目</div>
+
+      <div class="pb-controls">
+        <button class="pb-btn" id="btn-prev" type="button" aria-label="上一首">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12l-9-6z"/></svg>
+        </button>
+        <button class="pb-btn pb-play" id="btn-play" type="button" aria-label="播放">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button class="pb-btn" id="btn-next" type="button" aria-label="下一首">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l9 6-9 6z"/></svg>
+        </button>
+      </div>
+
+      <div class="pb-right">
+        <button class="pb-btn" id="btn-shuffle" type="button" aria-label="随机播放">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>
+            <polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
+            <line x1="4" y1="4" x2="9" y2="9"/>
+          </svg>
+        </button>
+        <div class="pb-vol">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+          <input type="range" id="vol" min="0" max="1" step="0.01" value="1" aria-label="音量">
+        </div>
       </div>
     </div>
-    <div class="pb-controls">
-      <button class="pb-btn" id="btn-prev" aria-label="上一首">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12l-9-6z"/></svg>
-      </button>
-      <button class="pb-btn pb-play" id="btn-play" aria-label="播放">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-      </button>
-      <button class="pb-btn" id="btn-next" aria-label="下一首">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l9 6-9 6z"/></svg>
-      </button>
+
+    <!-- 第二行：进度条 -->
+    <div class="pb-row-bottom">
+      <span id="cur-time">0:00</span>
+      <div class="pb-bar" id="seek-bar"><div class="pb-bar-fill" id="seek-fill"></div></div>
+      <span id="dur-time">0:00</span>
     </div>
-  </div>
-  <div class="pb-row-bottom">
-    <span id="cur-time">0:00</span>
-    <div class="pb-bar" id="seek-bar"><div class="pb-bar-fill" id="seek-fill"></div></div>
-    <span id="dur-time">0:00</span>
+
   </div>
 </div>
 
-<!-- ==================== 全屏 Now Playing ==================== -->
+<!-- ==================== 全屏 Now Playing (专业版) ==================== -->
 <div class="now-playing" id="now-playing" hidden>
   <div class="np-backdrop"></div>
+  
   <canvas class="np-spectrum" id="np-spectrum"></canvas>
 
-  <!-- 顶部导航：左侧空，右侧词+关闭 -->
+  <!-- 顶部导航 -->
   <div class="np-header">
     <div class="np-header-left">
-      <!-- 左上角留空，仅作占位以保证标题居中 -->
+      <button class="np-icon-btn" data-np-close aria-label="收起">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
     </div>
     <div class="np-header-title" id="np-header-title">
       <h3 id="np-header-name">—</h3>
       <p id="np-header-artist">—</p>
     </div>
     <div class="np-header-right">
-      <button class="np-icon-btn" id="np-toggle-lyrics" aria-label="切换歌词">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h6"/></svg>
-      </button>
       <button class="np-icon-btn" data-np-close aria-label="关闭">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
       </button>
     </div>
   </div>
@@ -471,6 +594,9 @@
       <div class="np-info">
         <div class="np-title-row">
           <h2 id="np-title">—</h2>
+          <button class="np-like-btn" aria-label="收藏">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </button>
         </div>
         <p id="np-artist">—</p>
       </div>
@@ -485,68 +611,93 @@
 
   </div>
 
-  <!-- 底部纯享控制区 -->
+  <!-- 底部控件区 -->
   <div class="np-footer">
+    
+    <!-- 操作按钮行 -->
+    <div class="np-actions">
+      <button class="np-action-btn" aria-label="下载">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>下载</span>
+      </button>
+      <button class="np-action-btn" id="np-toggle-lyrics" aria-label="歌词">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h6"/></svg>
+        <span>词</span>
+      </button>
+      <button class="np-action-btn" aria-label="评论">
+        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        <span>评论</span>
+      </button>
+      <button class="np-action-btn" aria-label="更多">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        <span>更多</span>
+      </button>
+    </div>
+
+    <!-- 进度条 -->
     <div class="np-progress-row">
       <span id="np-cur">0:00</span>
       <div class="np-bar" id="np-bar"><div class="np-bar-fill" id="np-fill"></div></div>
       <span id="np-dur">0:00</span>
     </div>
 
+    <!-- 播放控制 -->
     <div class="np-controls">
+      <button class="np-btn" id="np-mode" aria-label="播放模式">
+        <svg id="np-icon-mode-seq" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <svg id="np-icon-mode-one" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M4 6h16M4 12h16M4 18h16"/><path d="M12 8v8M10 10l2-2 2 2" stroke="var(--accent)"/></svg>
+        <svg id="np-icon-mode-shuffle" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+      </button>
+      
       <button class="np-btn" id="np-prev" aria-label="上一首">
         <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12l-9-6z"/></svg>
       </button>
+      
       <button class="np-btn np-main" id="np-play" aria-label="播放">
         <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
       </button>
+      
       <button class="np-btn" id="np-next" aria-label="下一首">
         <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l9 6-9 6z"/></svg>
+      </button>
+      
+      <button class="np-btn" aria-label="播放列表">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       </button>
     </div>
   </div>
 </div>
 
-<!-- 设置弹窗 -->
 <div class="settings-modal" id="settings-modal" hidden>
   <div class="settings-backdrop" data-settings-close></div>
-  <div class="settings-panel">
-    <button class="settings-close" type="button" data-settings-close>×</button>
-    <h3>设置</h3>
-    <p class="settings-sub">配置播放器外观与数据源。</p>
+  <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <button class="settings-close" type="button" data-settings-close aria-label="关闭">×</button>
+    <h3 id="settings-title">清单</h3>
+    <p class="settings-sub">播放器读取一个 JSON 清单文件来加载曲目。留空时自动使用当前站点的清单。</p>
 
     <div class="settings-tabs" id="settings-tabs">
-      <button class="settings-tab active" type="button" data-tab="config">常规配置</button>
-      <button class="settings-tab" type="button" data-tab="docs">格式说明</button>
+      <button class="settings-tab active" type="button" data-tab="config">清单配置</button>
+      <button class="settings-tab" type="button" data-tab="docs">数据格式</button>
     </div>
 
     <div class="settings-tab-content" data-content="config">
-      <div class="settings-row">
-        <div>
-          <div class="settings-row-title">深色模式</div>
-          <div class="settings-row-desc">切换应用主题外观</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="theme-toggle">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div style="margin-top: 24px;">
+      <div>
         <label class="settings-label" for="manifest-url">清单地址</label>
-        <input class="settings-input" id="manifest-url" type="text" placeholder="留空则尝试 ./manifest.json" value="">
-        <p class="settings-hint">若文件放在别处，填写完整 URL，并确保允许跨域访问。</p>
-        <div class="settings-current" id="settings-current" style="font-size: 0.75rem; color: var(--text-3); margin-top: 10px; padding: 10px; background: var(--bg); border-radius: 8px; word-break: break-all;"></div>
+        <input class="settings-input" id="manifest-url" type="text" placeholder="留空则自动使用当前站点" value="">
+        <p class="settings-hint">留空时依次尝试当前站点的 <code>./manifest.json</code> 与 <code>/manifest.json</code>。若文件放在别处，填写完整 URL，并确保该地址允许跨域访问。</p>
+        <div class="settings-current" id="settings-current"></div>
       </div>
-
       <div class="settings-actions">
         <span class="settings-status" id="settings-status"></span>
-        <button class="btn btn-primary" id="pf-save">保存并刷新</button>
+        <button class="btn btn-primary btn-sm" id="pf-test" type="button">测试读取</button>
+        <button class="btn btn-primary btn-sm" id="pf-save" type="button">保存并应用</button>
       </div>
     </div>
 
     <div class="settings-tab-content" data-content="docs" hidden>
-      <div class="doc-panel"><pre id="doc-pre"></pre></div>
+      <div class="doc-panel">
+        <pre id="doc-pre"></pre>
+      </div>
     </div>
   </div>
 </div>
@@ -557,149 +708,301 @@
 (function(){
   'use strict';
 
-  var DOC_TEXT = `manifest.json 数据格式
-──────────────────────────────────────────────
-{
-  "tracks": [
-    {
-      "id": "唯一标识",
-      "title": "曲目标题",
-      "artist": "艺术家",
-      "category": "分类",
-      "src": "audio/001.mp3",
-      "cover": "audio/001.jpg",
-      "lyrics": "audio/001.lrc"
-    }
-  ]
-}
+  var PALETTES = [
+    ['#2d5a4a','#7fbfa8'],
+    ['#4a3f5e','#9b8ec4'],
+    ['#5e3f3a','#c49b8e'],
+    ['#3a4a5e','#8ea9c4'],
+    ['#5e4a3a','#c4ab8e'],
+    ['#3a5e4a','#8ec4a9']
+  ];
 
-路径与歌词说明
-──────────────────────────────────────────────
-src、cover、lyrics 的路径基于清单地址解析。
-lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
+  var DOC_TEXT = [
+    'manifest.json 数据格式',
+    '──────────────────────────────────────────────',
+    '',
+    '播放器读取一个 JSON 文件来加载曲目列表。文件结构如下：',
+    '',
+    '{',
+    '  "tracks": [',
+    '    {',
+    '      "id": "唯一标识",',
+    '      "title": "曲目标题",',
+    '      "artist": "艺术家",',
+    '      "album": "专辑",',
+    '      "category": "分类",',
+    '      "duration": 240,',
+    '      "src": "audio/001.mp3",',
+    '      "cover": "audio/001.jpg",',
+    '      "lyrics": "audio/001.lrc"',
+    '    }',
+    '  ]',
+    '}',
+    '',
+    '',
+    '路径与歌词说明',
+    '──────────────────────────────────────────────',
+    '',
+    'src、cover、lyrics 的路径基于清单文件地址解析。',
+    '',
+    'lyrics 字段支持三种形式：',
+    '  1. 完整 URL 或相对路径，播放器会拉取该文件内容；',
+    '  2. 内联的 LRC 文本（例如包含 [00:12.34] 标记）；',
+    '  3. 纯文本，播放器会按行切分显示。'
+  ].join('\n');
 
-  // DOM
-  var tabsEl = document.getElementById('tabs');
-  var coverStage = document.getElementById('cover-stage');
-  var coverTrack = document.getElementById('cover-track');
-  
-  // 底栏
-  var pbCover = document.getElementById('pb-cover');
-  var pbCoverImg = document.getElementById('pb-cover-img');
-  var pbTitle = document.getElementById('pb-title');
-  var pbArtist = document.getElementById('pb-artist');
-  var btnPlay = document.getElementById('btn-play');
-  var btnPrev = document.getElementById('btn-prev');
-  var btnNext = document.getElementById('btn-next');
-  var seekBar = document.getElementById('seek-bar');
-  var seekFill = document.getElementById('seek-fill');
+  var listEl    = document.getElementById('list');
+  var heroEl    = document.getElementById('hero');
+  var tabsEl    = document.getElementById('tabs');
+  var metaEl    = document.getElementById('meta');
+  var rankEl    = document.getElementById('rank-list');
+  var sourceEl  = document.getElementById('source-list');
+  var currentManifestEl = document.getElementById('current-manifest');
+  var liveText  = document.getElementById('live-text');
+
+  var audio     = document.getElementById('player');
+  var playerBar = document.getElementById('player-bar');
+  var pbCover   = document.getElementById('pb-cover');
+  var pbTitle   = document.getElementById('pb-title');
+  var pbArtist  = document.getElementById('pb-artist');
+  var btnPlay   = document.getElementById('btn-play');
+  var btnPrev   = document.getElementById('btn-prev');
+  var btnNext   = document.getElementById('btn-next');
+  var btnShuffle= document.getElementById('btn-shuffle');
+  var seekBar   = document.getElementById('seek-bar');
+  var seekFill  = document.getElementById('seek-fill');
   var curTimeEl = document.getElementById('cur-time');
   var durTimeEl = document.getElementById('dur-time');
-  var audio = document.getElementById('player');
+  var volEl     = document.getElementById('vol');
 
-  // 全屏
-  var npModal = document.getElementById('now-playing');
-  var npBackdrop = document.querySelector('.np-backdrop');
-  var npCover = document.getElementById('np-cover');
+  // Now Playing DOM
+  var npModal     = document.getElementById('now-playing');
+  var npBackdrop  = document.querySelector('.np-backdrop');
+  var npCover     = document.getElementById('np-cover');
   var npVinylDisc = document.getElementById('np-vinyl-disc');
-  var npTitle = document.getElementById('np-title');
-  var npArtist = document.getElementById('np-artist');
-  var npHeaderName = document.getElementById('np-header-name');
-  var npHeaderArtist = document.getElementById('np-header-artist');
+  var npTitle     = document.getElementById('np-title');
+  var npArtist    = document.getElementById('np-artist');
   
-  var npLyricsContent = document.getElementById('np-lyrics-content');
-  var npViewCover = document.getElementById('np-view-cover');
-  var npViewLyrics = document.getElementById('np-view-lyrics');
-  var npToggleLyricsBtn = document.getElementById('np-toggle-lyrics');
-  
-  var npPlayBtn = document.getElementById('np-play');
-  var npPrevBtn = document.getElementById('np-prev');
-  var npNextBtn = document.getElementById('np-next');
-  var npBar = document.getElementById('np-bar');
-  var npFill = document.getElementById('np-fill');
-  var npCur = document.getElementById('np-cur');
-  var npDur = document.getElementById('np-dur');
+  var npHeaderTitle = document.getElementById('np-header-title');
+  var npHeaderName  = document.getElementById('np-header-name');
+  var npHeaderArt   = document.getElementById('np-header-artist');
 
-  // 设置
-  var settingsBtn = document.getElementById('settings-btn');
+  var npBar       = document.getElementById('np-bar');
+  var npFill      = document.getElementById('np-fill');
+  var npCur       = document.getElementById('np-cur');
+  var npDur       = document.getElementById('np-dur');
+  var npPlayBtn   = document.getElementById('np-play');
+  var npPrevBtn   = document.getElementById('np-prev');
+  var npNextBtn   = document.getElementById('np-next');
+  var npModeBtn   = document.getElementById('np-mode');
+  
+  // 全屏视图切换
+  var npViewCover = document.getElementById('np-view-cover');
+  var npViewLyrics= document.getElementById('np-view-lyrics');
+  var npLyricsCont= document.getElementById('np-lyrics-content');
+  var npToggleLyricsBtn = document.getElementById('np-toggle-lyrics');
+
+  // 播放模式图标
+  var modeIcons = {
+    bar: [document.getElementById('icon-mode-seq'), document.getElementById('icon-mode-one'), document.getElementById('icon-mode-shuffle')],
+    np: [document.getElementById('np-icon-mode-seq'), document.getElementById('np-icon-mode-one'), document.getElementById('np-icon-mode-shuffle')]
+  };
+
+  var settingsBtn   = document.getElementById('settings-btn');
   var settingsModal = document.getElementById('settings-modal');
-  var settingsTabs = document.getElementById('settings-tabs');
-  var settingsStatus = document.getElementById('settings-status');
+  var settingsTabs  = document.getElementById('settings-tabs');
+  var settingsStatus= document.getElementById('settings-status');
   var settingsCurrent = document.getElementById('settings-current');
   var manifestUrlEl = document.getElementById('manifest-url');
-  var pfSave = document.getElementById('pf-save');
-  var docPre = document.getElementById('doc-pre');
-  var themeToggle = document.getElementById('theme-toggle');
+  var pfTest        = document.getElementById('pf-test');
+  var pfSave        = document.getElementById('pf-save');
+  var docPre        = document.getElementById('doc-pre');
+  var footerSettingsLink = document.getElementById('footer-settings-link');
 
-  var ICON_PLAY_SM = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-  var ICON_PAUSE_SM = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
-  var ICON_PLAY_LG = '<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-  var ICON_PAUSE_LG = '<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+  var ICON_PLAY  = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+  var ICON_PLAY_L  = '<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE_L = '<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
 
   docPre.textContent = DOC_TEXT;
 
   var tracks = [], filtered = [], activeCat = '全部';
   var currentId = null, isPlaying = false, npOpen = false;
+  
+  // 0=顺序, 1=单曲, 2=随机
+  var playMode = 0; 
+
   var currentManifestUrl = '';
-  var currentLyrics = [], currentLyricIndex = -1;
+  
+  var currentLyrics = [];
+  var currentLyricIndex = -1;
 
   var SOURCE_KEY = 'yaonet_manifest_v3';
   var PLAYER_KEY = 'yaonet_player_state_v1';
-  var THEME_KEY = 'yaonet_theme';
+
   var sourceState = { manifestUrl: '' };
 
-  // ==================== 基础工具 ====================
   function esc(s){
-    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
   function fmt(s){
     if (!isFinite(s) || s < 0) return '0:00';
     var m = Math.floor(s / 60), sec = Math.floor(s % 60);
     return m + ':' + (sec < 10 ? '0' : '') + sec;
   }
+  function coverGradient(id){
+    var i = 0;
+    for (var k = 0; k < tracks.length; k++){ if (tracks[k].id === id){ i = k; break; } }
+    var p = PALETTES[i % PALETTES.length];
+    return 'linear-gradient(135deg,' + p[0] + ',' + p[1] + ')';
+  }
   function getTrack(id){
     for (var i = 0; i < tracks.length; i++){ if (tracks[i].id === id) return tracks[i]; }
     return null;
   }
+  function indexInFiltered(id){
+    for (var i = 0; i < filtered.length; i++){ if (filtered[i].id === id) return i; }
+    return -1;
+  }
   function absoluteUrl(url){
     if (!url) return '';
-    try { return new URL(url, location.href).href; } catch(e){ return url; }
+    try { return new URL(url, location.href).href; }
+    catch(e){ return url; }
   }
   function resolveAsset(url, base){
     if (!url) return '';
     if (/^[a-z][a-z0-9+.-]*:/i.test(url) || url.indexOf('//') === 0) return url;
-    try { return new URL(url, base).href; } catch(e){ return url; }
+    try { return new URL(url, base).href; }
+    catch(e){ return url; }
+  }
+  function isSameOriginUrl(url){
+    if (!url) return true;
+    try { return new URL(url, location.href).origin === location.origin; }
+    catch(e){ return false; }
   }
 
-  // ==================== 主题切换 ====================
-  function initTheme() {
-    var savedTheme = localStorage.getItem(THEME_KEY);
-    if (savedTheme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      themeToggle.checked = true;
-    } else if (savedTheme === 'light') {
-      document.documentElement.removeAttribute('data-theme');
-      themeToggle.checked = false;
+  // ==================== 歌词逻辑 ====================
+
+  function parseLRC(text) {
+    var lines = text.split('\n');
+    var result = [];
+    var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
+    
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      
+      var match = timeReg.exec(line);
+      if (match) {
+        var min = parseInt(match[1], 10);
+        var sec = parseInt(match[2], 10);
+        var ms = parseInt(match[3], 10);
+        if (match[3].length === 2) ms *= 10;
+        
+        var time = min * 60 + sec + ms / 1000;
+        var content = line.replace(timeReg, '').trim();
+        if (content) {
+          result.push({ time: time, text: content });
+        }
+      } else {
+        if (!result.length) {
+           return text.split('\n').filter(l=>l.trim()).map(l => ({ time: -1, text: l.trim() }));
+        }
+      }
+    }
+    return result;
+  }
+
+  function loadLyrics(track) {
+    currentLyrics = [];
+    currentLyricIndex = -1;
+    npLyricsCont.innerHTML = '<div class="lyric-line active">暂无歌词</div>';
+    
+    if (!track || !track.lyrics) return;
+    
+    var lStr = track.lyrics;
+    if (lStr.indexOf('[') === 0 || lStr.indexOf('\n') !== -1 || lStr.length > 150) {
+      renderLyrics(parseLRC(lStr));
     } else {
-      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (prefersDark) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        themeToggle.checked = true;
+      fetch(lStr)
+        .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+        .then(text => {
+          if (currentId === track.id) renderLyrics(parseLRC(text));
+        })
+        .catch(e => {
+          if (currentId === track.id) npLyricsCont.innerHTML = '<div class="lyric-line active">歌词加载失败或跨域限制</div>';
+        });
+    }
+  }
+
+  function renderLyrics(lyrics) {
+    currentLyrics = lyrics;
+    currentLyricIndex = -1;
+    if (!lyrics.length) {
+      npLyricsCont.innerHTML = '<div class="lyric-line active">纯音乐，请欣赏</div>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < lyrics.length; i++) {
+      html += '<div class="lyric-line" data-index="' + i + '">' + esc(lyrics[i].text) + '</div>';
+    }
+    npLyricsCont.innerHTML = html;
+    updateLyricsHighlight(audio.currentTime);
+  }
+
+  function updateLyricsHighlight(currentTime) {
+    if (!currentLyrics.length) return;
+    if (currentLyrics[0].time === -1) return;
+
+    var idx = -1;
+    for (var i = 0; i < currentLyrics.length; i++) {
+      if (currentTime >= currentLyrics[i].time) {
+        idx = i;
+      } else {
+        break;
+      }
+    }
+
+    if (idx !== currentLyricIndex) {
+      currentLyricIndex = idx;
+      var lines = npLyricsCont.querySelectorAll('.lyric-line');
+      for (var j = 0; j < lines.length; j++) {
+        if (j === idx) lines[j].classList.add('active');
+        else lines[j].classList.remove('active');
+      }
+      
+      if (idx >= 0 && lines[idx]) {
+        var lineEl = lines[idx];
+        var top = lineEl.offsetTop - npViewLyrics.offsetHeight / 2 + lineEl.offsetHeight / 2;
+        npViewLyrics.scrollTo({ top: top, behavior: 'smooth' });
       }
     }
   }
-  themeToggle.addEventListener('change', function() {
-    if (this.checked) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      localStorage.setItem(THEME_KEY, 'dark');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem(THEME_KEY, 'light');
-    }
-  });
 
-  // ==================== 取色逻辑 ====================
-  var spectrumColor = [45, 90, 74], spectrumColorLight = [127, 191, 168];
+  function toggleLyricsView() {
+    if (npViewCover.classList.contains('hidden')) {
+      // 切回封面
+      npViewLyrics.classList.remove('active');
+      setTimeout(() => npViewLyrics.classList.add('hidden'), 300);
+      npViewCover.classList.remove('hidden');
+      npToggleLyricsBtn.classList.remove('active');
+      npHeaderTitle.classList.remove('show');
+    } else {
+      // 切到歌词
+      npViewCover.classList.add('hidden');
+      npViewLyrics.classList.remove('hidden');
+      void npViewLyrics.offsetWidth; // 强制重绘
+      npViewLyrics.classList.add('active');
+      npToggleLyricsBtn.classList.add('active');
+      npHeaderTitle.classList.add('show');
+      
+      if (isPlaying) updateLyricsHighlight(audio.currentTime);
+    }
+  }
+
+  // ==================== 动态背景取色 ====================
 
   function lightenColor(rgb, amount){
     return [Math.min(255, rgb[0] + amount), Math.min(255, rgb[1] + amount), Math.min(255, rgb[2] + amount)];
@@ -711,9 +1014,11 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     img.crossOrigin = 'anonymous';
     img.onload = function(){
       try {
-        var c = document.createElement('canvas'), size = 40;
+        var c = document.createElement('canvas');
+        var size = 40;
         c.width = size; c.height = size;
-        var cx = c.getContext('2d'); cx.drawImage(img, 0, 0, size, size);
+        var cx = c.getContext('2d');
+        cx.drawImage(img, 0, 0, size, size);
         var data = cx.getImageData(0, 0, size, size).data;
         var r=0,g=0,b=0,n=0;
         for (var i=0;i<data.length;i+=4){
@@ -732,6 +1037,9 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     img.onerror = function(){ callback(null); };
     img.src = url;
   }
+
+  var spectrumColor = [45, 90, 74];
+  var spectrumColorLight = [127, 191, 168];
 
   function applyColors(r, g, b) {
     spectrumColor = [r, g, b];
@@ -753,258 +1061,13 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     });
   }
 
-  // ==================== 歌词逻辑 ====================
-  function parseLRC(text) {
-    var lines = text.split('\n'), result = [];
-    var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i].trim();
-      if (!line) continue;
-      var match = timeReg.exec(line);
-      if (match) {
-        var min = parseInt(match[1], 10), sec = parseInt(match[2], 10), ms = parseInt(match[3], 10);
-        if (match[3].length === 2) ms *= 10;
-        var time = min * 60 + sec + ms / 1000;
-        var content = line.replace(timeReg, '').trim();
-        if (content) result.push({ time: time, text: content });
-      } else {
-        if (!result.length) return text.split('\n').filter(l=>l.trim()).map(l => ({ time: -1, text: l.trim() }));
-      }
-    }
-    return result;
-  }
-
-  function loadLyrics(track) {
-    currentLyrics = []; currentLyricIndex = -1;
-    npLyricsContent.innerHTML = '<div class="lyric-line active">暂无歌词</div>';
-    if (!track || !track.lyrics) return;
-    
-    var lStr = track.lyrics;
-    if (lStr.indexOf('[') === 0 || lStr.indexOf('\n') !== -1 || lStr.length > 150) {
-      renderLyrics(parseLRC(lStr));
-    } else {
-      fetch(lStr).then(r => { if (!r.ok) throw new Error(); return r.text(); }).then(text => {
-        if (currentId === track.id) renderLyrics(parseLRC(text));
-      }).catch(e => {
-        if (currentId === track.id) npLyricsContent.innerHTML = '<div class="lyric-line active">歌词加载失败或跨域</div>';
-      });
-    }
-  }
-
-  function renderLyrics(lyrics) {
-    currentLyrics = lyrics; currentLyricIndex = -1;
-    if (!lyrics.length) { npLyricsContent.innerHTML = '<div class="lyric-line active">纯音乐，请欣赏</div>'; return; }
-    npLyricsContent.innerHTML = lyrics.map((l, i) => `<div class="lyric-line" data-index="${i}">${esc(l.text)}</div>`).join('');
-    updateLyricsHighlight(audio.currentTime);
-  }
-
-  function updateLyricsHighlight(currentTime) {
-    if (!currentLyrics.length || currentLyrics[0].time === -1) return;
-    var idx = -1;
-    for (var i = 0; i < currentLyrics.length; i++) {
-      if (currentTime >= currentLyrics[i].time) idx = i; else break;
-    }
-    if (idx !== currentLyricIndex) {
-      currentLyricIndex = idx;
-      var lines = npLyricsContent.querySelectorAll('.lyric-line');
-      for (var j = 0; j < lines.length; j++) {
-        if (j === idx) lines[j].classList.add('active'); else lines[j].classList.remove('active');
-      }
-      if (idx >= 0 && lines[idx]) {
-        var top = lines[idx].offsetTop - npViewLyrics.offsetHeight / 2 + lines[idx].offsetHeight / 2;
-        npViewLyrics.scrollTo({ top: top, behavior: 'smooth' });
-      }
-    }
-  }
-
-  // ==================== 3D 无限唱片墙 ====================
-  
-  function renderTabs() {
-    var set = {};
-    tracks.forEach(t => { if (t.category) set[t.category] = true; });
-    var cats = ['全部', ...Object.keys(set)];
-    if (!cats.includes(activeCat)) activeCat = '全部';
-    tabsEl.innerHTML = cats.map(c => `<button class="cat-tab ${c === activeCat ? 'active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
-  }
-
-  function filterAndRenderCards() {
-    filtered = activeCat === '全部' ? tracks : tracks.filter(t => t.category === activeCat);
-    
-    if (!filtered.length) {
-      coverTrack.innerHTML = '<div style="color:var(--text-3);padding:20px;width:100%;text-align:center;">暂无曲目</div>';
-      return;
-    }
-
-    // 复制 3 份数据，实现无限滑
-    var renderList = [...filtered, ...filtered, ...filtered];
-    var html = renderList.map((t, i) => {
-      var cImg = t.cover ? `<img src="${esc(t.cover)}" onerror="this.style.display='none'">` : '';
-      var cls = t.cover ? 'cover-card' : 'cover-card no-cover';
-      return `<div class="${cls}" data-id="${esc(t.id)}">${cImg || '♪'}</div>`;
-    }).join('');
-    
-    coverTrack.innerHTML = html;
-    
-    requestAnimationFrame(() => {
-      var cards = coverTrack.querySelectorAll('.cover-card');
-      if (cards.length === 0) return;
-      var cardW = cards[0].offsetWidth;
-      var gap = parseInt(window.getComputedStyle(coverTrack).gap) || 24;
-      var singleGroupWidth = (cardW + gap) * filtered.length;
-      
-      coverTrack.style.scrollBehavior = 'auto';
-      coverTrack.scrollLeft = singleGroupWidth; // 定位到中间
-      coverTrack.style.scrollBehavior = '';
-      
-      update3D();
-    });
-  }
-
-  var scrollTimer = null;
-  function update3D() {
-    var cards = coverTrack.querySelectorAll('.cover-card');
-    if (!cards.length) return;
-    
-    var stageCenter = window.innerWidth / 2;
-    var closestCard = null, minDist = Infinity;
-
-    cards.forEach(card => {
-      var rect = card.getBoundingClientRect();
-      var cardCenter = rect.left + rect.width / 2;
-      var distance = stageCenter - cardCenter;
-      var absDist = Math.abs(distance);
-      
-      if (absDist > window.innerWidth) {
-        card.style.opacity = '0';
-        card.style.pointerEvents = 'none';
-        return;
-      }
-
-      var rotateY = (distance / stageCenter) * 45; // 最大旋转角度
-      rotateY = Math.max(-45, Math.min(45, rotateY));
-      
-      var scale = 1 - (absDist / stageCenter) * 0.35;
-      scale = Math.max(0.6, scale);
-      
-      var opacity = 1 - (absDist / stageCenter) * 0.6;
-      opacity = Math.max(0.2, opacity);
-      
-      var zIndex = 100 - Math.floor(absDist / 10);
-
-      card.style.transform = `perspective(1000px) rotateY(${rotateY}deg) scale(${scale})`;
-      card.style.opacity = opacity;
-      card.style.zIndex = zIndex;
-      card.style.pointerEvents = 'auto';
-      
-      if (absDist < minDist) {
-        minDist = absDist;
-        closestCard = card;
-      }
-    });
-
-    if (closestCard) {
-      cards.forEach(c => c.classList.remove('is-centered'));
-      closestCard.classList.add('is-centered');
-    }
-  }
-
-  coverTrack.addEventListener('scroll', () => {
-    var cards = coverTrack.querySelectorAll('.cover-card');
-    if (cards.length === 0) return;
-    
-    var cardW = cards[0].offsetWidth;
-    var gap = parseInt(window.getComputedStyle(coverTrack).gap) || 24;
-    var singleGroupWidth = (cardW + gap) * filtered.length;
-
-    // 无缝循环
-    if (coverTrack.scrollLeft < singleGroupWidth * 0.5) {
-      coverTrack.style.scrollBehavior = 'auto';
-      coverTrack.scrollLeft += singleGroupWidth;
-      coverTrack.style.scrollBehavior = '';
-    } else if (coverTrack.scrollLeft > singleGroupWidth * 2.5) {
-      coverTrack.style.scrollBehavior = 'auto';
-      coverTrack.scrollLeft -= singleGroupWidth;
-      coverTrack.style.scrollBehavior = '';
-    }
-
-    requestAnimationFrame(update3D);
-    
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(snapToCenter, 200);
-  });
-
-  function snapToCenter() {
-    var cards = coverTrack.querySelectorAll('.cover-card');
-    var stageCenter = window.innerWidth / 2;
-    var closestCard = null, minDist = Infinity;
-
-    cards.forEach(card => {
-      var rect = card.getBoundingClientRect();
-      var cardCenter = rect.left + rect.width / 2;
-      var distance = stageCenter - cardCenter;
-      if (Math.abs(distance) < minDist) {
-        minDist = Math.abs(distance);
-        closestCard = card;
-      }
-    });
-
-    if (closestCard) {
-      var rect = closestCard.getBoundingClientRect();
-      var cardCenter = rect.left + rect.width / 2;
-      var scrollAmount = stageCenter - cardCenter;
-      coverTrack.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-      
-      var id = closestCard.getAttribute('data-id');
-      if (id && id !== currentId) {
-        playTrack(id, false);
-      }
-    }
-  }
-
-  // 拖拽支持
-  let isDown = false, startX, scrollLeftStart;
-  coverStage.addEventListener('mousedown', (e) => {
-    isDown = true;
-    startX = e.pageX - coverStage.offsetLeft;
-    scrollLeftStart = coverTrack.scrollLeft;
-    coverTrack.style.scrollBehavior = 'auto';
-  });
-  window.addEventListener('mouseleave', () => isDown = false);
-  window.addEventListener('mouseup', () => {
-    if (isDown) {
-      isDown = false;
-      coverTrack.style.scrollBehavior = '';
-      snapToCenter();
-    }
-  });
-  window.addEventListener('mousemove', (e) => {
-    if (!isDown) return;
-    e.preventDefault();
-    const x = e.pageX - coverStage.offsetLeft;
-    coverTrack.scrollLeft = scrollLeftStart - (x - startX) * 2;
-  });
-
-  coverStage.addEventListener('wheel', (e) => {
-    if (e.deltaY !== 0) {
-      e.preventDefault();
-      coverTrack.scrollLeft += e.deltaY;
-    }
-  }, { passive: false });
-
-  coverTrack.addEventListener('click', (e) => {
-    if (Math.abs(scrollLeftStart - coverTrack.scrollLeft) > 10) return; // 拖拽误触
-    var card = e.target.closest('.cover-card');
-    if (card) {
-      var id = card.getAttribute('data-id');
-      if (id) { playTrack(id); snapToCenter(); }
-    }
-  });
-
   // ==================== 数据加载 ====================
+
   function buildCandidates(rawInput){
     var input = (rawInput || '').trim();
     if (input) return [input];
-    var list = ['./manifest.json', '/manifest.json'], seen = {}, out = [];
+    var list = ['./manifest.json', '/manifest.json'];
+    var seen = {}, out = [];
     for (var i = 0; i < list.length; i++){
       var abs = absoluteUrl(list[i]);
       if (!seen[abs]){ seen[abs] = true; out.push(list[i]); }
@@ -1014,363 +1077,735 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
 
   function fetchManifest(url){
     return fetch(url, { cache: 'no-cache' })
-      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-      .then(text => {
-        var data = JSON.parse(text);
+      .then(function(r){
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function(text){
+        var data;
+        try { data = JSON.parse(text); }
+        catch(e){ throw new Error('不是有效的 JSON'); }
         if (!data || !Array.isArray(data.tracks)) throw new Error('缺少 tracks 数组');
         return data;
       });
   }
 
   function fetchFirstAvailable(candidates){
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject){
       var i = 0, errors = [];
       function next(){
-        if (i >= candidates.length) return reject(new Error(errors[errors.length - 1] || '未找到清单'));
+        if (i >= candidates.length){
+          reject(new Error(errors.length ? errors[errors.length - 1] : '未找到清单'));
+          return;
+        }
         var url = candidates[i++];
-        fetchManifest(url).then(data => resolve({ url, data })).catch(e => { errors.push(absoluteUrl(url) + '：' + e.message); next(); });
+        fetchManifest(url)
+          .then(function(data){ resolve({ url: url, data: data }); })
+          .catch(function(e){
+            errors.push(absoluteUrl(url) + '：' + e.message);
+            next();
+          });
       }
       next();
     });
   }
 
+  function updateManifestHints(){
+    var raw = (sourceState.manifestUrl || '').trim();
+    var resolved = raw ? absoluteUrl(raw) : (currentManifestUrl ? absoluteUrl(currentManifestUrl) : absoluteUrl('./manifest.json'));
+    var label = raw ? '自定义清单' : (currentManifestUrl ? '自动（当前站点）' : '自动（当前站点，待验证）');
+    
+    if (settingsCurrent) settingsCurrent.innerHTML = '<strong>' + esc(label) + '</strong><br>' + esc(resolved);
+    if (currentManifestEl) {
+      if (currentManifestUrl) currentManifestEl.innerHTML = '<strong>' + esc(label) + '</strong><br>' + esc(absoluteUrl(currentManifestUrl));
+      else currentManifestEl.textContent = '未加载';
+    }
+  }
+
   function normalizeSongs(rawSongs, baseUrl){
-    return rawSongs.filter(s => s && typeof s === 'object').map((s, i) => ({
-      id: s.id || ('s' + i), title: s.title || '未命名', artist: s.artist || '',
-      album: s.album || '', category: s.category || '未分类',
-      src: resolveAsset(s.src, baseUrl), cover: resolveAsset(s.cover, baseUrl), lyrics: resolveAsset(s.lyrics, baseUrl)
-    }));
+    var out = [];
+    for (var i = 0; i < rawSongs.length; i++){
+      var s = rawSongs[i];
+      if (!s || typeof s !== 'object') continue;
+      out.push({
+        id: s.id || ('s' + i),
+        title: s.title || '未命名',
+        artist: s.artist || '',
+        album: s.album || '',
+        category: s.category || '未分类',
+        desc: s.desc || '',
+        duration: s.duration || 0,
+        src: resolveAsset(s.src, baseUrl),
+        cover: resolveAsset(s.cover, baseUrl),
+        lyrics: resolveAsset(s.lyrics, baseUrl)
+      });
+    }
+    return out;
   }
 
   function refreshLibrary(){
+    listEl.setAttribute('aria-busy', 'true');
+    metaEl.textContent = '正在加载清单…';
+
     fetchFirstAvailable(buildCandidates(sourceState.manifestUrl))
-      .then(res => {
+      .then(function(res){
         currentManifestUrl = res.url;
         tracks = normalizeSongs(res.data.tracks, absoluteUrl(res.url));
+        activeCat = '全部';
+        computeFiltered();
         renderTabs();
-        filterAndRenderCards();
+        if (!getTrack(currentId)) currentId = filtered[0] ? filtered[0].id : (tracks[0] ? tracks[0].id : null);
         
+        renderHero();
+        renderList();
+        renderRank();
+        renderSources();
+        updateMeta();
+        updatePlayerBar();
+        syncPlayUI();
+        updateManifestHints();
         applyRestoredPlayerState();
-        if (!currentId && filtered.length) {
-          currentId = filtered[0].id;
-          updatePlayerUI(getTrack(currentId));
-        }
+        prepareSpectrum();
       })
-      .catch(e => {
-        coverTrack.innerHTML = `<div style="color:#ef4444;padding:20px;width:100%;text-align:center;">加载失败: ${esc(e.message)}</div>`;
+      .catch(function(e){
+        currentManifestUrl = '';
+        tracks = []; filtered = []; currentId = null; activeCat = '全部';
+        var hint = sourceState.manifestUrl ? ('无法读取清单：' + e.message) : '当前站点未找到可用的 manifest.json。';
+        metaEl.textContent = '清单加载失败';
+        heroEl.innerHTML = '<div class="state">' + esc(hint) + '</div>';
+        listEl.innerHTML = '<div class="state">' + esc(hint) + '</div>';
+        listEl.setAttribute('aria-busy', 'false');
+        rankEl.innerHTML = ''; sourceEl.innerHTML = '';
+        renderTabs(); updatePlayerBar(); syncPlayUI(); updateManifestHints();
       });
   }
 
-  // ==================== 播放与 UI 同步 ====================
-  function updatePlayerUI(t) {
-    if (!t) {
-      pbTitle.textContent = '未在播放'; pbArtist.textContent = '请选择曲目';
-      pbCoverImg.style.display = 'none'; pbCover.style.background = 'var(--border)';
+  function computeFiltered(){
+    if (activeCat === '全部'){ filtered = tracks.slice(); }
+    else {
+      filtered = [];
+      for (var i = 0; i < tracks.length; i++){
+        if (tracks[i].category === activeCat) filtered.push(tracks[i]);
+      }
+    }
+  }
+
+  function renderTabs(){
+    var set = {};
+    for (var i = 0; i < tracks.length; i++){ if (tracks[i].category) set[tracks[i].category] = true; }
+    var cats = ['全部'];
+    for (var k in set){ if (Object.prototype.hasOwnProperty.call(set,k)) cats.push(k); }
+    if (cats.indexOf(activeCat) === -1) activeCat = '全部';
+    tabsEl.innerHTML = cats.map(function(c){
+      return '<button type="button" class="cat-tab' + (c === activeCat ? ' active' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>';
+    }).join('');
+  }
+
+  function coverLayer(t){
+    var bg = 'style="background:' + coverGradient(t.id) + '"';
+    if (!t.cover) return { bg: bg, img: '' };
+    return { bg: bg, img: '<img src="' + esc(t.cover) + '" alt="" loading="lazy" onerror="this.remove()">' };
+  }
+
+  function renderHero(){
+    var t = getTrack(currentId) || filtered[0] || tracks[0];
+    if (!t){ heroEl.innerHTML = '<div class="state">清单中暂无曲目。</div>'; return; }
+    
+    var playingThis = (t.id === currentId && isPlaying);
+    var status = (t.id === currentId) ? (isPlaying ? '正在播放' : '已暂停') : '未播放';
+    var c = coverLayer(t);
+
+    heroEl.innerHTML =
+      '<div class="hero-cover" ' + c.bg + '>' + c.img + '</div>' +
+      '<div class="hero-body">' +
+        '<div class="hero-meta">' +
+          '<span class="tag">' + esc(t.category || '') + '</span>' +
+          '<span>' + esc(t.artist || '') + '</span>' +
+          (t.album ? '<span>·</span><span>' + esc(t.album) + '</span>' : '') +
+        '</div>' +
+        '<h2>' + esc(t.title) + '</h2>' +
+        (t.desc ? '<p>' + esc(t.desc) + '</p>' : '') +
+        '<div class="hero-actions">' +
+          '<button class="btn btn-primary btn-sm hero-play" type="button" data-id="' + esc(t.id) + '">' +
+            (playingThis ? '暂停' : '播放') +
+          '</button>' +
+          '<span class="hero-status">' + status + '</span>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderList(){
+    if (!filtered.length){
+      listEl.innerHTML = '<div class="state">当前分类暂无曲目。</div>';
+      listEl.setAttribute('aria-busy', 'false');
       return;
     }
-    pbTitle.textContent = t.title;
-    pbArtist.textContent = t.artist || '未知艺术家';
-    if (t.cover) {
-      pbCoverImg.src = t.cover; pbCoverImg.style.display = 'block'; pbCover.style.background = 'transparent';
-    } else {
-      pbCoverImg.style.display = 'none'; pbCover.style.background = 'var(--border)';
+    var html = '';
+    for (var i = 0; i < filtered.length; i++){
+      var t = filtered[i], active = (t.id === currentId), c = coverLayer(t);
+      html +=
+        '<button class="track-item' + (active ? ' active' : '') + (active && isPlaying ? ' playing' : '') + '" type="button" data-id="' + esc(t.id) + '">' +
+          '<span class="track-cover" ' + c.bg + '>' + c.img + '</span>' +
+          '<span class="track-body">' +
+            '<span class="track-title">' + esc(t.title) + '</span>' +
+            '<span class="track-meta">' + esc(t.artist || '') + (t.album ? ' · ' + esc(t.album) : '') + '</span>' +
+          '</span>' +
+          (active ? '<span class="eq"><i></i><i></i><i></i></span>' : '') +
+          (t.category ? '<span class="tag">' + esc(t.category) + '</span>' : '') +
+        '</button>';
     }
-    
-    // 同步全屏 Now Playing
-    npCover.style.background = t.cover ? `url("${t.cover}") center/cover` : 'var(--accent-soft)';
-    if (!t.cover) npCover.innerHTML = '<span style="font-size:4rem;color:rgba(255,255,255,0.2)">♪</span>'; else npCover.innerHTML = '';
-    npTitle.textContent = t.title;
-    npArtist.textContent = (t.artist || '') + (t.album ? ' · ' + t.album : '');
-    npHeaderName.textContent = t.title;
-    npHeaderArtist.textContent = t.artist || '';
-
-    updateTrackColors(t);
-    loadLyrics(t);
+    listEl.innerHTML = html;
+    listEl.setAttribute('aria-busy', 'false');
   }
 
-  function playTrack(id, forcePlay) {
-    var t = getTrack(id);
-    if (!t || !t.src) return;
-    if (id === currentId && !forcePlay) { togglePlay(); return; }
-
-    currentId = id;
-    audio.src = t.src;
-    audio.play().catch(e => console.warn('播放失败', e));
-    
-    updatePlayerUI(t);
-    savePlayerState();
+  function renderRank(){
+    if (!tracks.length){ rankEl.innerHTML = ''; return; }
+    var sorted = tracks.slice().sort(function(a, b){ return (b.title || '').localeCompare(a.title || ''); }).slice(0, 6);
+    rankEl.innerHTML = sorted.map(function(t, i){
+      return '<button class="rank-item" type="button" data-id="' + esc(t.id) + '">' +
+          '<span class="rank-num">' + (i + 1 < 10 ? '0' : '') + (i + 1) + '</span>' +
+          '<span class="rank-name">' + esc(t.title) + '</span>' +
+          '<span class="rank-count">' + esc(t.category || '') + '</span>' +
+        '</button>';
+    }).join('');
   }
 
-  function togglePlay() {
-    if (!currentId) { if (filtered.length) playTrack(filtered[0].id); return; }
-    if (audio.paused) { ensureAudioContext(); audio.play().catch(e => console.warn(e)); } 
-    else { audio.pause(); }
-  }
-
-  function nextTrack() {
-    if (!filtered.length) return;
-    var i = filtered.findIndex(t => t.id === currentId);
-    var n = (i + 1) % filtered.length;
-    if (i === -1) n = 0;
-    playTrack(filtered[n].id, filtered.length === 1);
-  }
-
-  function prevTrack() {
-    if (!filtered.length) return;
-    var i = filtered.findIndex(t => t.id === currentId);
-    var n = (i - 1 + filtered.length) % filtered.length;
-    if (i === -1) n = 0;
-    playTrack(filtered[n].id, filtered.length === 1);
-  }
-
-  function updateProgress() {
-    var d = audio.duration, c = audio.currentTime;
-    if (isFinite(d) && d > 0) {
-      seekFill.style.width = (c / d * 100) + '%';
-      npFill.style.width = (c / d * 100) + '%';
+  function renderSources(){
+    if (!tracks.length){ sourceEl.innerHTML = ''; return; }
+    var map = {};
+    for (var i = 0; i < tracks.length; i++){
+      var c = tracks[i].category || '未分类';
+      map[c] = (map[c] || 0) + 1;
     }
-    curTimeEl.textContent = fmt(c); npCur.textContent = fmt(c);
-    if (isFinite(d)) { durTimeEl.textContent = fmt(d); npDur.textContent = fmt(d); }
-    updateLyricsHighlight(c);
+    var rows = [];
+    for (var k in map){ if (Object.prototype.hasOwnProperty.call(map, k)) rows.push([k, map[k]]); }
+    rows.sort(function(a, b){ return b[1] - a[1]; });
+    sourceEl.innerHTML = rows.map(function(r){
+      return '<div class="source-row"><span>' + esc(r[0]) + '</span><span>' + r[1] + '</span></div>';
+    }).join('');
   }
 
-  function syncPlayUI() {
-    btnPlay.innerHTML = isPlaying ? ICON_PAUSE_SM : ICON_PLAY_SM;
-    npPlayBtn.innerHTML = isPlaying ? ICON_PAUSE_LG : ICON_PLAY_LG;
+  function updateMeta(){
+    metaEl.textContent = tracks.length ? (tracks.length + ' 首 · ' + filtered.length + ' 条当前分类') : '清单中暂无曲目';
+  }
+
+  // ==================== 播放控制 ====================
+
+  function updateModeUI() {
+    modeIcons.bar[0].style.display = playMode === 0 ? 'block' : 'none';
+    modeIcons.bar[1].style.display = playMode === 1 ? 'block' : 'none';
+    modeIcons.bar[2].style.display = playMode === 2 ? 'block' : 'none';
+    btnShuffle.classList.toggle('on', playMode !== 0);
+    
+    modeIcons.np[0].style.display = playMode === 0 ? 'block' : 'none';
+    modeIcons.np[1].style.display = playMode === 1 ? 'block' : 'none';
+    modeIcons.np[2].style.display = playMode === 2 ? 'block' : 'none';
+  }
+
+  function toggleMode() {
+    playMode = (playMode + 1) % 3;
+    updateModeUI();
+    savePlayerState(true);
+  }
+
+  function syncPlayUI(){
+    btnPlay.innerHTML = isPlaying ? ICON_PAUSE : ICON_PLAY;
+    btnPlay.setAttribute('aria-label', isPlaying ? '暂停' : '播放');
+    var t = getTrack(currentId);
+    if (isPlaying && t) liveText.textContent = '正在播放 · ' + t.title;
+    else if (t) liveText.textContent = '已暂停 · ' + t.title;
+    else liveText.textContent = '待机';
+    renderHero();
+    renderList();
+    syncNowPlaying();
+  }
+
+  function syncNowPlaying(){
+    if (!npOpen) return;
+    var t = getTrack(currentId);
+    if (t) {
+      updateNowPlayingContent(t);
+      updateTrackColors(t);
+    }
+    npPlayBtn.innerHTML = isPlaying ? ICON_PAUSE_L : ICON_PLAY_L;
+    npPlayBtn.setAttribute('aria-label', isPlaying ? '暂停' : '播放');
     npModal.classList.toggle('is-playing', isPlaying);
   }
 
-  // ==================== 持久化 ====================
-  function savePlayerState() {
-    try { localStorage.setItem(PLAYER_KEY, JSON.stringify({ trackId: currentId || null, currentTime: audio.currentTime || 0 })); } catch(e){}
+  function updatePlayerBar(){
+    var t = getTrack(currentId);
+    if (!t){
+      pbTitle.textContent = '未在播放'; pbArtist.textContent = '请选择曲目';
+      pbCover.style.background = 'var(--accent-soft)'; pbCover.innerHTML = '';
+      return;
+    }
+    pbTitle.textContent = t.title;
+    pbArtist.textContent = (t.artist || '') + (t.album ? ' · ' + t.album : '');
+    pbCover.style.background = coverGradient(t.id);
+    if (t.cover) pbCover.innerHTML = '<img src="' + esc(t.cover) + '" alt="" onerror="this.remove()">';
+    else pbCover.innerHTML = '';
   }
 
-  function applyRestoredPlayerState() {
-    try {
-      var raw = localStorage.getItem(PLAYER_KEY);
-      if (!raw) return;
-      var state = JSON.parse(raw);
-      if (state.trackId) {
-        var t = getTrack(state.trackId);
-        if (t) {
-          currentId = t.id;
-          updatePlayerUI(t);
-          audio.src = t.src;
-          var seekTo = state.currentTime || 0;
-          audio.addEventListener('loadedmetadata', function onMeta(){
-            audio.removeEventListener('loadedmetadata', onMeta);
-            if (seekTo > 0 && seekTo < audio.duration) audio.currentTime = seekTo;
-          });
-        }
-      }
-    } catch(e){}
+  function updateProgress(){
+    var d = audio.duration, c = audio.currentTime;
+    if (isFinite(d) && d > 0){
+      seekFill.style.width = (c / d * 100) + '%';
+      npFill.style.width = (c / d * 100) + '%';
+    }
+    curTimeEl.textContent = fmt(c);
+    npCur.textContent = fmt(c);
+    if (isFinite(d)){
+      durTimeEl.textContent = fmt(d);
+      npDur.textContent = fmt(d);
+    }
+    updateLyricsHighlight(c);
   }
 
-  // ==================== 频谱 ====================
-  var audioCtx = null, analyser = null, freqData = null;
-  var barSpectrumCanvas = document.getElementById('bar-spectrum'), barSpectrumCtx = barSpectrumCanvas.getContext('2d');
-  var npSpectrumCanvas = document.getElementById('np-spectrum'), npSpectrumCtx = npSpectrumCanvas.getContext('2d');
-  var spectrumRAF = null;
+  function playTrack(id, forcePlay){
+    var t = getTrack(id);
+    if (!t || !t.src) return;
+    if (id === currentId && !forcePlay){ togglePlay(); return; }
 
-  function setupAnalyser() {
-    if (audioCtx) return;
+    currentId = id;
+    audio.src = t.src;
+    audio.play().catch(function(e){ console.warn('播放失败', e); });
+    updatePlayerBar();
+    syncPlayUI();
+    loadLyrics(t);
+    savePlayerState(true);
+  }
+
+  function togglePlay(){
+    if (!currentId){ if (filtered.length) playTrack(filtered[0].id); return; }
+    var t = getTrack(currentId);
+    if (audio.paused) {
+      if (!audio.src && t && t.src) audio.src = t.src;
+      ensureAudioContext();
+      audio.play().catch(function(e){ console.warn('播放失败', e); });
+    } else {
+      audio.pause();
+    }
+  }
+
+  function nextTrack(){
+    if (!filtered.length) return;
+    var i = indexInFiltered(currentId), n;
+    if (playMode === 2) n = Math.floor(Math.random() * filtered.length);
+    else { n = (i + 1) % filtered.length; if (i === -1) n = 0; }
+    playTrack(filtered[n].id, filtered.length === 1);
+  }
+
+  function prevTrack(){
+    if (!filtered.length) return;
+    var i = indexInFiltered(currentId), n;
+    if (playMode === 2) n = Math.floor(Math.random() * filtered.length);
+    else { n = (i - 1 + filtered.length) % filtered.length; if (i === -1) n = 0; }
+    playTrack(filtered[n].id, filtered.length === 1);
+  }
+
+  // ==================== Now Playing UI ====================
+
+  function updateNowPlayingContent(t){
+    if (!t) return;
+    npCover.style.background = coverGradient(t.id);
+    if (t.cover) npCover.innerHTML = '<img src="' + esc(t.cover) + '" alt="" onerror="this.remove()">';
+    else npCover.innerHTML = '';
+    
+    npTitle.textContent = t.title || '—';
+    npArtist.innerHTML = esc(t.artist || '') + (t.album ? ' <span style="opacity:0.5;font-size:.8em">· ' + esc(t.album) + '</span>' : '');
+    
+    npHeaderName.textContent = t.title || '—';
+    npHeaderArt.textContent = t.artist || '—';
+  }
+
+  function openNowPlaying(){
+    if (npOpen) return;
+    var t = getTrack(currentId);
+    if (!t){
+      var first = filtered[0] || tracks[0];
+      if (!first) return;
+      currentId = first.id; t = first;
+      updatePlayerBar(); syncPlayUI();
+    }
+
+    updateNowPlayingContent(t);
+    updateTrackColors(t);
+    loadLyrics(t);
+    
+    // 重置视图状态
+    npViewCover.classList.remove('hidden');
+    npViewLyrics.classList.add('hidden');
+    npViewLyrics.classList.remove('active');
+    npToggleLyricsBtn.classList.remove('active');
+    npHeaderTitle.classList.remove('show');
+
+    npOpen = true;
+    npModal.hidden = false;
+    npModal.classList.remove('closing');
+    document.body.style.overflow = 'hidden';
+    syncNowPlaying();
+
+    if (isPlaying) startSpectrum();
+    
+    // 封面位移动画
+    var firstRect = pbCover.getBoundingClientRect();
+    var lastRect  = npCover.getBoundingClientRect();
+
+    if (firstRect.width && lastRect.width){
+      var dx = firstRect.left - lastRect.left;
+      var dy = firstRect.top - lastRect.top;
+      var sx = firstRect.width / lastRect.width;
+      var sy = firstRect.height / lastRect.height;
+
+      npCover.style.transformOrigin = 'top left';
+      var anim = npCover.animate([
+        { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')' },
+        { transform: 'translate(0,0) scale(1,1)' }
+      ], { duration: 540, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+      anim.onfinish = function(){ npCover.style.transformOrigin = ''; anim.cancel(); };
+    }
+  }
+
+  function closeNowPlaying(){
+    if (!npOpen) return;
+    npOpen = false;
+    npModal.classList.add('closing');
+
+    function finish(){
+      npModal.hidden = true;
+      npModal.classList.remove('closing', 'is-playing');
+      document.body.style.overflow = '';
+      npCover.style.transformOrigin = '';
+    }
+
+    var firstRect = pbCover.getBoundingClientRect();
+    var lastRect  = npCover.getBoundingClientRect();
+
+    if (firstRect.width && lastRect.width && !npViewCover.classList.contains('hidden')){
+      var dx = firstRect.left - lastRect.left;
+      var dy = firstRect.top - lastRect.top;
+      var sx = firstRect.width / lastRect.width;
+      var sy = firstRect.height / lastRect.height;
+
+      npCover.style.transformOrigin = 'top left';
+      var anim = npCover.animate([
+        { transform: 'translate(0,0) scale(1,1)' },
+        { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')' }
+      ], { duration: 400, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
+      anim.onfinish = function(){ finish(); anim.cancel(); };
+    } else {
+      finish();
+    }
+  }
+
+  // ==================== 频谱动画 ====================
+
+  var audioCtx = null, analyser = null, freqData = null, sourceNode = null;
+  var hasRealAudioData = false, audioCtxFailed = false;
+  var npSpectrumCanvas = document.getElementById('np-spectrum');
+  var barSpectrumCanvas = document.getElementById('bar-spectrum');
+  var npSpectrumCtx = npSpectrumCanvas.getContext('2d');
+  var barSpectrumCtx = barSpectrumCanvas.getContext('2d');
+  var spectrumRAF = null, spectrumActive = false;
+
+  function setupAnalyser(){
+    if (audioCtx || audioCtxFailed) return;
     var AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
+    if (!AC){ audioCtxFailed = true; return; }
     try {
-      audioCtx = new AC(); analyser = audioCtx.createAnalyser(); analyser.fftSize = 256;
-      var sourceNode = audioCtx.createMediaElementSource(audio);
-      sourceNode.connect(analyser); analyser.connect(audioCtx.destination);
+      audioCtx = new AC();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.82;
+      sourceNode = audioCtx.createMediaElementSource(audio);
+      sourceNode.connect(analyser);
+      analyser.connect(audioCtx.destination);
       freqData = new Uint8Array(analyser.frequencyBinCount);
-    } catch(e){}
+    } catch(e){ audioCtx = null; audioCtxFailed = true; }
   }
 
-  function ensureAudioContext() {
-    if (!audioCtx) setupAnalyser();
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  function ensureAudioContext(){
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(function(){});
+  }
+
+  function prepareSpectrum(){
+    if (audioCtx || audioCtxFailed || !tracks.length) return;
+    var allSame = true;
+    for (var i = 0; i < tracks.length; i++){
+      if (tracks[i].src && !isSameOriginUrl(tracks[i].src)){ allSame = false; break; }
+    }
+    if (allSame) setupAnalyser();
   }
 
   function generateFakeData(t){
     var arr = new Uint8Array(64);
     for (var i=0;i<64;i++){
-      var v = Math.sin(t*0.003 + i*0.2) * Math.cos(t*0.001 - i*0.1);
-      arr[i] = Math.floor((v + 1) / 2 * 255);
+      var phase = i * 0.21;
+      var v1 = Math.sin(t*0.0023 + phase) * 0.5 + 0.5;
+      var v2 = Math.sin(t*0.0007 + phase*0.5) * 0.3 + 0.7;
+      var v3 = Math.sin(t*0.0051 + phase*1.7) * 0.15 + 0.85;
+      var freq = 1 - (i/64) * 0.4;
+      arr[i] = Math.floor(v1 * v2 * v3 * freq * 255);
     }
     return arr;
   }
 
-  function drawSpectrum(canvas, ctx, isFullScreen) {
+  function drawSpectrum(canvas, ctx, data, isFullScreen){
     var dpr = window.devicePixelRatio || 1;
     var w = canvas.clientWidth, h = canvas.clientHeight;
     if (!w || !h) return;
-    if (canvas.width !== w*dpr) { canvas.width = w*dpr; canvas.height = h*dpr; }
+
+    if (canvas.width !== Math.round(w*dpr) || canvas.height !== Math.round(h*dpr)){
+      canvas.width = Math.round(w*dpr);
+      canvas.height = Math.round(h*dpr);
+    }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
-    var data = generateFakeData(Date.now());
-    if (analyser && freqData) {
-      analyser.getByteFrequencyData(freqData);
-      if (freqData.reduce((a,b)=>a+b, 0) > 100) { data = freqData; }
-    }
+    if (!data || !data.length) return;
 
     var usable = Math.floor(data.length * 0.7);
     var targetBarW = isFullScreen ? 8 : 5;
     var bars = Math.floor(w / targetBarW);
     if (usable < bars) bars = usable;
     if (bars <= 0) return;
-    
+
     var step = Math.max(1, Math.floor(usable / bars));
     var actualBarW = w / bars;
     var gap = Math.max(1, actualBarW * 0.25);
-    
+    var bw = actualBarW - gap;
+
     var grad = ctx.createLinearGradient(0, h, 0, 0);
-    grad.addColorStop(0, `rgba(${spectrumColor.join(',')}, 0.65)`);
-    grad.addColorStop(1, `rgba(${spectrumColorLight.join(',')}, 0.25)`);
+    grad.addColorStop(0, 'rgba(' + spectrumColor.join(',') + ',0.65)');
+    grad.addColorStop(1, 'rgba(' + spectrumColorLight.join(',') + ',0.25)');
     ctx.fillStyle = grad;
 
     for (var i=0;i<bars;i++){
-      var sum=0, cnt=0;
-      for (var j=0;j<step;j++){ if(i*step+j < usable){ sum+=data[i*step+j]; cnt++; } }
-      var v = cnt ? sum/cnt/255 : 0;
-      var bh = Math.max(2, Math.pow(v, 0.35) * h * 1.25);
-      ctx.fillRect(i*actualBarW + gap/2, h - bh, actualBarW - gap, bh);
+      var sum = 0, cnt = 0;
+      for (var j=0;j<step;j++){
+        var idx = i*step + j;
+        if (idx < usable){ sum += data[idx]; cnt++; }
+      }
+      var v = cnt ? sum / cnt / 255 : 0;
+      v = Math.pow(v, 0.35);
+      var bh = Math.max(2, Math.min(h * 1.15, v * h * 1.25));
+      ctx.fillRect(i*actualBarW + gap/2, h - bh, bw, bh);
     }
   }
 
-  function loopSpectrum() {
-    if (npOpen) drawSpectrum(npSpectrumCanvas, npSpectrumCtx, true);
-    else drawSpectrum(barSpectrumCanvas, barSpectrumCtx, false);
-    if (isPlaying) spectrumRAF = requestAnimationFrame(loopSpectrum);
+  function spectrumLoop(t){
+    if (!spectrumActive) return;
+
+    var data;
+    if (analyser && freqData){
+      analyser.getByteFrequencyData(freqData);
+      var sum = 0;
+      for (var i=0;i<freqData.length;i++) sum += freqData[i];
+      if (sum > 100) hasRealAudioData = true;
+    }
+
+    if (hasRealAudioData && freqData) data = freqData;
+    else data = generateFakeData(t);
+
+    if (npOpen) drawSpectrum(npSpectrumCanvas, npSpectrumCtx, data, true);
+    else drawSpectrum(barSpectrumCanvas, barSpectrumCtx, data, false);
+
+    spectrumRAF = requestAnimationFrame(spectrumLoop);
   }
 
-  // ==================== 事件绑定 ====================
-  audio.addEventListener('play', () => { isPlaying = true; ensureAudioContext(); syncPlayUI(); cancelAnimationFrame(spectrumRAF); loopSpectrum(); });
-  audio.addEventListener('pause', () => { isPlaying = false; syncPlayUI(); savePlayerState(); });
-  audio.addEventListener('ended', nextTrack);
-  audio.addEventListener('timeupdate', updateProgress);
+  function startSpectrum(){
+    if (!spectrumActive) { spectrumActive = true; spectrumRAF = requestAnimationFrame(spectrumLoop); }
+  }
+
+  function stopSpectrum(){
+    if (spectrumActive) { spectrumActive = false; if (spectrumRAF) cancelAnimationFrame(spectrumRAF); spectrumRAF = null; }
+  }
+
+  // ==================== 设置及事件 ====================
+
+  function loadSourceState(){
+    try {
+      var raw = localStorage.getItem(SOURCE_KEY);
+      if (raw) {
+        var obj = JSON.parse(raw);
+        if (obj && typeof obj.manifestUrl === 'string') sourceState.manifestUrl = obj.manifestUrl;
+      }
+    } catch(e){}
+    manifestUrlEl.value = sourceState.manifestUrl || '';
+    updateManifestHints();
+  }
+
+  function saveSourceState(){ try{ localStorage.setItem(SOURCE_KEY, JSON.stringify(sourceState)); }catch(e){} }
+  
+  var lastSaveTime = 0;
+  function savePlayerState(immediate){
+    var now = Date.now();
+    if (!immediate && now - lastSaveTime < 3000) return;
+    lastSaveTime = now;
+    var state = {
+      trackId: currentId || null,
+      currentTime: (audio && isFinite(audio.currentTime)) ? audio.currentTime : 0,
+      volume: audio ? audio.volume : 1,
+      playMode: playMode,
+      savedAt: now
+    };
+    try{ localStorage.setItem(PLAYER_KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  function applyRestoredPlayerState(){
+    try {
+      var raw = localStorage.getItem(PLAYER_KEY);
+      if (!raw) return;
+      var state = JSON.parse(raw);
+      
+      if (typeof state.volume === 'number' && isFinite(state.volume)){
+        audio.volume = Math.max(0, Math.min(1, state.volume));
+        volEl.value = audio.volume;
+      }
+      if (typeof state.playMode === 'number') {
+        playMode = state.playMode;
+        updateModeUI();
+      }
+      if (!state.trackId) return;
+      
+      var t = getTrack(state.trackId);
+      if (!t || !t.src) return;
+
+      currentId = t.id;
+      updatePlayerBar(); renderHero(); renderList();
+      liveText.textContent = '已暂停 · ' + t.title;
+
+      audio.src = t.src;
+      var seekTo = state.currentTime || 0;
+      var onMeta = function(){
+        audio.removeEventListener('loadedmetadata', onMeta);
+        if (seekTo > 0 && isFinite(audio.duration) && seekTo < audio.duration - 0.5){
+          try{ audio.currentTime = seekTo; }catch(e){}
+          curTimeEl.textContent = fmt(seekTo);
+          seekFill.style.width = (seekTo / audio.duration * 100) + '%';
+        }
+      };
+      audio.addEventListener('loadedmetadata', onMeta);
+    } catch(e){}
+  }
+
+  function switchSettingsTab(name){
+    var tabs = settingsTabs.querySelectorAll('.settings-tab');
+    for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', tabs[i].getAttribute('data-tab') === name);
+    var contents = settingsModal.querySelectorAll('.settings-tab-content');
+    for (var j = 0; j < contents.length; j++) contents[j].hidden = contents[j].getAttribute('data-content') !== name;
+  }
+
+  function testManifest(){
+    var raw = manifestUrlEl.value.trim();
+    settingsStatus.className = 'settings-status'; settingsStatus.textContent = '正在读取…';
+    var tried = [], i = 0;
+    
+    function next(){
+      if (i >= buildCandidates(raw).length){
+        settingsStatus.className = 'settings-status err';
+        settingsStatus.innerHTML = '读取失败。已尝试：<br>' + tried.map(esc).join('<br>');
+        return;
+      }
+      var url = buildCandidates(raw)[i++];
+      fetchManifest(url).then(function(data){
+        var n = data.tracks.length, withCover = 0;
+        for (var k = 0; k < n; k++) if (data.tracks[k].cover) withCover++;
+        settingsStatus.className = 'settings-status ok';
+        settingsStatus.textContent = '成功（' + absoluteUrl(url) + '），共 ' + n + ' 首，' + withCover + ' 首带封面。';
+      }).catch(function(e){ tried.push(absoluteUrl(url) + '：' + e.message); next(); });
+    }
+    next();
+  }
+
+  function saveManifest(){
+    var raw = manifestUrlEl.value.trim();
+    settingsStatus.className = 'settings-status'; settingsStatus.textContent = '正在验证…';
+    var i = 0;
+    
+    function commit(ok, msg){
+      sourceState.manifestUrl = raw; saveSourceState();
+      try{ localStorage.removeItem(PLAYER_KEY); }catch(e){}
+      currentId = null; audio.pause(); audio.removeAttribute('src');
+      settingsStatus.className = 'settings-status ' + (ok ? 'ok' : 'err'); settingsStatus.textContent = msg;
+      updateManifestHints();
+      setTimeout(function(){ settingsModal.hidden = true; if(!npOpen) document.body.style.overflow = ''; refreshLibrary(); }, ok ? 500 : 900);
+    }
+    
+    function next(){
+      if (i >= buildCandidates(raw).length){ commit(false, '验证失败，已保存配置。'); return; }
+      fetchManifest(buildCandidates(raw)[i++]).then(function(){ commit(true, '验证通过，已保存。'); }).catch(next);
+    }
+    next();
+  }
+
+  function adjustBodyPadding(){
+    document.body.style.paddingBottom = (playerBar.offsetHeight + 24) + 'px';
+  }
+
+  // 绑定事件
+  audio.addEventListener('play', function(){ isPlaying = true; ensureAudioContext(); startSpectrum(); syncPlayUI(); });
+  audio.addEventListener('pause', function(){ isPlaying = false; stopSpectrum(); syncPlayUI(); savePlayerState(true); });
+  audio.addEventListener('ended', function(){ savePlayerState(true); nextTrack(); });
+  audio.addEventListener('loadedmetadata', function(){ durTimeEl.textContent = fmt(audio.duration); });
+  audio.addEventListener('timeupdate', function(){ updateProgress(); savePlayerState(false); });
 
   btnPlay.addEventListener('click', togglePlay);
   btnPrev.addEventListener('click', prevTrack);
   btnNext.addEventListener('click', nextTrack);
+  btnShuffle.addEventListener('click', toggleMode);
+  seekBar.addEventListener('click', function(e){
+    var rect = seekBar.getBoundingClientRect(), ratio = (e.clientX - rect.left) / rect.width;
+    if (isFinite(audio.duration) && audio.duration > 0) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
+  });
+  volEl.addEventListener('input', function(){ audio.volume = parseFloat(volEl.value); savePlayerState(true); });
+
+  pbCover.addEventListener('click', openNowPlaying);
+  pbCover.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openNowPlaying(); } });
+
+  npModal.addEventListener('click', function(e){ if (e.target.closest('[data-np-close]')) closeNowPlaying(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && npOpen) closeNowPlaying(); else if (e.key === 'Escape' && !settingsModal.hidden) { settingsModal.hidden = true; if(!npOpen) document.body.style.overflow = ''; } });
   npPlayBtn.addEventListener('click', togglePlay);
   npPrevBtn.addEventListener('click', prevTrack);
   npNextBtn.addEventListener('click', nextTrack);
+  npModeBtn.addEventListener('click', toggleMode);
+  npToggleLyricsBtn.addEventListener('click', toggleLyricsView);
 
-  // 右上角的歌词切换按钮
-  npToggleLyricsBtn.addEventListener('click', () => {
-    if (npViewCover.classList.contains('hidden')) {
-      // 切回封面
-      npViewLyrics.classList.remove('active');
-      setTimeout(() => npViewLyrics.classList.add('hidden'), 300);
-      npViewCover.classList.remove('hidden');
-      npToggleLyricsBtn.classList.remove('active');
-    } else {
-      // 切到歌词
-      npViewCover.classList.add('hidden');
-      npViewLyrics.classList.remove('hidden');
-      void npViewLyrics.offsetWidth;
-      npViewLyrics.classList.add('active');
-      npToggleLyricsBtn.classList.add('active');
-      if (isPlaying) updateLyricsHighlight(audio.currentTime);
-    }
-  });
-
-  seekBar.addEventListener('click', e => {
-    var rect = seekBar.getBoundingClientRect(), ratio = (e.clientX - rect.left) / rect.width;
-    if (isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
-  });
-  npBar.addEventListener('click', e => {
+  // 全屏进度条点击
+  npBar.addEventListener('click', function(e) {
     var rect = npBar.getBoundingClientRect(), ratio = (e.clientX - rect.left) / rect.width;
-    if (isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
+    if (isFinite(audio.duration) && audio.duration > 0) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
   });
 
-  tabsEl.addEventListener('click', e => {
-    var btn = e.target.closest('.cat-tab');
-    if (!btn) return;
-    activeCat = btn.getAttribute('data-cat');
-    renderTabs();
-    filterAndRenderCards();
+  tabsEl.addEventListener('click', function(e){
+    var btn = e.target.closest('.cat-tab'); if (!btn) return;
+    activeCat = btn.getAttribute('data-cat'); computeFiltered(); renderTabs(); renderList(); renderHero(); updateMeta();
   });
+  listEl.addEventListener('click', function(e){ var item = e.target.closest('.track-item'); if (item) playTrack(item.getAttribute('data-id')); });
+  heroEl.addEventListener('click', function(e){ var btn = e.target.closest('.hero-play'); if (btn) { var id = btn.getAttribute('data-id'); if (id === currentId) togglePlay(); else playTrack(id); } });
+  rankEl.addEventListener('click', function(e){ var btn = e.target.closest('.rank-item'); if (btn) playTrack(btn.getAttribute('data-id')); });
 
-  pbCover.addEventListener('click', () => {
-    if (!currentId) return;
-    npOpen = true;
-    npModal.hidden = false;
-    npModal.classList.remove('closing');
-    document.body.style.overflow = 'hidden';
-    
-    // 重置为封面视图
-    npViewCover.classList.remove('hidden');
-    npViewLyrics.classList.add('hidden');
-    npViewLyrics.classList.remove('active');
-    npToggleLyricsBtn.classList.remove('active');
-
-    if (isPlaying) { cancelAnimationFrame(spectrumRAF); loopSpectrum(); }
+  settingsBtn.addEventListener('click', function(){
+    manifestUrlEl.value = sourceState.manifestUrl || '';
+    switchSettingsTab('config'); settingsStatus.textContent = ''; updateManifestHints();
+    settingsModal.hidden = false; document.body.style.overflow = 'hidden';
   });
+  footerSettingsLink.addEventListener('click', function(e){ e.preventDefault(); settingsBtn.click(); });
+  settingsModal.addEventListener('click', function(e){ if (e.target.closest('[data-settings-close]')) { settingsModal.hidden = true; if(!npOpen) document.body.style.overflow = ''; } });
+  settingsTabs.addEventListener('click', function(e){ var btn = e.target.closest('.settings-tab'); if (btn) switchSettingsTab(btn.getAttribute('data-tab')); });
+  pfTest.addEventListener('click', testManifest);
+  pfSave.addEventListener('click', saveManifest);
+  manifestUrlEl.addEventListener('keydown', function(e){ if (e.key === 'Enter') testManifest(); });
 
-  npModal.addEventListener('click', e => {
-    if (e.target.closest('[data-np-close]')) {
-      npOpen = false;
-      npModal.classList.add('closing');
-      setTimeout(() => {
-        npModal.hidden = true;
-        npModal.classList.remove('closing');
-        document.body.style.overflow = '';
-      }, 200);
-    }
-  });
-  
-  document.addEventListener('keydown', e => {
-    if (e.target.tagName === 'INPUT') return;
-    if (e.key === 'Escape') {
-      if(npOpen) {
-        npOpen = false;
-        npModal.classList.add('closing');
-        setTimeout(() => { npModal.hidden = true; npModal.classList.remove('closing'); document.body.style.overflow = ''; }, 200);
-      } else if (!settingsModal.hidden) settingsModal.hidden = true;
-    }
-    if (e.key === ' ') { e.preventDefault(); togglePlay(); }
-    if (e.key === 'ArrowRight' && !npOpen) nextTrack();
-    if (e.key === 'ArrowLeft' && !npOpen) prevTrack();
-  });
-
-  // 设置面板
-  function updateManifestHints(){
-    var raw = (sourceState.manifestUrl || '').trim();
-    var resolved = raw ? absoluteUrl(raw) : absoluteUrl('./manifest.json');
-    settingsCurrent.innerHTML = `<strong>当前生效地址</strong>${resolved}`;
-  }
-
-  settingsBtn.addEventListener('click', () => { settingsModal.hidden = false; settingsStatus.textContent = ''; updateManifestHints(); });
-  settingsModal.addEventListener('click', e => { if(e.target.closest('[data-settings-close]')) settingsModal.hidden = true; });
-  settingsTabs.addEventListener('click', e => {
-    var btn = e.target.closest('.settings-tab'); if(!btn) return;
-    var name = btn.getAttribute('data-tab');
-    settingsModal.querySelectorAll('.settings-tab').forEach(b => b.classList.toggle('active', b === btn));
-    settingsModal.querySelectorAll('.settings-tab-content').forEach(c => c.hidden = c.getAttribute('data-content') !== name);
-  });
-
-  pfSave.addEventListener('click', () => {
-    sourceState.manifestUrl = manifestUrlEl.value.trim();
-    try { localStorage.setItem(SOURCE_KEY, JSON.stringify(sourceState)); } catch(e){}
-    settingsModal.hidden = true;
-    refreshLibrary();
-  });
-
-  window.addEventListener('resize', () => {
-    update3D();
-    drawSpectrum(npSpectrumCanvas, npSpectrumCtx, true);
-    drawSpectrum(barSpectrumCanvas, barSpectrumCtx, false);
-  });
+  window.addEventListener('beforeunload', function(){ savePlayerState(true); });
+  window.addEventListener('pagehide', function(){ savePlayerState(true); });
+  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') savePlayerState(true); });
+  window.addEventListener('resize', adjustBodyPadding);
 
   // 启动
-  initTheme();
-  try {
-    var raw = localStorage.getItem(SOURCE_KEY);
-    if (raw) sourceState = JSON.parse(raw);
-  } catch(e){}
-  manifestUrlEl.value = sourceState.manifestUrl || '';
-  
+  loadSourceState();
   refreshLibrary();
+  adjustBodyPadding();
 })();
 </script>
 </body>
