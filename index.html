@@ -66,7 +66,7 @@
   .cat-tab.active { background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
   [data-theme="dark"] .cat-tab.active { color: #0f0f0f; }
 
-  /* ==================== 3D 无限唱片墙 ==================== */
+  /* ==================== 3D Cover Flow 唱片墙 ==================== */
   .main-stage {
     flex: 1; display: flex; align-items: center; justify-content: center;
     overflow: hidden; position: relative;
@@ -74,7 +74,7 @@
 
   .cover-stage {
     width: 100%; height: 360px; position: relative;
-    perspective: 1200px; /* 全局透视景深 */
+    perspective: 1000px; /* 景深透视 */
     display: flex; align-items: center;
     cursor: grab;
   }
@@ -82,14 +82,13 @@
 
   .cover-track {
     display: flex; align-items: center; gap: 24px;
-    padding: 0 calc(50vw - 120px);
+    padding: 0 calc(50vw - 120px); /* 预留左右空间 */
     height: 100%; overflow-x: auto; scrollbar-width: none;
     transform-style: preserve-3d;
     scroll-snap-type: none; 
   }
   .cover-track::-webkit-scrollbar { display: none; }
 
-  /* 卡片改为自适应宽度，保证两边能露出 */
   .cover-card {
     flex-shrink: 0; 
     width: min(240px, 55vw); 
@@ -99,6 +98,8 @@
     box-shadow: var(--shadow-md); border: 1px solid var(--border);
     will-change: transform, opacity;
     overflow: hidden;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
   }
   .cover-card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
   .cover-card.no-cover { display: grid; place-items: center; font-size: 3rem; color: var(--text-3); background: var(--accent-soft); }
@@ -797,7 +798,7 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     }
   }
 
-  // ==================== 3D 无限唱片墙 ====================
+  // ==================== 3D Cover Flow 唱片墙 ====================
   function renderTabs() {
     var set = {};
     tracks.forEach(t => { if (t.category) set[t.category] = true; });
@@ -814,7 +815,7 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
       return;
     }
 
-    // 复制 9 份，确保无限滚动和两侧有足够的卡片
+    // 复制 9 份数据，确保左右两侧有堆叠的卡片
     var renderList = [];
     for (var k = 0; k < 9; k++) renderList = renderList.concat(filtered);
     
@@ -829,14 +830,18 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     requestAnimationFrame(() => {
       var cards = coverTrack.querySelectorAll('.cover-card');
       if (cards.length === 0) return;
-      var cardW = cards[0].offsetWidth;
-      var gap = parseInt(window.getComputedStyle(coverTrack).gap) || 24;
-      var singleGroupWidth = (cardW + gap) * filtered.length;
       
-      // 定位到正中间那组（第 5 组）
-      coverTrack.style.scrollBehavior = 'auto';
-      coverTrack.scrollLeft = singleGroupWidth * 4;
-      coverTrack.style.scrollBehavior = '';
+      // 初始定位到第 5 组的正中间（也就是整个列表的正中间）
+      var targetCard = cards[filtered.length * 4];
+      if (targetCard) {
+        var viewportCenter = window.innerWidth / 2;
+        var cardW = targetCard.offsetWidth;
+        var targetScroll = targetCard.offsetLeft - viewportCenter + cardW / 2;
+        
+        coverTrack.style.scrollBehavior = 'auto';
+        coverTrack.scrollLeft = targetScroll;
+        coverTrack.style.scrollBehavior = '';
+      }
       
       update3D();
     });
@@ -847,49 +852,48 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     var cards = coverTrack.querySelectorAll('.cover-card');
     if (!cards.length) return;
     
-    var stageCenter = window.innerWidth / 2;
+    var viewportCenter = window.innerWidth / 2;
     var closestCard = null, minDist = Infinity;
+    
+    // 获取卡片未变换时的真实物理宽度
+    var cardW = cards[0].offsetWidth;
+    var gap = 24; // flex gap
+    var stepWidth = cardW + gap;
 
     cards.forEach(card => {
-      var rect = card.getBoundingClientRect();
-      var cardCenter = rect.left + rect.width / 2;
-      var distance = stageCenter - cardCenter;
+      // 用 offsetLeft 和 scrollLeft 计算物理中心，绝不受 transform 影响
+      var physicalCenter = card.offsetLeft + cardW / 2 - coverTrack.scrollLeft;
+      var distance = viewportCenter - physicalCenter; 
       var absDist = Math.abs(distance);
-      
-      // 计算跨越的卡片数量步长
-      var cardW = rect.width;
-      var gap = 24;
-      var stepWidth = cardW + gap;
-      var step = distance / stepWidth;
+      var step = distance / stepWidth; // 左边为正，右边为负
       var absStep = Math.abs(step);
 
-      // 只渲染中间附近的几张，超出视野的直接隐藏
+      // 只渲染视野附近的卡片，远的直接隐藏
       if (absStep > 3) {
         card.style.opacity = '0';
         card.style.pointerEvents = 'none';
         return;
       }
 
-      // 旋转角度：越往两侧倾斜越大
-      var rotateY = step * 45; 
+      // 核心 3D 参数：内倾 Cover Flow 效果
+      // 左侧 step > 0，rotateY 为正，向左转；右侧 step < 0，rotateY 为负，向右转
+      var rotateY = step * 55; 
       
-      // 缩放：中心为 1，两侧缩小
-      var scale = 1 - absStep * 0.15;
+      // 往屏幕内部推，形成纵深感
+      var translateZ = -absStep * 60;
       
-      // 景深：两侧往后退
-      var translateZ = -absStep * 50;
+      // 缩小
+      var scale = 1 - absStep * 0.08;
       
-      // 垂直下沉：两侧稍微往下掉
-      var translateY = absStep * 15;
-      
-      // 透明度：越往两侧越暗
+      // 变暗
       var opacity = 1 - absStep * 0.35;
+      
+      // 稍微往中间挤一点，显得紧凑
+      var translateX = step * 15;
 
-      // 组合 3D 变换（父容器已设置 perspective）
-      card.style.transform = `translateX(0) translateY(${translateY}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
+      card.style.transform = `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
       card.style.opacity = Math.max(0, opacity);
       card.style.zIndex = 100 - Math.floor(absStep * 10);
-      card.style.pointerEvents = 'auto';
       
       if (absDist < minDist) {
         minDist = absDist;
@@ -908,10 +912,10 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     if (cards.length === 0) return;
     
     var cardW = cards[0].offsetWidth;
-    var gap = parseInt(window.getComputedStyle(coverTrack).gap) || 24;
+    var gap = 24;
     var singleGroupWidth = (cardW + gap) * filtered.length;
 
-    // 无限循环边界调整（在 3.5 到 4.5 之间无缝跳跃）
+    // 无缝循环边界重置（在 3.5 到 4.5 之间无缝跳回）
     if (coverTrack.scrollLeft < singleGroupWidth * 3.5) {
       coverTrack.style.scrollBehavior = 'auto';
       coverTrack.scrollLeft += singleGroupWidth;
@@ -930,13 +934,13 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
 
   function snapToCenter() {
     var cards = coverTrack.querySelectorAll('.cover-card');
-    var stageCenter = window.innerWidth / 2;
+    var viewportCenter = window.innerWidth / 2;
     var closestCard = null, minDist = Infinity;
 
     cards.forEach(card => {
-      var rect = card.getBoundingClientRect();
-      var cardCenter = rect.left + rect.width / 2;
-      var distance = stageCenter - cardCenter;
+      var cardW = card.offsetWidth;
+      var physicalCenter = card.offsetLeft + cardW / 2 - coverTrack.scrollLeft;
+      var distance = viewportCenter - physicalCenter;
       if (Math.abs(distance) < minDist) {
         minDist = Math.abs(distance);
         closestCard = card;
@@ -944,10 +948,9 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     });
 
     if (closestCard) {
-      var rect = closestCard.getBoundingClientRect();
-      var cardCenter = rect.left + rect.width / 2;
-      var scrollAmount = stageCenter - cardCenter;
-      coverTrack.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      var cardW = closestCard.offsetWidth;
+      var targetScroll = closestCard.offsetLeft - viewportCenter + cardW / 2;
+      coverTrack.scrollTo({ left: targetScroll, behavior: 'smooth' });
       
       var id = closestCard.getAttribute('data-id');
       if (id && id !== currentId) {
@@ -956,6 +959,7 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     }
   }
 
+  // 鼠标/触摸拖拽
   let isDown = false, startX, scrollLeftStart;
   coverStage.addEventListener('mousedown', (e) => {
     isDown = true;
@@ -978,6 +982,7 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     coverTrack.scrollLeft = scrollLeftStart - (x - startX) * 2;
   });
 
+  // 鼠标滚轮
   coverStage.addEventListener('wheel', (e) => {
     if (e.deltaY !== 0) {
       e.preventDefault();
@@ -985,8 +990,9 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     }
   }, { passive: false });
 
+  // 点击卡片
   coverTrack.addEventListener('click', (e) => {
-    if (Math.abs(scrollLeftStart - coverTrack.scrollLeft) > 10) return;
+    if (Math.abs(scrollLeftStart - coverTrack.scrollLeft) > 10) return; // 拖拽误触
     var card = e.target.closest('.cover-card');
     if (card) {
       var id = card.getAttribute('data-id');
