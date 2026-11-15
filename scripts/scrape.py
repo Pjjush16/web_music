@@ -2,11 +2,14 @@
 """
 扫描 audio/，按 Kodi 音乐刮削思路补全元数据、封面和歌词。
 
-扫描：只读内嵌标签（title / artist / album / MusicBrainz ID）。
-刮削：优先用标签里的 MusicBrainz Recording ID 精确查询；
-      没有 MBID 时用 artist + title 搜索 MusicBrainz，取最高分匹配。
-封面：Cover Art Archive（基于 release MBID），失败退到 iTunes。
-歌词：LRCLIB（基于 artist + title）。
+识别三层兜底：
+  1. 标签里的 MusicBrainz Recording ID 精确查询
+  2. MusicBrainz 用 artist + title 文本搜索
+  3. AcoustID 音频指纹识别（仅在 1、2 都失败且配置了 API Key 时触发），
+     识别成功后再用 artist + title 搜一次 MusicBrainz
+
+封面：Cover Art Archive（基于 release MBID）→ 内嵌封面 → iTunes
+歌词：LRCLIB
 
 产物写在音频同目录：
   <stem>.jpg   封面
@@ -23,7 +26,7 @@ from pathlib import Path
 import requests
 from mutagen import File as MutagenFile
 from mutagen.flac import Picture
-from mutagen.id3 import APIC, TXXX
+from mutagen.id3 import APIC
 
 AUDIO_EXTS = {".mp3", ".flac", ".m4a", ".aac", ".ogg", ".opus", ".wav", ".wma"}
 AUDIO_ROOT = Path("audio")
@@ -37,11 +40,13 @@ ITUNES_BASE = "https://itunes.apple.com"
 
 REQ_TIMEOUT = 20
 USER_AGENT = "YAONET-AudioScraper/1.0 (https://github.com/yaonet/audio)"
-MB_SLEEP = 1.1          # MusicBrainz 限速 1 req/s，留余量
+MB_SLEEP = 1.1
 CAA_SLEEP = 0.5
 ITUNES_SLEEP = 0.6
 LRCLIB_SLEEP = 0.3
-MB_MIN_SCORE = 85       # 搜索结果最低可信分
+ACOUSTID_SLEEP = 0.4
+MB_MIN_SCORE = 85
+ACOUSTID_MIN_SCORE = 0.5
 
 
 def log(msg):
@@ -71,16 +76,11 @@ def save_state(state):
 # ---------- 标签读取 ----------
 
 def read_tags(path):
-    """
-    返回 title / artist / album / duration，
-    以及 MusicBrainz 的 recording / release / artist MBID（如果有）。
-    """
     info = {
         "title": "", "artist": "", "album": "", "duration": 0,
         "mb_recording": "", "mb_release": "", "mb_artist": ""
     }
 
-    # easy 模式读常用字段
     try:
         easy = MutagenFile(str(path), easy=True)
     except Exception:
@@ -101,7 +101,6 @@ def read_tags(path):
         except Exception:
             pass
 
-    # 原始模式读 MBID
     try:
         raw = MutagenFile(str(path))
     except Exception:
@@ -109,7 +108,7 @@ def read_tags(path):
     if raw is None or raw.tags is None:
         return info
 
-    # ID3（MP3）
+    # ID3
     try:
         for key, value in raw.tags.items():
             if not isinstance(key, str):
@@ -126,7 +125,7 @@ def read_tags(path):
     except Exception:
         pass
 
-    # Vorbis Comment（FLAC / OGG）
+    # Vorbis Comment
     try:
         getter = getattr(raw.tags, "get", None)
         if callable(getter):
@@ -143,7 +142,7 @@ def read_tags(path):
     except Exception:
         pass
 
-    # MP4（M4A）
+    # MP4
     try:
         for key, attr in (
             ("----:com.apple.iTunes:MusicBrainz Track Id", "mb_recording"),
@@ -164,7 +163,6 @@ def read_tags(path):
 
 
 def parse_from_path(path):
-    """标签缺失时从路径推断 artist / album / title。"""
     rel = path.relative_to(AUDIO_ROOT)
     parts = list(rel.parts)
     stem = Path(parts[-1]).stem
@@ -249,11 +247,9 @@ def mb_search_recording(artist, title):
 
 
 def pick_release(recording):
-    """从 recording 的 releases 里取一个 release MBID。"""
     if not recording:
         return ""
-    releases = recording.get("releases") or []
-    for rel in releases:
+    for rel in recording.get("releases") or []:
         rid = rel.get("id") or ""
         if rid:
             return rid
@@ -285,6 +281,55 @@ def extract_recording_info(recording):
         "mb_recording": recording.get("id") or "",
         "mb_release": pick_release(recording),
     }
+
+
+# ---------- AcoustID 指纹兜底 ----------
+
+def identify_acoustid(path, api_key):
+    """
+    使用 AcoustID 音频指纹识别，仅作为最后一层兜底。
+    返回 {title, artist, recording_id, score}，失败返回空 dict。
+    """
+    if not api_key:
+        return {}
+    try:
+        import acoustid
+    except ImportError:
+        log("  [warn] pyacoustid 未安装，跳过指纹识别")
+        return {}
+
+    best = None
+    best_score = 0.0
+    try:
+        for item in acoustid.match(api_key, str(path), meta="recordings"):
+            try:
+                score = float(item[0])
+                recording_id = item[1] if len(item) > 1 else ""
+                title = item[2] if len(item) > 2 else ""
+                artist = item[3] if len(item) > 3 else ""
+            except (IndexError, TypeError, ValueError):
+                continue
+            if score > best_score:
+                best_score = score
+                best = {
+                    "title": (title or "").strip(),
+                    "artist": (artist or "").strip(),
+                    "recording_id": recording_id or "",
+                    "score": score,
+                }
+    except Exception as e:
+        log(f"  [warn] AcoustID 失败: {e}")
+        return {}
+    finally:
+        time.sleep(ACOUSTID_SLEEP)
+
+    if best and best_score >= ACOUSTID_MIN_SCORE:
+        log(
+            f"  AcoustID 匹配: score={best_score:.2f} "
+            f"title={best['title']!r} artist={best['artist']!r}"
+        )
+        return best
+    return {}
 
 
 # ---------- 封面 ----------
@@ -482,6 +527,12 @@ def iter_audio_files():
 
 
 def main():
+    api_key = os.environ.get("ACOUSTID_API_KEY", "").strip()
+    if api_key:
+        log("已启用 AcoustID 指纹兜底")
+    else:
+        log("未配置 ACOUSTID_API_KEY：跳过指纹兜底，仅使用标签 + MusicBrainz")
+
     state = load_state()
     files = list(iter_audio_files())
     log(f"发现 {len(files)} 个音频文件")
@@ -501,13 +552,28 @@ def main():
         artist = tags["artist"] or path_meta["artist"]
         album = tags["album"] or path_meta["album"]
 
+        # 第一层：MBID 精确查询
         recording = None
         if tags["mb_recording"]:
             log(f"  使用 MusicBrainz Recording ID: {tags['mb_recording']}")
             recording = mb_lookup_recording(tags["mb_recording"])
+
+        # 第二层：MusicBrainz 文本搜索
         if not recording and title:
-            log(f"  搜索 MusicBrainz: artist={artist!r} title={title!r}")
+            log(f"  MusicBrainz 搜索: artist={artist!r} title={title!r}")
             recording = mb_search_recording(artist, title)
+
+        # 第三层：AcoustID 指纹兜底
+        acoustid_used = False
+        if not recording and api_key:
+            log("  MusicBrainz 未匹配，尝试 AcoustID 指纹识别")
+            fp = identify_acoustid(path, api_key)
+            if fp:
+                acoustid_used = True
+                title = fp.get("title") or title
+                artist = fp.get("artist") or artist
+                log("  使用 AcoustID 结果重新搜索 MusicBrainz")
+                recording = mb_search_recording(artist, title)
 
         mb_info = extract_recording_info(recording) if recording else {}
         if mb_info:
@@ -515,8 +581,10 @@ def main():
             artist = mb_info.get("artist") or artist
             album = mb_info.get("album") or album
             log(f"  MusicBrainz 匹配: title={title!r} artist={artist!r} album={album!r}")
+        elif acoustid_used:
+            log(f"  AcoustID 结果（未经 MusicBrainz 确认）: title={title!r} artist={artist!r}")
         else:
-            log("  MusicBrainz 未匹配，保留标签/路径信息")
+            log("  未匹配到 MusicBrainz 记录，保留标签/路径信息")
 
         if not title:
             log("  [skip] 无法识别标题")
@@ -572,6 +640,7 @@ def main():
         entry["album"] = meta["album"]
         entry["mb_recording"] = mb_info.get("mb_recording", "")
         entry["mb_release"] = mb_info.get("mb_release", "")
+        entry["acoustid_used"] = acoustid_used
 
     save_state(state)
     log("刮削完成")
