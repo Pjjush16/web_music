@@ -289,6 +289,50 @@
   .np-btn.np-main{width:64px;height:64px;background:var(--accent);color:#fff;border-color:transparent;box-shadow:0 12px 30px rgba(45,90,74,.3)}
   .np-btn.np-main:hover{opacity:.92;color:#fff}
 
+  /* ==================== 亮色主题覆盖 (根据封面自适应) ==================== */
+  .now-playing.np-light-theme .np-icon-btn {
+    color: rgba(0,0,0,0.6);
+    background: rgba(255,255,255,0.6);
+    border-color: rgba(0,0,0,0.08);
+  }
+  .now-playing.np-light-theme .np-icon-btn:hover {
+    background: rgba(255,255,255,0.9);
+    color: #1a1a1a;
+  }
+  .now-playing.np-light-theme .np-icon-btn.active {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .now-playing.np-light-theme .np-info h2,
+  .now-playing.np-light-theme .np-header-title h3 { color: #1a1a1a; }
+  .now-playing.np-light-theme .np-info p,
+  .now-playing.np-light-theme .np-header-title p { color: rgba(26,26,26,0.6); }
+
+  .now-playing.np-light-theme .np-progress-row { color: rgba(26,26,26,0.6); }
+  .now-playing.np-light-theme .np-bar { background: rgba(0,0,0,0.1); }
+  .now-playing.np-light-theme .np-bar-fill { background: #1a1a1a; }
+  .now-playing.np-light-theme .np-bar-fill::after { background: #1a1a1a; }
+
+  .now-playing.np-light-theme .np-btn {
+    color: rgba(26,26,26,0.8);
+    background: rgba(255,255,255,0.5);
+    border-color: rgba(0,0,0,0.06);
+  }
+  .now-playing.np-light-theme .np-btn:hover {
+    background: rgba(255,255,255,0.9);
+    color: #1a1a1a;
+  }
+  .now-playing.np-light-theme .np-btn.np-main {
+    color: #fff;
+    background: #1a1a1a;
+    border-color: transparent;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+  }
+
+  .now-playing.np-light-theme .lyric-line { color: rgba(0,0,0,0.4); }
+  .now-playing.np-light-theme .lyric-line.active { color: #1a1a1a; text-shadow: none; }
+
   .now-playing.closing .np-content,
   .now-playing.closing .np-spectrum,
   .now-playing.closing .np-icon-btn,
@@ -672,7 +716,7 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     }
   });
 
-  // ==================== 取色逻辑 ====================
+  // ==================== 取色与亮暗主题自适应 ====================
   var spectrumColor = [45, 90, 74], spectrumColorLight = [127, 191, 168];
 
   function lightenColor(rgb, amount){
@@ -711,8 +755,22 @@ lyrics 支持相对路径、完整 URL、或直接内联 LRC 文本。`;
     spectrumColor = [r, g, b];
     spectrumColorLight = lightenColor([r,g,b], 70);
     
-    var darkR = Math.floor(r * 0.35), darkG = Math.floor(g * 0.35), darkB = Math.floor(b * 0.35);
-    npBackdrop.style.background = `radial-gradient(circle at 50% 10%, rgba(${r},${g},${b}, 0.45) 0%, rgba(${darkR},${darkG},${darkB}, 0.85) 40%, #0f0f0f 90%)`;
+    // 计算提取主色的亮度
+    var luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    if (luminance > 0.65) {
+      // 偏亮：强制亮色主题，文字用黑色，背景逐渐变浅
+      npModal.classList.add('np-light-theme');
+      var lightR = Math.floor(r * 0.4 + 255 * 0.6);
+      var lightG = Math.floor(g * 0.4 + 255 * 0.6);
+      var lightB = Math.floor(b * 0.4 + 255 * 0.6);
+      npBackdrop.style.background = `radial-gradient(circle at 50% 10%, rgba(${r},${g},${b}, 0.5) 0%, rgba(${lightR},${lightG},${lightB}, 0.9) 40%, #f7f6f3 90%)`;
+    } else {
+      // 偏暗：强制暗色主题，文字用白色，背景逐渐变深
+      npModal.classList.remove('np-light-theme');
+      var darkR = Math.floor(r * 0.35), darkG = Math.floor(g * 0.35), darkB = Math.floor(b * 0.35);
+      npBackdrop.style.background = `radial-gradient(circle at 50% 10%, rgba(${r},${g},${b}, 0.45) 0%, rgba(${darkR},${darkG},${darkB}, 0.85) 40%, #0f0f0f 90%)`;
+    }
     
     npVinylDisc.style.setProperty('--vinyl-label', `rgb(${r},${g},${b})`);
   }
