@@ -1,13 +1,46 @@
 {
   "audio/Higher - Tobu.aac": {
     "acoustid_used": false,
-    "album": "Best of Tobu 2023 - Ultimate Electronic Video Gaming Mix",
+    "album": "Higher",
     "artist": "Tobu",
     "cover": "Higher - Tobu.jpg",
     "lyrics": null,
-    "mb_recording": "0aabe96b-d152-4285-b074-95aee50368d9",
-    "mb_release": "4bea6e3f-c731-42f2-9fa0-10bfdbe705c2",
+    "mb_recording": "",
+    "mb_release": "",
     "status": "ok",
     "title": "Higher"
+  },
+  "audio/Nevada - Vicetone.aac": {
+    "acoustid_used": false,
+    "album": "Nevada (slowed + reverb)",
+    "artist": "Vicetone",
+    "cover": "Nevada - Vicetone.jpg",
+    "lyrics": null,
+    "mb_recording": "7d2a23ec-2593-4bca-b76e-209f89f73b94",
+    "mb_release": "d157ad2c-0208-40aa-ba48-897717b157d3",
+    "status": "ok",
+    "title": "Nevada (slowed + reverb)"
+  },
+  "audio/水手 - 郑智化.mp3": {
+    "acoustid_used": false,
+    "album": "老歌珍藏 一人一首成名曲",
+    "artist": "鄭智化",
+    "cover": "水手 - 郑智化.jpg",
+    "lyrics": "水手 - 郑智化.lrc",
+    "mb_recording": "3decd452-afae-47f1-ab01-96d4eab1d4b8",
+    "mb_release": "c88e987e-a3aa-4aa0-a4a3-8afe4f115337",
+    "status": "ok",
+    "title": "水手"
+  },
+  "audio/起风了 - 周深.aac": {
+    "acoustid_used": false,
+    "album": "起风了",
+    "artist": "周深",
+    "cover": "起风了 - 周深.jpg",
+    "lyrics": "起风了 - 周深.lrc",
+    "mb_recording": "52727392-1bd1-4d48-a0c0-31ba85c68e40",
+    "mb_release": "c7989998-3f0f-47bd-8038-6729e1c71ce8",
+    "status": "ok",
+    "title": "起风了"
   }
 }

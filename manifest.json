@@ -10,6 +10,41 @@
       "duration": 213,
       "src": "audio/Higher%20-%20Tobu.aac",
       "cover": "audio/Higher%20-%20Tobu.jpg"
+    },
+    {
+      "id": "9dae36116f20",
+      "title": "Nevada",
+      "artist": "Vicetone",
+      "album": "Monstercat - Best of House",
+      "category": "未分类",
+      "desc": "",
+      "duration": 208,
+      "src": "audio/Nevada%20-%20Vicetone.aac",
+      "cover": "audio/Nevada%20-%20Vicetone.jpg"
+    },
+    {
+      "id": "b4ce38c9d60b",
+      "title": "水手",
+      "artist": "郑智化",
+      "album": "让我拥抱你入梦 让风吹 水手（黑胶版）",
+      "category": "未分类",
+      "desc": "",
+      "duration": 292,
+      "src": "audio/%E6%B0%B4%E6%89%8B%20-%20%E9%83%91%E6%99%BA%E5%8C%96.mp3",
+      "cover": "audio/%E6%B0%B4%E6%89%8B%20-%20%E9%83%91%E6%99%BA%E5%8C%96.jpg",
+      "lyrics": "audio/%E6%B0%B4%E6%89%8B%20-%20%E9%83%91%E6%99%BA%E5%8C%96.lrc"
+    },
+    {
+      "id": "4384c12d21e3",
+      "title": "起风了",
+      "artist": "周深",
+      "album": "起风了",
+      "category": "未分类",
+      "desc": "",
+      "duration": 311,
+      "src": "audio/%E8%B5%B7%E9%A3%8E%E4%BA%86%20-%20%E5%91%A8%E6%B7%B1.aac",
+      "cover": "audio/%E8%B5%B7%E9%A3%8E%E4%BA%86%20-%20%E5%91%A8%E6%B7%B1.jpg",
+      "lyrics": "audio/%E8%B5%B7%E9%A3%8E%E4%BA%86%20-%20%E5%91%A8%E6%B7%B1.lrc"
     }
   ]
 }
