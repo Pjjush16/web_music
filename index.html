@@ -1139,6 +1139,35 @@
     
     updatePlayerUI(t);
     savePlayerState();
+
+    // 关键修复：让顶部卡片自动滚动到中间
+    var cards = coverTrack.querySelectorAll('.cover-card');
+    if (!cards.length) return;
+
+    var viewportCenter = window.innerWidth / 2;
+    var closestCard = null, minDist = Infinity;
+
+    // 找到所有相同 ID 的卡片中，距离中心最近的那一个
+    cards.forEach(card => {
+      if (card.getAttribute('data-id') === id) {
+        var cardW = card.offsetWidth;
+        var physicalCenter = card.offsetLeft + cardW / 2 - coverTrack.scrollLeft;
+        var distance = Math.abs(viewportCenter - physicalCenter);
+        if (distance < minDist) {
+          minDist = distance;
+          closestCard = card;
+        }
+      }
+    });
+
+    if (closestCard) {
+      var cardW = closestCard.offsetWidth;
+      var targetScroll = closestCard.offsetLeft - viewportCenter + cardW / 2;
+      // 如果距离目标位置超过5px才滚动（避免与用户手势拖拽吸附冲突）
+      if (Math.abs(targetScroll - coverTrack.scrollLeft) > 5) {
+        coverTrack.scrollTo({ left: targetScroll, behavior: 'smooth' });
+      }
+    }
   }
 
   function togglePlay() {
