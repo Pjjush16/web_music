@@ -66,7 +66,7 @@
     perspective: 1000px;
     display: flex; align-items: center; justify-content: center;
     cursor: grab;
-    touch-action: none; /* 阻止移动端浏览器的默认滚动，接管手势 */
+    touch-action: none;
   }
   .cover-stage:active { cursor: grabbing; }
 
@@ -670,7 +670,7 @@
     }
   }
 
-  // ==================== 3D Cover Flow (数学取模核心) ====================
+  // ==================== 3D Cover Flow ====================
   function initCoverFlow() {
     let html = '';
     for (let i = -4; i <= 4; i++) {
@@ -1034,6 +1034,7 @@
     } catch(e){}
   }
 
+  // ==================== 频谱动画 ====================
   var audioCtx = null, analyser = null, freqData = null;
   var barSpectrumCanvas = document.getElementById('bar-spectrum'), barSpectrumCtx = barSpectrumCanvas.getContext('2d');
   var npSpectrumCanvas = document.getElementById('np-spectrum'), npSpectrumCtx = npSpectrumCanvas.getContext('2d');
@@ -1042,6 +1043,7 @@
   var visData = new Float32Array(64);
   var targetData = new Float32Array(64);
   var isSpectrumRunning = false;
+  var lastSpectrumTime = 0;
 
   function setupAnalyser() {
     if (audioCtx) return;
@@ -1078,7 +1080,9 @@
     ctx.clearRect(0, 0, w, h);
 
     var usable = data.length;
-    var targetBarW = isFullScreen ? 8 : 5;
+    
+    // 统一按固定宽度的柱子计算，如果屏幕宽则自适应
+    var targetBarW = isFullScreen ? 8 : 6;
     var bars = Math.floor(w / targetBarW);
     if (bars <= 0) return;
     
@@ -1111,8 +1115,14 @@
     }
   }
 
-  function loopSpectrum() {
+  function loopSpectrum(now) {
     if (!isSpectrumRunning) return;
+    
+    if (!lastSpectrumTime) lastSpectrumTime = now;
+    // 限制最大帧间隔 50ms（防止后台切回来瞬间滑落太快）
+    var dt = Math.min(now - lastSpectrumTime, 50);
+    lastSpectrumTime = now;
+
     if (isPlaying) {
       if (analyser && freqData) {
         analyser.getByteFrequencyData(freqData);
@@ -1134,9 +1144,13 @@
       targetData.fill(0);
     }
 
+    // 基于时间差的平滑过渡（无论 60Hz 还是 120Hz 衰减率一致）
+    // 假设 60fps 下的 ease = 0.35，根据 dt 推导当前 ease
+    var baseEase = isPlaying ? 0.35 : 0.08;
+    var ease = 1 - Math.pow(1 - baseEase, dt / 16.66);
+
     var isAllZero = true;
     for (var i = 0; i < 64; i++) {
-      var ease = isPlaying ? 0.35 : 0.08;
       visData[i] += (targetData[i] - visData[i]) * ease;
       if (visData[i] > 1) isAllZero = false;
       else visData[i] = 0;
@@ -1156,8 +1170,81 @@
   function startSpectrum() {
     if (isSpectrumRunning) return;
     isSpectrumRunning = true;
+    lastSpectrumTime = 0;
     spectrumRAF = requestAnimationFrame(loopSpectrum);
   }
+
+  // ==================== UI 历史状态管理 (返回键) ====================
+  var historyState = 'main'; // 'main', 'np', 'settings'
+
+  function openNP() {
+    if (!currentId || npOpen) return;
+    npOpen = true;
+    npModal.hidden = false;
+    npModal.classList.remove('closing');
+    document.body.style.overflow = 'hidden';
+    npViewCover.classList.remove('hidden');
+    npViewLyrics.classList.add('hidden');
+    npViewLyrics.classList.remove('active');
+    npToggleLyricsBtn.classList.remove('active');
+
+    if (historyState !== 'np') {
+      history.pushState({ modal: 'np' }, '');
+      historyState = 'np';
+    }
+
+    if (isPlaying || isSpectrumRunning) startSpectrum();
+    else drawSpectrum(npSpectrumCanvas, npSpectrumCtx, visData, true);
+  }
+
+  function closeNP(fromPopstate) {
+    if (!npOpen) return;
+    npOpen = false;
+    npModal.classList.add('closing');
+    setTimeout(() => {
+      npModal.hidden = true;
+      npModal.classList.remove('closing');
+      document.body.style.overflow = '';
+    }, 200);
+
+    if (!fromPopstate) {
+      if (history.state && history.state.modal === 'np') {
+        history.back();
+      }
+    } else {
+      historyState = 'main';
+    }
+  }
+
+  function openSettings() {
+    if (!settingsModal.hidden) return;
+    settingsModal.hidden = false;
+    settingsStatus.textContent = '';
+    updateManifestHints();
+
+    if (historyState !== 'settings') {
+      history.pushState({ modal: 'settings' }, '');
+      historyState = 'settings';
+    }
+  }
+
+  function closeSettings(fromPopstate) {
+    if (settingsModal.hidden) return;
+    settingsModal.hidden = true;
+
+    if (!fromPopstate) {
+      if (history.state && history.state.modal === 'settings') {
+        history.back();
+      }
+    } else {
+      historyState = 'main';
+    }
+  }
+
+  window.addEventListener('popstate', function() {
+    if (npOpen) closeNP(true);
+    if (!settingsModal.hidden) closeSettings(true);
+  });
 
   // ==================== 全局事件 ====================
   audio.addEventListener('play', () => { isPlaying = true; ensureAudioContext(); syncPlayUI(); startSpectrum(); });
@@ -1197,41 +1284,17 @@
     if (isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
   });
 
-  pbCover.addEventListener('click', () => {
-    if (!currentId) return;
-    npOpen = true;
-    npModal.hidden = false;
-    npModal.classList.remove('closing');
-    document.body.style.overflow = 'hidden';
-    npViewCover.classList.remove('hidden');
-    npViewLyrics.classList.add('hidden');
-    npViewLyrics.classList.remove('active');
-    npToggleLyricsBtn.classList.remove('active');
-
-    if (isPlaying || isSpectrumRunning) startSpectrum();
-    else drawSpectrum(npSpectrumCanvas, npSpectrumCtx, visData, true);
-  });
+  pbCover.addEventListener('click', openNP);
 
   npModal.addEventListener('click', e => {
-    if (e.target.closest('[data-np-close]')) {
-      npOpen = false;
-      npModal.classList.add('closing');
-      setTimeout(() => {
-        npModal.hidden = true;
-        npModal.classList.remove('closing');
-        document.body.style.overflow = '';
-      }, 200);
-    }
+    if (e.target.closest('[data-np-close]')) closeNP(false);
   });
   
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
     if (e.key === 'Escape') {
-      if(npOpen) {
-        npOpen = false;
-        npModal.classList.add('closing');
-        setTimeout(() => { npModal.hidden = true; npModal.classList.remove('closing'); document.body.style.overflow = ''; }, 200);
-      } else if (!settingsModal.hidden) settingsModal.hidden = true;
+      if(npOpen) closeNP(false);
+      else if (!settingsModal.hidden) closeSettings(false);
     }
     if (e.key === ' ') { e.preventDefault(); togglePlay(); }
     if (e.key === 'ArrowRight' && !npOpen) nextTrack();
@@ -1244,8 +1307,9 @@
     settingsCurrent.innerHTML = `<strong>当前生效地址</strong>${resolved}`;
   }
 
-  settingsBtn.addEventListener('click', () => { settingsModal.hidden = false; settingsStatus.textContent = ''; updateManifestHints(); });
-  settingsModal.addEventListener('click', e => { if(e.target.closest('[data-settings-close]')) settingsModal.hidden = true; });
+  settingsBtn.addEventListener('click', openSettings);
+  settingsModal.addEventListener('click', e => { if(e.target.closest('[data-settings-close]')) closeSettings(false); });
+  
   settingsTabs.addEventListener('click', e => {
     var btn = e.target.closest('.settings-tab'); if(!btn) return;
     var name = btn.getAttribute('data-tab');
@@ -1256,7 +1320,7 @@
   pfSave.addEventListener('click', () => {
     sourceState.manifestUrl = manifestUrlEl.value.trim();
     try { localStorage.setItem(SOURCE_KEY, JSON.stringify(sourceState)); } catch(e){}
-    settingsModal.hidden = true;
+    closeSettings(false);
     refreshLibrary();
   });
 
