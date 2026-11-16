@@ -76,6 +76,7 @@
     padding: 0 calc(50vw - 120px);
     height: 100%; overflow-x: auto; scrollbar-width: none;
     transform-style: preserve-3d;
+    /* 移除 scroll-behavior: smooth，改用 JS 动画避免冲突 */
   }
   .cover-track::-webkit-scrollbar { display: none; }
 
@@ -615,6 +616,7 @@
   var currentId = null, isPlaying = false, npOpen = false;
   var currentManifestUrl = '';
   var currentLyrics = [], currentLyricIndex = -1;
+  var isAnimatingScroll = false;
 
   var SOURCE_KEY = 'yaonet_manifest_v3';
   var PLAYER_KEY = 'yaonet_player_state_v1';
@@ -893,9 +895,7 @@
         var cardW = targetCard.offsetWidth;
         var targetScroll = targetCard.offsetLeft - viewportCenter + cardW / 2;
         
-        coverTrack.style.scrollBehavior = 'auto';
         coverTrack.scrollLeft = targetScroll;
-        coverTrack.style.scrollBehavior = '';
       }
       update3D();
     });
@@ -948,7 +948,7 @@
     }
   }
 
-  coverTrack.addEventListener('scroll', () => {
+  function handleScrollWrap() {
     var cards = coverTrack.querySelectorAll('.cover-card');
     if (cards.length === 0) return;
     
@@ -957,22 +957,58 @@
     var singleGroupWidth = (cardW + gap) * tracks.length;
 
     if (coverTrack.scrollLeft < singleGroupWidth * 3.5) {
-      coverTrack.style.scrollBehavior = 'auto';
       coverTrack.scrollLeft += singleGroupWidth;
-      coverTrack.style.scrollBehavior = '';
     } else if (coverTrack.scrollLeft > singleGroupWidth * 4.5) {
-      coverTrack.style.scrollBehavior = 'auto';
       coverTrack.scrollLeft -= singleGroupWidth;
-      coverTrack.style.scrollBehavior = '';
     }
+  }
 
+  function animateScrollTo(targetScroll, duration) {
+    if (isAnimatingScroll) return;
+    isAnimatingScroll = true;
+    
+    var startScroll = coverTrack.scrollLeft;
+    var distance = targetScroll - startScroll;
+    var startTime = performance.now();
+
+    function step(now) {
+      if (!isAnimatingScroll) return; // 如果被中断（比如用户手动按下）
+      
+      var p = (now - startTime) / duration;
+      if (p > 1) p = 1;
+      
+      // easeOutCubic 缓动
+      var ease = 1 - Math.pow(1 - p, 3);
+      coverTrack.scrollLeft = startScroll + distance * ease;
+
+      if (p < 1) {
+        requestAnimationFrame(step);
+      } else {
+        coverTrack.scrollLeft = targetScroll;
+        isAnimatingScroll = false;
+        handleScrollWrap();
+        update3D();
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
+  coverTrack.addEventListener('scroll', () => {
+    if (!isAnimatingScroll) {
+      handleScrollWrap();
+    }
+    
     requestAnimationFrame(update3D);
     
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(snapToCenter, 200);
+    if (!isAnimatingScroll) {
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(snapToCenter, 200);
+    }
   });
 
   function snapToCenter() {
+    if (isAnimatingScroll) return;
+    
     var cards = coverTrack.querySelectorAll('.cover-card');
     var viewportCenter = window.innerWidth / 2;
     var closestCard = null, minDist = Infinity;
@@ -990,27 +1026,30 @@
     if (closestCard) {
       var cardW = closestCard.offsetWidth;
       var targetScroll = closestCard.offsetLeft - viewportCenter + cardW / 2;
-      coverTrack.scrollTo({ left: targetScroll, behavior: 'smooth' });
+      var scrollDiff = targetScroll - coverTrack.scrollLeft;
+      
+      if (Math.abs(scrollDiff) > 2) {
+        animateScrollTo(coverTrack.scrollLeft + scrollDiff, 250);
+      }
       
       var id = closestCard.getAttribute('data-id');
       if (id && id !== currentId) {
-        playTrack(id, false);
+        playTrack(id, false, 0);
       }
     }
   }
 
   let isDown = false, startX, scrollLeftStart;
   coverStage.addEventListener('mousedown', (e) => {
+    isAnimatingScroll = false; // 强行打断正在进行的动画
     isDown = true;
     startX = e.pageX - coverStage.offsetLeft;
     scrollLeftStart = coverTrack.scrollLeft;
-    coverTrack.style.scrollBehavior = 'auto';
   });
   window.addEventListener('mouseleave', () => isDown = false);
   window.addEventListener('mouseup', () => {
     if (isDown) {
       isDown = false;
-      coverTrack.style.scrollBehavior = '';
       snapToCenter();
     }
   });
@@ -1022,6 +1061,7 @@
   });
 
   coverStage.addEventListener('wheel', (e) => {
+    isAnimatingScroll = false;
     if (e.deltaY !== 0) {
       e.preventDefault();
       coverTrack.scrollLeft += e.deltaY;
@@ -1033,7 +1073,7 @@
     var card = e.target.closest('.cover-card');
     if (card) {
       var id = card.getAttribute('data-id');
-      if (id) { playTrack(id); snapToCenter(); }
+      if (id) { playTrack(id, false, 0); snapToCenter(); }
     }
   });
 
@@ -1127,12 +1167,11 @@
     loadLyrics(t);
   }
 
-  function playTrack(id, forcePlay) {
+  function playTrack(id, forcePlay, dir) {
     var t = getTrack(id);
     if (!t || !t.src) return;
     if (id === currentId && !forcePlay) { togglePlay(); return; }
 
-    // 切歌不再强制退回封面
     currentId = id;
     audio.src = t.src;
     audio.play().catch(e => console.warn('播放失败', e));
@@ -1140,39 +1179,79 @@
     updatePlayerUI(t);
     savePlayerState();
 
-    // 关键修复：让顶部卡片自动滚动到中间
+    if (dir === undefined) dir = 0;
+
     var cards = coverTrack.querySelectorAll('.cover-card');
     if (!cards.length) return;
 
     var viewportCenter = window.innerWidth / 2;
-    var closestCard = null, minDist = Infinity;
+    var currentScroll = coverTrack.scrollLeft;
+    var targetCard = null;
+    var minDist = Infinity;
 
-    // 找到所有相同 ID 的卡片中，距离中心最近的那一个
     cards.forEach(card => {
       if (card.getAttribute('data-id') === id) {
         var cardW = card.offsetWidth;
-        var physicalCenter = card.offsetLeft + cardW / 2 - coverTrack.scrollLeft;
-        var distance = Math.abs(viewportCenter - physicalCenter);
-        if (distance < minDist) {
-          minDist = distance;
-          closestCard = card;
+        var cardTargetScroll = card.offsetLeft - viewportCenter + cardW / 2;
+        var scrollDiff = cardTargetScroll - currentScroll;
+        
+        if (dir === 0) {
+          // 任意方向，找绝对最近的
+          if (Math.abs(scrollDiff) < minDist) {
+            minDist = Math.abs(scrollDiff);
+            targetCard = card;
+          }
+        } else if (dir > 0) {
+          // 下一首（向右），找当前位置右侧的
+          if (scrollDiff > -10 && scrollDiff < minDist) {
+            minDist = scrollDiff;
+            targetCard = card;
+          }
+        } else if (dir < 0) {
+          // 上一首（向左），找当前位置左侧的
+          if (scrollDiff < 10 && Math.abs(scrollDiff) < minDist) {
+            minDist = Math.abs(scrollDiff);
+            targetCard = card;
+          }
         }
       }
     });
 
-    if (closestCard) {
-      var cardW = closestCard.offsetWidth;
-      var targetScroll = closestCard.offsetLeft - viewportCenter + cardW / 2;
-      // 如果距离目标位置超过5px才滚动（避免与用户手势拖拽吸附冲突）
-      if (Math.abs(targetScroll - coverTrack.scrollLeft) > 5) {
-        coverTrack.scrollTo({ left: targetScroll, behavior: 'smooth' });
+    // 兜底：没找到就找全局最近
+    if (!targetCard) {
+      cards.forEach(card => {
+        if (card.getAttribute('data-id') === id) {
+          var cardW = card.offsetWidth;
+          var cardTargetScroll = card.offsetLeft - viewportCenter + cardW / 2;
+          var scrollDiff = cardTargetScroll - currentScroll;
+          if (Math.abs(scrollDiff) < minDist) {
+            minDist = Math.abs(scrollDiff);
+            targetCard = card;
+          }
+        }
+      });
+    }
+
+    if (targetCard) {
+      var cardW = targetCard.offsetWidth;
+      var targetScroll = targetCard.offsetLeft - viewportCenter + cardW / 2;
+      var scrollDiff = targetScroll - currentScroll;
+      
+      var singleGroupWidth = (cardW + 24) * tracks.length;
+      // 如果距离超过了半组，说明跨组了，直接强行拉过去
+      if (Math.abs(scrollDiff) > singleGroupWidth / 2) {
+        coverTrack.scrollLeft = targetScroll;
+        handleScrollWrap();
+        update3D();
+      } else if (Math.abs(scrollDiff) > 5) {
+        animateScrollTo(targetScroll, 350);
       }
     }
   }
 
   function togglePlay() {
     // 暂停不再强制退回封面
-    if (!currentId) { if (tracks.length) playTrack(tracks[0].id); return; }
+    if (!currentId) { if (tracks.length) playTrack(tracks[0].id, false, 0); return; }
     if (audio.paused) { ensureAudioContext(); audio.play().catch(e => console.warn(e)); } 
     else { audio.pause(); }
   }
@@ -1182,7 +1261,7 @@
     var i = tracks.findIndex(t => t.id === currentId);
     var n = (i + 1) % tracks.length;
     if (i === -1) n = 0;
-    playTrack(tracks[n].id, tracks.length === 1);
+    playTrack(tracks[n].id, tracks.length === 1, 1); // 向右
   }
 
   function prevTrack() {
@@ -1190,7 +1269,7 @@
     var i = tracks.findIndex(t => t.id === currentId);
     var n = (i - 1 + tracks.length) % tracks.length;
     if (i === -1) n = 0;
-    playTrack(tracks[n].id, tracks.length === 1);
+    playTrack(tracks[n].id, tracks.length === 1, -1); // 向左
   }
 
   function updateProgress() {
