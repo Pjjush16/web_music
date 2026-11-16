@@ -972,12 +972,11 @@
     var startTime = performance.now();
 
     function step(now) {
-      if (!isAnimatingScroll) return; // 如果被中断（比如用户手动按下）
+      if (!isAnimatingScroll) return; 
       
       var p = (now - startTime) / duration;
       if (p > 1) p = 1;
       
-      // easeOutCubic 缓动
       var ease = 1 - Math.pow(1 - p, 3);
       coverTrack.scrollLeft = startScroll + distance * ease;
 
@@ -1189,35 +1188,36 @@
     var targetCard = null;
     var minDist = Infinity;
 
+    // 1. 根据切歌方向，找出距离当前位置最合适的卡片
     cards.forEach(card => {
-      if (card.getAttribute('data-id') === id) {
-        var cardW = card.offsetWidth;
-        var cardTargetScroll = card.offsetLeft - viewportCenter + cardW / 2;
-        var scrollDiff = cardTargetScroll - currentScroll;
-        
-        if (dir === 0) {
-          // 任意方向，找绝对最近的
-          if (Math.abs(scrollDiff) < minDist) {
-            minDist = Math.abs(scrollDiff);
-            targetCard = card;
-          }
-        } else if (dir > 0) {
-          // 下一首（向右），找当前位置右侧的
-          if (scrollDiff > -10 && scrollDiff < minDist) {
-            minDist = scrollDiff;
-            targetCard = card;
-          }
-        } else if (dir < 0) {
-          // 上一首（向左），找当前位置左侧的
-          if (scrollDiff < 10 && Math.abs(scrollDiff) < minDist) {
-            minDist = Math.abs(scrollDiff);
-            targetCard = card;
-          }
+      if (card.getAttribute('data-id') !== id) return;
+      
+      var cardW = card.offsetWidth;
+      var cardTargetScroll = card.offsetLeft - viewportCenter + cardW / 2;
+      var scrollDiff = cardTargetScroll - currentScroll;
+
+      if (dir === 0) {
+        // 任意方向：找绝对距离最近的
+        if (Math.abs(scrollDiff) < minDist) {
+          minDist = Math.abs(scrollDiff);
+          targetCard = card;
+        }
+      } else if (dir > 0) {
+        // 下一首（向右）：只找当前位置右侧（或极近）的卡片
+        if (scrollDiff > -5 && scrollDiff < minDist) {
+          minDist = scrollDiff;
+          targetCard = card;
+        }
+      } else if (dir < 0) {
+        // 上一首（向左）：只找当前位置左侧（或极近）的卡片
+        if (scrollDiff < 5 && Math.abs(scrollDiff) < minDist) {
+          minDist = Math.abs(scrollDiff);
+          targetCard = card;
         }
       }
     });
 
-    // 兜底：没找到就找全局最近
+    // 2. 如果找不到（极端边界情况），兜底找全局最近的
     if (!targetCard) {
       cards.forEach(card => {
         if (card.getAttribute('data-id') === id) {
@@ -1232,19 +1232,19 @@
       });
     }
 
+    // 3. 执行滚动
     if (targetCard) {
       var cardW = targetCard.offsetWidth;
       var targetScroll = targetCard.offsetLeft - viewportCenter + cardW / 2;
-      var scrollDiff = targetScroll - currentScroll;
       
+      // 如果距离超过半组，说明跨组了，直接瞬移过去
       var singleGroupWidth = (cardW + 24) * tracks.length;
-      // 如果距离超过了半组，说明跨组了，直接强行拉过去
-      if (Math.abs(scrollDiff) > singleGroupWidth / 2) {
+      if (Math.abs(targetScroll - currentScroll) > singleGroupWidth / 2) {
         coverTrack.scrollLeft = targetScroll;
         handleScrollWrap();
         update3D();
-      } else if (Math.abs(scrollDiff) > 5) {
-        animateScrollTo(targetScroll, 350);
+      } else if (Math.abs(targetScroll - currentScroll) > 2) {
+        animateScrollTo(targetScroll, 300);
       }
     }
   }
