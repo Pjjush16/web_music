@@ -990,7 +990,6 @@
     var stepWidth = cardW + gap;
 
     cards.forEach(card => {
-      // 如果在动画中，跳过计算，保持行内样式
       if (card.style.transform && card.style.transform.includes('scale(0.1)')) return;
 
       var physicalCenter = card.offsetLeft + cardW / 2 - coverTrack.scrollLeft;
@@ -1027,70 +1026,88 @@
     }
   }
 
-  // === 单曲随机（老虎机） ===
+  // === 单曲随机（不重复 + 恒定步长防卡顿） ===
   function startSingleShuffle() {
     if (isShuffling || !filtered.length) return;
     isShuffling = true;
     coverTrack.classList.add('spinning');
 
     var cards = coverTrack.querySelectorAll('.cover-card');
-    var cardW = cards[0].offsetWidth + 24;
-    var singleGroupWidth = cardW * filtered.length;
+    if (cards.length === 0) { isShuffling = false; return; }
 
-    // 防止滚出安全区域，如果不在中间，先强行拉回中心
-    if (coverTrack.scrollLeft < singleGroupWidth * 3.5 || coverTrack.scrollLeft > singleGroupWidth * 4.5) {
-      coverTrack.style.scrollBehavior = 'auto';
-      coverTrack.scrollLeft = singleGroupWidth * 4;
-    }
+    // 1. 过滤掉正在播放的歌
+    var candidates = filtered.filter(t => t.id !== currentId);
+    if (candidates.length === 0) candidates = filtered;
+    
+    // 2. 真随机选出一首目标
+    var targetTrack = candidates[Math.floor(Math.random() * candidates.length)];
+    
+    // 3. 找到最近的一个目标卡片，且强制在右侧
+    var viewportCenter = window.innerWidth / 2;
+    var currentCenterScroll = coverTrack.scrollLeft + viewportCenter;
+    var targetCard = null;
+    var minDistance = Infinity;
 
-    var startScroll = coverTrack.scrollLeft;
-    // 随机滚动的距离（3000px - 5000px），保证能滚过好几个卡片
-    var extraScroll = 3000 + Math.random() * 2000; 
-    var targetScroll = startScroll + extraScroll;
-
-    var startTime = performance.now();
-    var duration = 1200; // 1.2秒
-
-    function animate(now) {
-      var p = (now - startTime) / duration;
-      if (p > 1) p = 1;
-      // 缓动函数 easeOutQuint
-      var ease = 1 - Math.pow(1 - p, 5);
-      coverTrack.scrollLeft = startScroll + (targetScroll - startScroll) * ease;
-
-      if (p < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        coverTrack.classList.remove('spinning');
-        isShuffling = false;
+    cards.forEach(card => {
+      if (card.getAttribute('data-id') === targetTrack.id) {
+        var cardCenter = card.offsetLeft + card.offsetWidth / 2;
+        var distance = cardCenter - currentCenterScroll;
         
-        // 手动计算吸附与强制播放
-        var viewportCenter = window.innerWidth / 2;
-        var closestCard = null, minDist = Infinity;
-        cards.forEach(card => {
-          var cW = card.offsetWidth;
-          var physicalCenter = card.offsetLeft + cW / 2 - coverTrack.scrollLeft;
-          var distance = viewportCenter - physicalCenter;
-          if (Math.abs(distance) < minDist) {
-            minDist = Math.abs(distance);
-            closestCard = card;
-          }
-        });
-
-        if (closestCard) {
-          var cW = closestCard.offsetWidth;
-          var target = closestCard.offsetLeft - viewportCenter + cW / 2;
-          coverTrack.scrollTo({ left: target, behavior: 'smooth' });
-          
-          var id = closestCard.getAttribute('data-id');
-          if (id) playTrack(id, true); // true = 强制播放
+        // 只考虑在当前视野中心右侧（或刚好在中心）的卡片
+        if (distance > -10) {
+           if (distance < minDistance) {
+             minDistance = distance;
+             targetCard = card;
+           }
         }
       }
+    });
+
+    // 兜底：如果都在左侧，则取最左边的那个（等下会加上一整圈的距离强制拉到右侧）
+    if (!targetCard) {
+      cards.forEach(card => {
+        if (card.getAttribute('data-id') === targetTrack.id) {
+          if (!targetCard) targetCard = card;
+        }
+      });
     }
-    requestAnimationFrame(animate);
+
+    var targetScroll = targetCard.offsetLeft - viewportCenter + targetCard.offsetWidth / 2;
+    
+    // 4. 如果目标在左边，加上一圈的宽度，模拟用力向右扒拉
+    var singleGroupWidth = (cards[0].offsetWidth + 24) * filtered.length;
+    while (targetScroll <= coverTrack.scrollLeft + 50) {
+        targetScroll += singleGroupWidth;
+    }
+
+    // 5. 恒定步长的缓动动画
+    var speed = 25; // 初始速度：每帧移动 25px (不依赖时间差，低端机绝对能渲染)
+    
+    function step() {
+        var remaining = targetScroll - coverTrack.scrollLeft;
+        
+        if (remaining <= speed) {
+            // 到达终点
+            coverTrack.scrollLeft = targetScroll;
+            coverTrack.classList.remove('spinning');
+            isShuffling = false;
+            
+            playTrack(targetTrack.id, true);
+            update3D();
+            coverTrack.dispatchEvent(new Event('scroll'));
+            return;
+        }
+        
+        coverTrack.scrollLeft += speed;
+        speed = Math.max(2, speed * 0.96); // 缓慢减速，最低速 2px/帧
+        
+        requestAnimationFrame(step);
+    }
+    
+    requestAnimationFrame(step);
   }
 
-  // === 随机列表（聚拢散开） ===
+  // === 随机列表（完全洗牌 + 避重） ===
   function startListShuffle() {
     if (isShuffling || !filtered.length) return;
     isShuffling = true;
@@ -1098,7 +1115,6 @@
     var cards = Array.from(coverTrack.querySelectorAll('.cover-card'));
     if (!cards.length) { isShuffling = false; return; }
 
-    // 解除父级 overflow 限制，让卡片能飞出屏幕
     var originalMainStageOverflow = mainStage.style.overflow;
     var originalTrackOverflowX = coverTrack.style.overflowX;
     mainStage.style.overflow = 'visible';
@@ -1138,11 +1154,10 @@
 
     // 第三步：洗牌重绘并恢复
     setTimeout(() => {
-      // 恢复遮挡
       mainStage.style.overflow = originalMainStageOverflow;
       coverTrack.style.overflowX = originalTrackOverflowX;
 
-      // 数组洗牌 (Fisher-Yates)
+      // 真正的 Fisher-Yates 洗牌算法
       for (var i = tracks.length - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));
         var temp = tracks[i];
@@ -1150,10 +1165,22 @@
         tracks[j] = temp;
       }
 
-      // 重新渲染，瞬间恢复正常的 Cover Flow 布局
+      // 更新 filtered 池
+      filtered = activeCat === '全部' ? tracks : tracks.filter(t => t.category === activeCat);
+
+      // 确保洗牌后的第一首不是当前正在播放的，如果是，则往后挪
+      if (filtered.length > 1 && filtered[0].id === currentId) {
+        var idx0 = tracks.findIndex(t => t.id === filtered[0].id);
+        var idx1 = tracks.findIndex(t => t.id === filtered[1].id);
+        if (idx0 > -1 && idx1 > -1) {
+           var tempT = tracks[idx0]; tracks[idx0] = tracks[idx1]; tracks[idx1] = tempT;
+        }
+        filtered = activeCat === '全部' ? tracks : tracks.filter(t => t.category === activeCat);
+      }
+
+      // 渲染，会自动将列表第一个居中
       filterAndRenderCards();
       
-      // 强制播放一首歌
       setTimeout(() => {
         if (filtered.length > 0) {
           playTrack(filtered[0].id, true); 
@@ -1163,7 +1190,7 @@
     }, 1050); 
   }
 
-  // 拖动、滚动等事件绑定
+  // ==================== 其他拖动与交互绑定 ====================
   coverTrack.addEventListener('scroll', () => {
     if (isShuffling) return; // 动画期间不响应
 
