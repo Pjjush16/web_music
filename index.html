@@ -91,8 +91,6 @@
     overflow: hidden;
     transform-style: preserve-3d;
     backface-visibility: hidden;
-    /* 强制宽高一致 */
-    aspect-ratio: 1 / 1;
   }
   .cover-card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
   .cover-card.no-cover { display: grid; place-items: center; font-size: 3rem; color: var(--text-3); background: var(--accent-soft); }
@@ -121,6 +119,7 @@
   .pb-track { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
 
   .pb-cover {
+    position: relative;
     width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
     background: var(--accent-soft); display: grid; place-items: center;
     overflow: hidden; box-shadow: var(--shadow-sm); cursor: pointer;
@@ -129,6 +128,7 @@
   .pb-cover:hover { transform: scale(1.05); }
   .pb-cover img { width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1; }
   .pb-cover::before { content: '♪'; position: absolute; font-size: 1.2rem; color: var(--text-3); z-index: 0; }
+  .pb-cover.has-cover::before { display: none; }
 
   .pb-info { display: flex; flex-direction: column; min-width: 0; }
   .pb-title { font-size: 0.95rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); line-height: 1.3; }
@@ -162,45 +162,17 @@
   .np-lyric-btn { right: 24px; }
 
   .np-spectrum{position:absolute;left:0;right:0;bottom:0;width:100vw;height:130px;pointer-events:none;z-index:1;-webkit-mask-image:linear-gradient(to top, black 30%, transparent 100%);mask-image:linear-gradient(to top, black 30%, transparent 100%);}
-  
-  /* 基础排版：默认手机竖屏的上下结构 */
-  .np-content{
-    position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);
-    display:flex;flex-direction:column;align-items:center;
-    width:100%;max-width:720px;padding:0 24px;max-height:calc(100vh - 100px);
-  }
-
-  .np-view-cover{
-    display:flex;flex-direction:column;align-items:center;
-    transition:opacity .3s,transform .3s;width:100%;
-    flex-shrink: 0;
-  }
+  .np-content{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;width:100%;max-width:720px;padding:0 24px;max-height:calc(100vh - 100px);}
+  .np-view-cover{display:flex;flex-direction:column;align-items:center;transition:opacity .3s,transform .3s;width:100%;}
   .np-view-cover.hidden{opacity:0;pointer-events:none;transform:scale(.95);}
-  
-  /* 坚决防止变形 */
-  .np-art{display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px;flex-shrink:0;}
-  .np-cover{
-    width:min(300px,55vw);height:min(300px,55vw);
-    aspect-ratio: 1 / 1;
-    border-radius:min(20px,4vw);position:relative;z-index:2;box-shadow:0 30px 80px rgba(0,0,0,.35);
-    display:grid;place-items:center;background:var(--accent-soft);overflow:hidden;flex-shrink: 0;
-  }
+  .np-art{display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px;}
+  .np-cover{width:min(300px,55vw);height:min(300px,55vw);border-radius:min(20px,4vw);position:relative;z-index:2;box-shadow:0 30px 80px rgba(0,0,0,.35);display:grid;place-items:center;background:var(--accent-soft);overflow:hidden;}
   .np-cover::before{content:'♪';color:rgba(255,255,255,.9);font-size:clamp(2.4rem,7vw,3.6rem);position:absolute}
   .np-cover img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
 
-  .np-vinyl{
-    width:min(280px,52vw);height:min(280px,52vw);
-    aspect-ratio: 1 / 1;
-    margin-left:calc(min(280px,52vw) * -0.5);
-    position:relative;z-index:1;flex-shrink: 0;
-    animation:vinylIn .55s cubic-bezier(.22,1,.36,1) .08s both;
-  }
+  .np-vinyl{width:min(280px,52vw);height:min(280px,52vw);margin-left:calc(min(280px,52vw) * -0.5);position:relative;z-index:1;animation:vinylIn .55s cubic-bezier(.22,1,.36,1) .08s both;}
   @keyframes vinylIn{from{transform:translateX(-45%) scale(.84) rotate(-18deg);opacity:0}to{transform:translateX(0) scale(1) rotate(0);opacity:1}}
-  .np-vinyl-disc{
-    width:100%;height:100%;border-radius:50%;
-    background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.10),transparent 46%),repeating-radial-gradient(circle at center,#1d1d1d 0 1px,#0d0d0d 1px 3px);
-    position:relative;animation:spin 10s linear infinite;animation-play-state:paused;flex-shrink:0;
-  }
+  .np-vinyl-disc{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.10),transparent 46%),repeating-radial-gradient(circle at center,#1d1d1d 0 1px,#0d0d0d 1px 3px);position:relative;animation:spin 10s linear infinite;animation-play-state:paused;}
   .now-playing.is-playing .np-vinyl-disc{animation-play-state:running}
   @keyframes spin{to{transform:rotate(360deg)}}
   .np-vinyl-disc::before{content:'';position:absolute;width:45%;height:45%;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--vinyl-label,var(--np-primary));background-size:cover;background-position:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.22);}
@@ -210,12 +182,7 @@
   .np-info h2{font-size:clamp(1.3rem,3.2vw,1.7rem);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e0e0e0;margin-bottom:4px;}
   .np-info p{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(255,255,255,0.5);}
 
-  .np-view-lyrics{
-    position:absolute;top:0;left:0;right:0;bottom:140px;display:block;opacity:0;pointer-events:none;
-    transition:opacity .3s;overflow-y:auto;scrollbar-width:none;padding:30vh 0;box-sizing:border-box;
-    scroll-behavior:smooth;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);
-    mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);
-  }
+  .np-view-lyrics{position:absolute;top:0;left:0;right:0;bottom:140px;display:block;opacity:0;pointer-events:none;transition:opacity .3s;overflow-y:auto;scrollbar-width:none;padding:30vh 0 20vh;box-sizing:border-box;scroll-behavior:smooth;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);}
   .np-view-lyrics.hidden{display:none;}
   .np-view-lyrics.active{opacity:1;pointer-events:auto;}
   .np-view-lyrics::-webkit-scrollbar{display:none;}
@@ -223,81 +190,14 @@
   .lyric-line{font-size:1.1rem;line-height:1.6;color:rgba(255,255,255,.3);text-align:center;padding:12px 0;transition:color .3s,transform .3s;font-weight:600;}
   .lyric-line.active{color:rgba(255,255,255,.85);font-size:1.25rem;font-weight:800;transform:scale(1.02);}
 
-  .np-progress-row{display:flex;align-items:center;gap:12px;width:100%;max-width:320px;font-size:.75rem;color:rgba(255,255,255,.4);margin-bottom:16px;z-index:10;}
+  .np-progress-row{display:flex;align-items:center;gap:12px;width:100%;max-width:320px;font-size:.75rem;color:rgba(255,255,255,.4);margin-bottom:16px;}
   .np-bar{flex:1;height:4px;border-radius:999px;background:rgba(255,255,255,.15);position:relative;cursor:pointer;overflow:hidden;}
   .np-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:var(--np-primary-light);width:0%;transition:width .1s linear;}
 
-  .np-controls{display:flex;align-items:center;justify-content:center;gap:24px;width:100%;z-index:10;flex-shrink:0;}
-  .np-btn{width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);display:grid;place-items:center;transition:all .2s;flex-shrink:0;}
+  .np-controls{display:flex;align-items:center;justify-content:center;gap:24px;width:100%;}
+  .np-btn{width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);display:grid;place-items:center;transition:all .2s;}
   .np-btn:hover{background:rgba(255,255,255,.2);color:#fff;}
   .np-btn.np-main{width:64px;height:64px;background:var(--np-primary-light);color:#fff;border-color:transparent;box-shadow:0 12px 30px color-mix(in srgb,var(--np-primary) 50%,transparent);}
-
-  /* ==================== 终极响应式：横屏/宽屏无缝切换 ==================== */
-  /* 只要屏幕的宽高比大于 1:1（横屏），或者屏幕宽度大于 768px（平板/PC），就触发融合双栏 */
-  @media (min-aspect-ratio: 1/1), (min-width: 768px) {
-    .np-content {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr auto auto;
-      grid-template-areas: 
-        "cover lyrics"
-        "progress progress"
-        "controls controls";
-      max-width: 1100px;
-      width: 90%;
-      height: 85vh;
-      gap: 10px 40px;
-      padding: 0;
-      align-items: center;
-      align-content: center;
-    }
-
-    /* 左侧封面 */
-    .np-view-cover {
-      grid-area: cover;
-      justify-content: center;
-      height: 100%;
-    }
-    /* 动态适应高度，防止溢出 */
-    .np-cover { 
-      width: min(360px, 32vw, 45vh); 
-      height: min(360px, 32vw, 45vh); 
-    }
-    .np-vinyl { 
-      width: min(320px, 28vw, 40vh); 
-      height: min(320px, 28vw, 40vh); 
-      margin-left: calc(min(320px, 28vw, 40vh) * -0.5); 
-    }
-
-    /* 右侧歌词，不再绝对定位，自然铺满右侧网格 */
-    .np-view-lyrics {
-      grid-area: lyrics;
-      position: relative;
-      inset: auto;
-      bottom: auto;
-      height: 100%;
-      width: 100%;
-      opacity: 1;
-      pointer-events: auto;
-      padding: 10vh 0;
-      mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-    }
-
-    /* 宽屏下无需切换按钮，强制隐藏 */
-    .np-lyric-btn { display: none !important; }
-
-    /* 底部进度条和控制条居中 */
-    .np-progress-row {
-      grid-area: progress;
-      max-width: 60%;
-      margin: 0 auto;
-    }
-
-    .np-controls {
-      grid-area: controls;
-    }
-  }
 
   /* ==================== 设置弹窗 ==================== */
   .settings-modal{position:fixed;inset:0;z-index:400;display:grid;place-items:center;padding:24px;}
@@ -328,32 +228,16 @@
   .doc-panel{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;max-height:300px;overflow-y:auto;}
   .doc-panel pre{margin:0;font-family:var(--mono);font-size:.8rem;white-space:pre-wrap;word-break:break-word;color:var(--text-2);}
 
-  /* 超小屏幕手表优化 */
-  @media (max-width: 320px) {
-    .site-brand { font-size: 1rem; }
-    .settings-btn { width: 32px; height: 32px; }
-    .cover-stage { height: 200px; }
-    .cover-card { width: 70vw; height: 70vw; margin-left: -35vw; margin-top: -35vw; }
-    .player-bar { padding: 8px 12px; }
-    .pb-cover { width: 32px; height: 32px; }
-    .pb-title { font-size: 0.75rem; }
-    .pb-artist { font-size: 0.65rem; }
-    .pb-btn { width: 28px; height: 28px; }
-    .pb-play { width: 36px; height: 36px; }
-    
-    .np-icon-btn { width: 32px; height: 32px; top: 12px; }
-    .np-close-btn { left: 12px; }
-    .np-lyric-btn { right: 12px; }
-    
-    .np-cover { width: min(180px, 55vw); height: min(180px, 55vw); }
-    .np-vinyl { width: min(160px, 50vw); height: min(160px, 50vw); margin-left: calc(min(160px, 50vw) * -0.5); }
-    .np-info h2 { font-size: 1rem; }
-    .np-info p { font-size: 0.75rem; }
-    .np-progress-row { margin-bottom: 8px; }
-    .np-btn { width: 36px; height: 36px; }
-    .np-btn.np-main { width: 48px; height: 48px; }
-    .lyric-line { font-size: 0.9rem; padding: 8px 0; }
-    .lyric-line.active { font-size: 1.05rem; }
+  @media (max-width: 820px) {
+    .pb-cover{width:40px;height:40px;}
+    .cover-stage{height:280px;}
+    .cover-card{width:min(200px,50vw);height:min(200px,50vw);margin-left:calc(min(200px,50vw) / -2);margin-top:calc(min(200px,50vw) / -2);}
+    .np-spectrum{height:100px;}
+    .np-cover{width:min(260px,60vw);height:min(260px,60vw);}
+    .np-vinyl{width:min(240px,55vw);height:min(240px,55vw);margin-left:calc(min(240px,55vw) * -0.5);}
+    .np-btn{width:44px;height:44px;}
+    .np-btn.np-main{width:56px;height:56px;}
+    .np-view-lyrics{bottom:120px;padding:25vh 0 15vh;}
   }
 </style>
 </head>
@@ -402,7 +286,6 @@
   <button class="np-icon-btn np-close-btn" type="button" data-np-close aria-label="关闭"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   <button class="np-icon-btn np-lyric-btn" id="np-toggle-lyrics" type="button" aria-label="切换歌词"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h10M4 17h6"/></svg></button>
   <canvas class="np-spectrum" id="np-spectrum"></canvas>
-  
   <div class="np-content" id="np-content">
     <div class="np-view-cover" id="np-view-cover">
       <div class="np-art">
@@ -527,6 +410,7 @@
   var currentId = null, isPlaying = false, npOpen = false;
   var currentManifestUrl = '';
   var currentLyrics = [], currentLyricIndex = -1;
+  var userScrolling = false, scrollTimer = null;
 
   // 数学取模核心变量
   var logicalCenter = 0; 
@@ -569,6 +453,10 @@
   function looksLikeLRC(s){
     return typeof s === 'string' && /^\s*\[\d{1,3}:\d{1,2}/.test(s);
   }
+  function isSameOrigin(url) {
+    try { return new URL(url, location.href).origin === location.origin; }
+    catch (e) { return true; }
+  }
 
   function getStepWidth() {
     var viewportW = window.innerWidth;
@@ -603,6 +491,7 @@
       document.documentElement.removeAttribute('data-theme');
       localStorage.setItem(THEME_KEY, 'light');
     }
+    if (currentId) updateTrackColors(getTrack(currentId));
   });
 
   var spectrumColor = [45, 90, 74], spectrumColorLight = [127, 191, 168];
@@ -714,6 +603,7 @@
 
   function loadLyrics(track) {
     currentLyrics = []; currentLyricIndex = -1;
+    userScrolling = false;
     npLyricsContent.innerHTML = '<div class="lyric-line active">暂无歌词</div>';
     if (!track || !track.lyrics) return;
     
@@ -773,10 +663,26 @@
       for (var j = 0; j < lines.length; j++) {
         if (j === idx) lines[j].classList.add('active'); else lines[j].classList.remove('active');
       }
-      if (idx >= 0 && lines[idx]) {
+      if (idx >= 0 && lines[idx] && !userScrolling) {
         var top = lines[idx].offsetTop - npViewLyrics.offsetHeight / 2 + lines[idx].offsetHeight / 2;
         npViewLyrics.scrollTop = top;
       }
+    }
+  }
+
+  npViewLyrics.addEventListener('scroll', function () {
+    if (npViewLyrics.style.scrollBehavior === 'auto') return;
+    userScrolling = true;
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function () { userScrolling = false; }, 4000);
+  }, { passive: true });
+
+  function hideLyricsView() {
+    if (npViewCover.classList.contains('hidden')) {
+      npViewLyrics.classList.remove('active');
+      setTimeout(function(){ npViewLyrics.classList.add('hidden'); }, 300);
+      npViewCover.classList.remove('hidden');
+      npToggleLyricsBtn.classList.remove('active');
     }
   }
 
@@ -809,7 +715,7 @@
       if (card.getAttribute('data-id') !== t.id) {
         card.setAttribute('data-id', t.id);
         if (t.cover) {
-          card.innerHTML = `<img src="${esc(t.cover)}" onerror="this.style.display='none'">`;
+          card.innerHTML = `<img src="${esc(t.cover)}" loading="lazy" decoding="async" onerror="this.style.display='none'">`;
           card.classList.remove('no-cover');
         } else {
           card.innerHTML = '♪';
@@ -835,6 +741,7 @@
       card.style.transform = `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
       card.style.opacity = Math.max(0, opacity);
       card.style.zIndex = 100 - Math.floor(absStep * 10);
+      card.style.pointerEvents = '';
 
       if (absStep < minDist) {
         minDist = absStep;
@@ -850,39 +757,40 @@
   }
 
   function animateToOffset(targetOffset) {
-    if (isAnimatingScroll) return;
+    if (isAnimatingScroll || !tracks.length) return;
     isAnimatingScroll = true;
-    
-    let startOffset = currentOffset;
-    let distance = targetOffset - startOffset;
-    let duration = 250;
-    let startTime = performance.now();
+
+    const N = tracks.length;
+    const startOffset = currentOffset;
+    const distance = targetOffset - startOffset;
+    const duration = 250;
+    const startTime = performance.now();
 
     function step(now) {
       if (!isAnimatingScroll) return;
       let p = (now - startTime) / duration;
       if (p > 1) p = 1;
-      let ease = 1 - Math.pow(1 - p, 3);
-      
+      const ease = 1 - Math.pow(1 - p, 3);
+
       currentOffset = startOffset + distance * ease;
       update3D();
 
       if (p < 1) {
         requestAnimationFrame(step);
-      } else {
-        currentOffset = targetOffset;
-        
-        if (targetOffset !== 0) {
-          let shift = Math.floor(targetOffset);
-          logicalCenter = (logicalCenter + shift) % tracks.length;
-          if (logicalCenter < 0) logicalCenter += tracks.length;
-          currentOffset -= shift;
-          
-          update3D();
-          syncPlayerToCurrent();
-        }
-        isAnimatingScroll = false;
+        return;
       }
+
+      currentOffset = targetOffset;
+
+      if (targetOffset !== 0) {
+        const shift = Math.floor(targetOffset);
+        logicalCenter = ((logicalCenter + shift) % N + N) % N;
+        currentOffset -= shift;
+      }
+
+      update3D();
+      isAnimatingScroll = false;
+      syncPlayerToCurrent();
     }
     requestAnimationFrame(step);
   }
@@ -1006,12 +914,14 @@
   }
 
   function normalizeSongs(rawSongs, baseUrl){
-    return rawSongs.filter(s => s && typeof s === 'object').map((s, i) => ({
-      id: s.id || ('s' + i), title: s.title || '未命名', artist: s.artist || '',
-      album: s.album || '', category: s.category || '未分类',
-      src: resolveAsset(s.src, baseUrl), cover: resolveAsset(s.cover, baseUrl),
-      lyrics: looksLikeLRC(s.lyrics) ? s.lyrics : resolveAsset(s.lyrics, baseUrl)
-    }));
+    return rawSongs
+      .filter(s => s && typeof s === 'object' && s.src)
+      .map((s, i) => ({
+        id: s.id || ('s' + i), title: s.title || '未命名', artist: s.artist || '',
+        album: s.album || '', category: s.category || '未分类',
+        src: resolveAsset(s.src, baseUrl), cover: resolveAsset(s.cover, baseUrl),
+        lyrics: looksLikeLRC(s.lyrics) ? s.lyrics : resolveAsset(s.lyrics, baseUrl)
+      }));
   }
 
   function refreshLibrary(){
@@ -1019,7 +929,9 @@
       .then(res => {
         currentManifestUrl = res.url;
         tracks = normalizeSongs(res.data.tracks, absoluteUrl(res.url));
-        
+        if (!tracks.length) throw new Error('清单中没有可用曲目（缺少 src 字段）');
+        logicalCenter = ((logicalCenter % tracks.length) + tracks.length) % tracks.length;
+
         applyRestoredPlayerState();
         if (!currentId && tracks.length) {
           currentId = tracks[0].id;
@@ -1036,44 +948,39 @@
 
   function updatePlayerUI(t) {
     if (!t) {
-      pbTitle.textContent = '未在播放'; pbArtist.textContent = '请选择曲目';
-      pbCoverImg.style.display = 'none'; pbCover.style.background = 'var(--border)';
+      pbTitle.textContent = '未在播放';
+      pbArtist.textContent = '请选择曲目';
+      pbCoverImg.style.display = 'none';
+      pbCover.classList.remove('has-cover');
+      pbCover.style.background = 'var(--border)';
       return;
     }
     pbTitle.textContent = t.title;
     pbArtist.textContent = t.artist || '未知艺术家';
     if (t.cover) {
-      pbCoverImg.src = t.cover; pbCoverImg.style.display = 'block'; pbCover.style.background = 'transparent';
+      pbCoverImg.src = t.cover;
+      pbCoverImg.style.display = 'block';
+      pbCover.classList.add('has-cover');
+      pbCover.style.background = 'transparent';
     } else {
-      pbCoverImg.style.display = 'none'; pbCover.style.background = 'var(--border)';
+      pbCoverImg.removeAttribute('src');
+      pbCoverImg.style.display = 'none';
+      pbCover.classList.remove('has-cover');
+      pbCover.style.background = 'var(--border)';
     }
-    
-    npCover.style.background = t.cover ? `url("${t.cover}") center/cover` : 'var(--accent-soft)';
-    if (!t.cover) npCover.innerHTML = '<span style="font-size:4rem;color:rgba(255,255,255,0.2)">♪</span>'; else npCover.innerHTML = '';
-    npTitle.textContent = t.title;
-    npArtist.textContent = (t.artist || '') + (t.album ? ' · ' + t.album : '');
-    
+
     if (t.cover) {
-      npVinylDisc.style.setProperty('--vinyl-label', `url("${t.cover}")`);
+      npCover.innerHTML = '<img src="' + esc(t.cover) + '" alt="">';
+      npVinylDisc.style.setProperty('--vinyl-label', 'url("' + t.cover + '")');
     } else {
+      npCover.innerHTML = '';
       npVinylDisc.style.setProperty('--vinyl-label', 'var(--np-primary)');
     }
+    npTitle.textContent = t.title;
+    npArtist.textContent = (t.artist || '') + (t.album ? ' · ' + t.album : '');
 
     updateTrackColors(t);
     loadLyrics(t);
-  }
-
-  function playTrack(id, forcePlay) {
-    var t = getTrack(id);
-    if (!t || !t.src) return;
-    if (id === currentId && !forcePlay) { togglePlay(); return; }
-
-    currentId = id;
-    audio.src = t.src;
-    audio.play().catch(e => console.warn('播放失败', e));
-    
-    updatePlayerUI(t);
-    savePlayerState();
   }
 
   function togglePlay() {
@@ -1144,6 +1051,7 @@
     } catch(e){}
   }
 
+  // ==================== 频谱动画 ====================
   var audioCtx = null, analyser = null, freqData = null;
   var barSpectrumCanvas = document.getElementById('bar-spectrum'), barSpectrumCtx = barSpectrumCanvas.getContext('2d');
   var npSpectrumCanvas = document.getElementById('np-spectrum'), npSpectrumCtx = npSpectrumCanvas.getContext('2d');
@@ -1152,17 +1060,22 @@
   var visData = new Float32Array(64);
   var targetData = new Float32Array(64);
   var isSpectrumRunning = false;
+  var lastSpectrumTime = 0;
 
   function setupAnalyser() {
     if (audioCtx) return;
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
+    if (!audio.src || !isSameOrigin(audio.src)) return;
     try {
-      audioCtx = new AC(); analyser = audioCtx.createAnalyser(); analyser.fftSize = 256;
+      audioCtx = new AC();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
       var sourceNode = audioCtx.createMediaElementSource(audio);
-      sourceNode.connect(analyser); analyser.connect(audioCtx.destination);
+      sourceNode.connect(analyser);
+      analyser.connect(audioCtx.destination);
       freqData = new Uint8Array(analyser.frequencyBinCount);
-    } catch(e){}
+    } catch(e){ audioCtx = null; analyser = null; }
   }
 
   function ensureAudioContext() {
@@ -1183,12 +1096,17 @@
     var dpr = window.devicePixelRatio || 1;
     var w = canvas.clientWidth, h = canvas.clientHeight;
     if (!w || !h) return;
-    if (canvas.width !== w*dpr) { canvas.width = w*dpr; canvas.height = h*dpr; }
+    var cw = Math.round(w * dpr), ch = Math.round(h * dpr);
+    if (canvas.width !== cw || canvas.height !== ch) {
+      canvas.width = cw;
+      canvas.height = ch;
+    }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
     var usable = data.length;
-    var targetBarW = isFullScreen ? 8 : 5;
+    
+    var targetBarW = isFullScreen ? 8 : 6;
     var bars = Math.floor(w / targetBarW);
     if (bars <= 0) return;
     
@@ -1221,8 +1139,12 @@
     }
   }
 
-  function loopSpectrum() {
+  function loopSpectrum(now) {
     if (!isSpectrumRunning) return;
+    
+    if (!lastSpectrumTime) lastSpectrumTime = now;
+    var dt = Math.min(now - lastSpectrumTime, 50);
+    lastSpectrumTime = now;
 
     if (isPlaying) {
       if (analyser && freqData) {
@@ -1235,23 +1157,24 @@
           }
         } else {
           var fake = generateFakeData(Date.now());
-          for(var i=0; i<64; i++) targetData[i] = fake[i];
+          for(var k=0; k<64; k++) targetData[k] = fake[k];
         }
       } else {
         var fake = generateFakeData(Date.now());
-        for(var i=0; i<64; i++) targetData[i] = fake[i];
+        for(var k=0; k<64; k++) targetData[k] = fake[k];
       }
     } else {
       targetData.fill(0);
     }
 
+    var baseEase = isPlaying ? 0.35 : 0.08;
+    var ease = 1 - Math.pow(1 - baseEase, dt / 16.66);
+
     var isAllZero = true;
-    for (var i = 0; i < 64; i++) {
-      var ease = isPlaying ? 0.35 : 0.08;
-      visData[i] += (targetData[i] - visData[i]) * ease;
-      
-      if (visData[i] > 1) isAllZero = false;
-      else visData[i] = 0;
+    for (var m = 0; m < 64; m++) {
+      visData[m] += (targetData[m] - visData[m]) * ease;
+      if (visData[m] > 1) isAllZero = false;
+      else visData[m] = 0;
     }
 
     if (npOpen) drawSpectrum(npSpectrumCanvas, npSpectrumCtx, visData, true);
@@ -1268,8 +1191,82 @@
   function startSpectrum() {
     if (isSpectrumRunning) return;
     isSpectrumRunning = true;
+    lastSpectrumTime = 0;
     spectrumRAF = requestAnimationFrame(loopSpectrum);
   }
+
+  // ==================== UI 历史状态管理 (返回键) ====================
+  var historyState = 'main';
+
+  function openNP() {
+    if (!currentId || npOpen) return;
+    npOpen = true;
+    npModal.hidden = false;
+    npModal.classList.remove('closing');
+    document.body.style.overflow = 'hidden';
+    npViewCover.classList.remove('hidden');
+    npViewLyrics.classList.add('hidden');
+    npViewLyrics.classList.remove('active');
+    npToggleLyricsBtn.classList.remove('active');
+
+    if (historyState !== 'np') {
+      history.pushState({ modal: 'np' }, '');
+      historyState = 'np';
+    }
+
+    if (isPlaying || isSpectrumRunning) startSpectrum();
+    else drawSpectrum(npSpectrumCanvas, npSpectrumCtx, visData, true);
+  }
+
+  function closeNP(fromPopstate) {
+    if (!npOpen) return;
+    npOpen = false;
+    npModal.classList.add('closing');
+    setTimeout(() => {
+      npModal.hidden = true;
+      npModal.classList.remove('closing');
+      document.body.style.overflow = '';
+    }, 200);
+
+    if (!fromPopstate) {
+      if (history.state && history.state.modal === 'np') {
+        history.back();
+      }
+    } else {
+      historyState = 'main';
+    }
+  }
+
+  function openSettings() {
+    if (!settingsModal.hidden) return;
+    settingsModal.hidden = false;
+    settingsStatus.textContent = '';
+    updateManifestHints();
+
+    if (historyState !== 'settings') {
+      history.pushState({ modal: 'settings' }, '');
+      historyState = 'settings';
+    }
+  }
+
+  function closeSettings(fromPopstate) {
+    if (settingsModal.hidden) return;
+    settingsModal.hidden = true;
+
+    if (!fromPopstate) {
+      if (history.state && history.state.modal === 'settings') {
+        history.back();
+      }
+    } else {
+      historyState = 'main';
+    }
+  }
+
+  window.addEventListener('popstate', function() {
+    historyState = 'main';
+    if (npOpen) closeNP(true);
+    if (!settingsModal.hidden) closeSettings(true);
+  });
 
   // ==================== 全局事件 ====================
   audio.addEventListener('play', () => { isPlaying = true; ensureAudioContext(); syncPlayUI(); startSpectrum(); });
@@ -1300,60 +1297,37 @@
     }
   });
 
-  seekBar.addEventListener('click', e => {
-    var rect = seekBar.getBoundingClientRect(), ratio = (e.clientX - rect.left) / rect.width;
-    if (isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
-  });
-  npBar.addEventListener('click', e => {
-    var rect = npBar.getBoundingClientRect(), ratio = (e.clientX - rect.left) / rect.width;
-    if (isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
-  });
-
-  pbCover.addEventListener('click', () => {
-    if (!currentId) return;
-    npOpen = true;
-    npModal.hidden = false;
-    npModal.classList.remove('closing');
-    document.body.style.overflow = 'hidden';
-    
-    // 宽屏直接进入双栏模式
-    if (window.innerWidth > 768 || window.innerWidth > window.innerHeight) {
-      npViewCover.classList.remove('hidden');
-      npViewLyrics.classList.remove('hidden');
-      npViewLyrics.classList.add('active');
-      npToggleLyricsBtn.classList.remove('active');
-    } else {
-      npViewCover.classList.remove('hidden');
-      npViewLyrics.classList.add('hidden');
-      npViewLyrics.classList.remove('active');
-      npToggleLyricsBtn.classList.remove('active');
+  function bindSeek(barEl) {
+    function seek(e) {
+      var rect = barEl.getBoundingClientRect();
+      var ratio = Math.max(0, Math.min(1, (getClientX(e) - rect.left) / rect.width));
+      if (isFinite(audio.duration)) audio.currentTime = ratio * audio.duration;
     }
+    var dragging = false;
+    barEl.addEventListener('mousedown', function(e){ dragging = true; seek(e); e.preventDefault(); });
+    window.addEventListener('mousemove', function(e){ if (dragging) seek(e); });
+    window.addEventListener('mouseup', function(){ dragging = false; });
+    barEl.addEventListener('touchstart', function(e){ dragging = true; seek(e); }, { passive: true });
+    barEl.addEventListener('touchmove', function(e){ if (dragging) { seek(e); e.preventDefault(); } }, { passive: false });
+    barEl.addEventListener('touchend', function(){ dragging = false; });
+  }
+  bindSeek(seekBar);
+  bindSeek(npBar);
 
-    if (isPlaying || isSpectrumRunning) startSpectrum();
-    else drawSpectrum(npSpectrumCanvas, npSpectrumCtx, visData, true);
-  });
+  pbCover.addEventListener('click', openNP);
 
   npModal.addEventListener('click', e => {
-    if (e.target.closest('[data-np-close]')) {
-      npOpen = false;
-      npModal.classList.add('closing');
-      setTimeout(() => {
-        npModal.hidden = true;
-        npModal.classList.remove('closing');
-        document.body.style.overflow = '';
-      }, 200);
-    }
+    if (e.target.closest('[data-np-close]')) closeNP(false);
   });
   
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
     if (e.key === 'Escape') {
-      if(npOpen) {
-        npOpen = false;
-        npModal.classList.add('closing');
-        setTimeout(() => { npModal.hidden = true; npModal.classList.remove('closing'); document.body.style.overflow = ''; }, 200);
-      } else if (!settingsModal.hidden) settingsModal.hidden = true;
+      if(npOpen) closeNP(false);
+      else if (!settingsModal.hidden) closeSettings(false);
+      return;
     }
+    if (e.target.closest('button')) return;
     if (e.key === ' ') { e.preventDefault(); togglePlay(); }
     if (e.key === 'ArrowRight' && !npOpen) nextTrack();
     if (e.key === 'ArrowLeft' && !npOpen) prevTrack();
@@ -1362,11 +1336,12 @@
   function updateManifestHints(){
     var raw = (sourceState.manifestUrl || '').trim();
     var resolved = raw ? absoluteUrl(raw) : absoluteUrl('./manifest.json');
-    settingsCurrent.innerHTML = `<strong>当前生效地址</strong>${resolved}`;
+    settingsCurrent.innerHTML = '<strong>当前生效地址</strong>' + esc(resolved);
   }
 
-  settingsBtn.addEventListener('click', () => { settingsModal.hidden = false; settingsStatus.textContent = ''; updateManifestHints(); });
-  settingsModal.addEventListener('click', e => { if(e.target.closest('[data-settings-close]')) settingsModal.hidden = true; });
+  settingsBtn.addEventListener('click', openSettings);
+  settingsModal.addEventListener('click', e => { if(e.target.closest('[data-settings-close]')) closeSettings(false); });
+  
   settingsTabs.addEventListener('click', e => {
     var btn = e.target.closest('.settings-tab'); if(!btn) return;
     var name = btn.getAttribute('data-tab');
@@ -1377,27 +1352,12 @@
   pfSave.addEventListener('click', () => {
     sourceState.manifestUrl = manifestUrlEl.value.trim();
     try { localStorage.setItem(SOURCE_KEY, JSON.stringify(sourceState)); } catch(e){}
-    settingsModal.hidden = true;
+    settingsStatus.textContent = '已保存';
+    closeSettings(false);
     refreshLibrary();
   });
 
   window.addEventListener('resize', () => {
-    // 旋转屏幕时更新布局
-    if (npOpen) {
-      if (window.innerWidth > 768 || window.innerWidth > window.innerHeight) {
-        npViewCover.classList.remove('hidden');
-        npViewLyrics.classList.remove('hidden');
-        npViewLyrics.classList.add('active');
-        npToggleLyricsBtn.classList.remove('active');
-      } else {
-        if (!npToggleLyricsBtn.classList.contains('active')) {
-          npViewCover.classList.remove('hidden');
-          npViewLyrics.classList.add('hidden');
-          npViewLyrics.classList.remove('active');
-        }
-      }
-    }
-    
     update3D();
     drawSpectrum(npSpectrumCanvas, npSpectrumCtx, visData, true);
     drawSpectrum(barSpectrumCanvas, barSpectrumCtx, visData, false);
