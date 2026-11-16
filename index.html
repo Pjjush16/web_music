@@ -36,7 +36,6 @@
   a { color: inherit; text-decoration: none; }
   button { font-family: inherit; border: none; background: none; color: inherit; cursor: pointer; outline: none; }
 
-  /* ==================== 主页面样式 ==================== */
   .app-wrapper {
     display: flex; flex-direction: column; height: 100%; padding-bottom: 110px;
   }
@@ -66,7 +65,8 @@
     width: 100%; height: 360px; position: relative;
     perspective: 1000px;
     display: flex; align-items: center; justify-content: center;
-    cursor: grab; touch-action: none;
+    cursor: grab;
+    touch-action: none;
   }
   .cover-stage:active { cursor: grabbing; }
 
@@ -91,6 +91,8 @@
     overflow: hidden;
     transform-style: preserve-3d;
     backface-visibility: hidden;
+    /* 强制宽高一致 */
+    aspect-ratio: 1 / 1;
   }
   .cover-card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
   .cover-card.no-cover { display: grid; place-items: center; font-size: 3rem; color: var(--text-3); background: var(--accent-soft); }
@@ -161,23 +163,44 @@
 
   .np-spectrum{position:absolute;left:0;right:0;bottom:0;width:100vw;height:130px;pointer-events:none;z-index:1;-webkit-mask-image:linear-gradient(to top, black 30%, transparent 100%);mask-image:linear-gradient(to top, black 30%, transparent 100%);}
   
-  /* 核心布局容器 */
+  /* 基础排版：默认手机竖屏的上下结构 */
   .np-content{
     position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);
     display:flex;flex-direction:column;align-items:center;
     width:100%;max-width:720px;padding:0 24px;max-height:calc(100vh - 100px);
   }
 
-  .np-view-cover{display:flex;flex-direction:column;align-items:center;transition:opacity .3s,transform .3s;width:100%;}
+  .np-view-cover{
+    display:flex;flex-direction:column;align-items:center;
+    transition:opacity .3s,transform .3s;width:100%;
+    flex-shrink: 0;
+  }
   .np-view-cover.hidden{opacity:0;pointer-events:none;transform:scale(.95);}
-  .np-art{display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px;}
-  .np-cover{width:min(300px,55vw);height:min(300px,55vw);border-radius:min(20px,4vw);position:relative;z-index:2;box-shadow:0 30px 80px rgba(0,0,0,.35);display:grid;place-items:center;background:var(--accent-soft);overflow:hidden;}
+  
+  /* 坚决防止变形 */
+  .np-art{display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px;flex-shrink:0;}
+  .np-cover{
+    width:min(300px,55vw);height:min(300px,55vw);
+    aspect-ratio: 1 / 1;
+    border-radius:min(20px,4vw);position:relative;z-index:2;box-shadow:0 30px 80px rgba(0,0,0,.35);
+    display:grid;place-items:center;background:var(--accent-soft);overflow:hidden;flex-shrink: 0;
+  }
   .np-cover::before{content:'♪';color:rgba(255,255,255,.9);font-size:clamp(2.4rem,7vw,3.6rem);position:absolute}
   .np-cover img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
 
-  .np-vinyl{width:min(280px,52vw);height:min(280px,52vw);margin-left:calc(min(280px,52vw) * -0.5);position:relative;z-index:1;animation:vinylIn .55s cubic-bezier(.22,1,.36,1) .08s both;}
+  .np-vinyl{
+    width:min(280px,52vw);height:min(280px,52vw);
+    aspect-ratio: 1 / 1;
+    margin-left:calc(min(280px,52vw) * -0.5);
+    position:relative;z-index:1;flex-shrink: 0;
+    animation:vinylIn .55s cubic-bezier(.22,1,.36,1) .08s both;
+  }
   @keyframes vinylIn{from{transform:translateX(-45%) scale(.84) rotate(-18deg);opacity:0}to{transform:translateX(0) scale(1) rotate(0);opacity:1}}
-  .np-vinyl-disc{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.10),transparent 46%),repeating-radial-gradient(circle at center,#1d1d1d 0 1px,#0d0d0d 1px 3px);position:relative;animation:spin 10s linear infinite;animation-play-state:paused;}
+  .np-vinyl-disc{
+    width:100%;height:100%;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.10),transparent 46%),repeating-radial-gradient(circle at center,#1d1d1d 0 1px,#0d0d0d 1px 3px);
+    position:relative;animation:spin 10s linear infinite;animation-play-state:paused;flex-shrink:0;
+  }
   .now-playing.is-playing .np-vinyl-disc{animation-play-state:running}
   @keyframes spin{to{transform:rotate(360deg)}}
   .np-vinyl-disc::before{content:'';position:absolute;width:45%;height:45%;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--vinyl-label,var(--np-primary));background-size:cover;background-position:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.22);}
@@ -187,7 +210,12 @@
   .np-info h2{font-size:clamp(1.3rem,3.2vw,1.7rem);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e0e0e0;margin-bottom:4px;}
   .np-info p{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(255,255,255,0.5);}
 
-  .np-view-lyrics{position:absolute;top:0;left:0;right:0;bottom:140px;display:block;opacity:0;pointer-events:none;transition:opacity .3s;overflow-y:auto;scrollbar-width:none;padding:30vh 0;box-sizing:border-box;scroll-behavior:smooth;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);}
+  .np-view-lyrics{
+    position:absolute;top:0;left:0;right:0;bottom:140px;display:block;opacity:0;pointer-events:none;
+    transition:opacity .3s;overflow-y:auto;scrollbar-width:none;padding:30vh 0;box-sizing:border-box;
+    scroll-behavior:smooth;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);
+    mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);
+  }
   .np-view-lyrics.hidden{display:none;}
   .np-view-lyrics.active{opacity:1;pointer-events:auto;}
   .np-view-lyrics::-webkit-scrollbar{display:none;}
@@ -199,15 +227,14 @@
   .np-bar{flex:1;height:4px;border-radius:999px;background:rgba(255,255,255,.15);position:relative;cursor:pointer;overflow:hidden;}
   .np-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:var(--np-primary-light);width:0%;transition:width .1s linear;}
 
-  .np-controls{display:flex;align-items:center;justify-content:center;gap:24px;width:100%;z-index:10;}
-  .np-btn{width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);display:grid;place-items:center;transition:all .2s;}
+  .np-controls{display:flex;align-items:center;justify-content:center;gap:24px;width:100%;z-index:10;flex-shrink:0;}
+  .np-btn{width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);display:grid;place-items:center;transition:all .2s;flex-shrink:0;}
   .np-btn:hover{background:rgba(255,255,255,.2);color:#fff;}
   .np-btn.np-main{width:64px;height:64px;background:var(--np-primary-light);color:#fff;border-color:transparent;box-shadow:0 12px 30px color-mix(in srgb,var(--np-primary) 50%,transparent);}
 
-  /* ==================== 多端响应式适配 ==================== */
-
-  /* 1. 宽屏 & 横屏模式 (PC、平板、折叠屏、手机横屏) */
-  @media (min-width: 900px), (orientation: landscape) and (min-height: 400px) {
+  /* ==================== 终极响应式：横屏/宽屏无缝切换 ==================== */
+  /* 只要屏幕的宽高比大于 1:1（横屏），或者屏幕宽度大于 768px（平板/PC），就触发融合双栏 */
+  @media (min-aspect-ratio: 1/1), (min-width: 768px) {
     .np-content {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -217,23 +244,32 @@
         "progress progress"
         "controls controls";
       max-width: 1100px;
+      width: 90%;
       height: 85vh;
       gap: 10px 40px;
-      padding: 0 40px;
+      padding: 0;
       align-items: center;
       align-content: center;
     }
 
+    /* 左侧封面 */
     .np-view-cover {
       grid-area: cover;
       justify-content: center;
+      height: 100%;
+    }
+    /* 动态适应高度，防止溢出 */
+    .np-cover { 
+      width: min(360px, 32vw, 45vh); 
+      height: min(360px, 32vw, 45vh); 
+    }
+    .np-vinyl { 
+      width: min(320px, 28vw, 40vh); 
+      height: min(320px, 28vw, 40vh); 
+      margin-left: calc(min(320px, 28vw, 40vh) * -0.5); 
     }
 
-    /* 调整宽屏下的唱片尺寸 */
-    .np-cover { width: min(340px, 35vw); height: min(340px, 35vw); }
-    .np-vinyl { width: min(300px, 32vw); height: min(300px, 32vw); margin-left: calc(min(300px, 32vw) * -0.5); }
-    
-    /* 宽屏歌词不再绝对定位铺满，成为网格右侧部分 */
+    /* 右侧歌词，不再绝对定位，自然铺满右侧网格 */
     .np-view-lyrics {
       grid-area: lyrics;
       position: relative;
@@ -243,50 +279,24 @@
       width: 100%;
       opacity: 1;
       pointer-events: auto;
-      padding: 15vh 0;
-      mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+      padding: 10vh 0;
+      mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
     }
 
-    /* 隐藏分离歌词按钮，因为已经常驻 */
+    /* 宽屏下无需切换按钮，强制隐藏 */
     .np-lyric-btn { display: none !important; }
 
+    /* 底部进度条和控制条居中 */
     .np-progress-row {
       grid-area: progress;
-      max-width: 80%;
+      max-width: 60%;
       margin: 0 auto;
     }
 
     .np-controls {
       grid-area: controls;
     }
-  }
-
-  /* 2. 手表 & 极窄屏 (小于 320px) */
-  @media (max-width: 320px) {
-    .site-brand { font-size: 1rem; }
-    .settings-btn { width: 32px; height: 32px; }
-    .cover-stage { height: 200px; }
-    .cover-card { width: 70vw; height: 70vw; margin-left: -35vw; margin-top: -35vw; }
-    .player-bar { padding: 8px 12px; }
-    .pb-cover { width: 32px; height: 32px; }
-    .pb-title { font-size: 0.75rem; }
-    .pb-artist { font-size: 0.65rem; }
-    .pb-btn { width: 28px; height: 28px; }
-    .pb-play { width: 36px; height: 36px; }
-    
-    .np-icon-btn { width: 32px; height: 32px; top: 12px; }
-    .np-close-btn { left: 12px; }
-    .np-lyric-btn { right: 12px; }
-    
-    .np-cover { width: min(180px, 55vw); height: min(180px, 55vw); }
-    .np-vinyl { width: min(160px, 50vw); height: min(160px, 50vw); margin-left: calc(min(160px, 50vw) * -0.5); }
-    .np-info h2 { font-size: 1rem; }
-    .np-info p { font-size: 0.75rem; }
-    .np-progress-row { margin-bottom: 8px; }
-    .np-btn { width: 36px; height: 36px; }
-    .np-btn.np-main { width: 48px; height: 48px; }
-    .lyric-line { font-size: 0.9rem; padding: 8px 0; }
-    .lyric-line.active { font-size: 1.05rem; }
   }
 
   /* ==================== 设置弹窗 ==================== */
@@ -317,6 +327,34 @@
   .btn-primary{background:var(--accent);color:#fff;}
   .doc-panel{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;max-height:300px;overflow-y:auto;}
   .doc-panel pre{margin:0;font-family:var(--mono);font-size:.8rem;white-space:pre-wrap;word-break:break-word;color:var(--text-2);}
+
+  /* 超小屏幕手表优化 */
+  @media (max-width: 320px) {
+    .site-brand { font-size: 1rem; }
+    .settings-btn { width: 32px; height: 32px; }
+    .cover-stage { height: 200px; }
+    .cover-card { width: 70vw; height: 70vw; margin-left: -35vw; margin-top: -35vw; }
+    .player-bar { padding: 8px 12px; }
+    .pb-cover { width: 32px; height: 32px; }
+    .pb-title { font-size: 0.75rem; }
+    .pb-artist { font-size: 0.65rem; }
+    .pb-btn { width: 28px; height: 28px; }
+    .pb-play { width: 36px; height: 36px; }
+    
+    .np-icon-btn { width: 32px; height: 32px; top: 12px; }
+    .np-close-btn { left: 12px; }
+    .np-lyric-btn { right: 12px; }
+    
+    .np-cover { width: min(180px, 55vw); height: min(180px, 55vw); }
+    .np-vinyl { width: min(160px, 50vw); height: min(160px, 50vw); margin-left: calc(min(160px, 50vw) * -0.5); }
+    .np-info h2 { font-size: 1rem; }
+    .np-info p { font-size: 0.75rem; }
+    .np-progress-row { margin-bottom: 8px; }
+    .np-btn { width: 36px; height: 36px; }
+    .np-btn.np-main { width: 48px; height: 48px; }
+    .lyric-line { font-size: 0.9rem; padding: 8px 0; }
+    .lyric-line.active { font-size: 1.05rem; }
+  }
 </style>
 </head>
 <body>
@@ -494,14 +532,17 @@
   var logicalCenter = 0; 
   var currentOffset = 0; 
   var isAnimatingScroll = false;
-  var isDragging = false;
-  var startX = 0, startOffset = 0, moved = false;
+  
+  // 拖拽状态
+  var isDown = false;
+  var startX = 0;
+  var lastX = 0;
+  var moved = false;
 
   var SOURCE_KEY = 'yaonet_manifest_v3';
   var PLAYER_KEY = 'yaonet_player_state_v1';
   var THEME_KEY = 'yaonet_theme';
   var sourceState = { manifestUrl: '' };
-  var historyState = 'main'; 
 
   // ==================== 基础工具 ====================
   function esc(s){
@@ -739,16 +780,7 @@
     }
   }
 
-  function hideLyricsView() {
-    if (npViewCover.classList.contains('hidden')) {
-      npViewLyrics.classList.remove('active');
-      setTimeout(function(){ npViewLyrics.classList.add('hidden'); }, 300);
-      npViewCover.classList.remove('hidden');
-      npToggleLyricsBtn.classList.remove('active');
-    }
-  }
-
-  // ==================== 3D Cover Flow (数学取模核心) ====================
+  // ==================== 3D Cover Flow ====================
   function initCoverFlow() {
     let html = '';
     for (let i = -4; i <= 4; i++) {
@@ -1112,7 +1144,6 @@
     } catch(e){}
   }
 
-  // ==================== 频谱动画 ====================
   var audioCtx = null, analyser = null, freqData = null;
   var barSpectrumCanvas = document.getElementById('bar-spectrum'), barSpectrumCtx = barSpectrumCanvas.getContext('2d');
   var npSpectrumCanvas = document.getElementById('np-spectrum'), npSpectrumCtx = npSpectrumCanvas.getContext('2d');
@@ -1121,7 +1152,6 @@
   var visData = new Float32Array(64);
   var targetData = new Float32Array(64);
   var isSpectrumRunning = false;
-  var lastSpectrumTime = 0;
 
   function setupAnalyser() {
     if (audioCtx) return;
@@ -1158,9 +1188,7 @@
     ctx.clearRect(0, 0, w, h);
 
     var usable = data.length;
-    
-    // 统一计算：全屏下稍微密集一点
-    var targetBarW = isFullScreen ? 8 : 6;
+    var targetBarW = isFullScreen ? 8 : 5;
     var bars = Math.floor(w / targetBarW);
     if (bars <= 0) return;
     
@@ -1193,12 +1221,8 @@
     }
   }
 
-  function loopSpectrum(now) {
+  function loopSpectrum() {
     if (!isSpectrumRunning) return;
-    
-    if (!lastSpectrumTime) lastSpectrumTime = now;
-    var dt = Math.min(now - lastSpectrumTime, 50);
-    lastSpectrumTime = now;
 
     if (isPlaying) {
       if (analyser && freqData) {
@@ -1221,12 +1245,11 @@
       targetData.fill(0);
     }
 
-    var baseEase = isPlaying ? 0.35 : 0.08;
-    var ease = 1 - Math.pow(1 - baseEase, dt / 16.66);
-
     var isAllZero = true;
     for (var i = 0; i < 64; i++) {
+      var ease = isPlaying ? 0.35 : 0.08;
       visData[i] += (targetData[i] - visData[i]) * ease;
+      
       if (visData[i] > 1) isAllZero = false;
       else visData[i] = 0;
     }
@@ -1245,84 +1268,8 @@
   function startSpectrum() {
     if (isSpectrumRunning) return;
     isSpectrumRunning = true;
-    lastSpectrumTime = 0;
     spectrumRAF = requestAnimationFrame(loopSpectrum);
   }
-
-  // ==================== UI 历史状态管理 (返回键) ====================
-  function openNP() {
-    if (!currentId || npOpen) return;
-    npOpen = true;
-    npModal.hidden = false;
-    npModal.classList.remove('closing');
-    document.body.style.overflow = 'hidden';
-    
-    // 宽屏直接进入双栏模式
-    if (window.innerWidth > 900 || (window.innerWidth > 600 && window.innerHeight < window.innerWidth)) {
-      npViewCover.classList.remove('hidden');
-      npViewLyrics.classList.remove('hidden');
-      npViewLyrics.classList.add('active');
-      npToggleLyricsBtn.classList.remove('active');
-    } else {
-      npViewCover.classList.remove('hidden');
-      npViewLyrics.classList.add('hidden');
-      npViewLyrics.classList.remove('active');
-      npToggleLyricsBtn.classList.remove('active');
-    }
-
-    if (historyState !== 'np') {
-      history.pushState({ modal: 'np' }, '');
-      historyState = 'np';
-    }
-
-    if (isPlaying || isSpectrumRunning) startSpectrum();
-    else drawSpectrum(npSpectrumCanvas, npSpectrumCtx, visData, true);
-  }
-
-  function closeNP(fromPopstate) {
-    if (!npOpen) return;
-    npOpen = false;
-    npModal.classList.add('closing');
-    setTimeout(() => {
-      npModal.hidden = true;
-      npModal.classList.remove('closing');
-      document.body.style.overflow = '';
-    }, 200);
-
-    if (!fromPopstate) {
-      if (history.state && history.state.modal === 'np') history.back();
-    } else {
-      historyState = 'main';
-    }
-  }
-
-  function openSettings() {
-    if (!settingsModal.hidden) return;
-    settingsModal.hidden = false;
-    settingsStatus.textContent = '';
-    updateManifestHints();
-
-    if (historyState !== 'settings') {
-      history.pushState({ modal: 'settings' }, '');
-      historyState = 'settings';
-    }
-  }
-
-  function closeSettings(fromPopstate) {
-    if (settingsModal.hidden) return;
-    settingsModal.hidden = true;
-
-    if (!fromPopstate) {
-      if (history.state && history.state.modal === 'settings') history.back();
-    } else {
-      historyState = 'main';
-    }
-  }
-
-  window.addEventListener('popstate', function() {
-    if (npOpen) closeNP(true);
-    if (!settingsModal.hidden) closeSettings(true);
-  });
 
   // ==================== 全局事件 ====================
   audio.addEventListener('play', () => { isPlaying = true; ensureAudioContext(); syncPlayUI(); startSpectrum(); });
@@ -1362,17 +1309,50 @@
     if (isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
   });
 
-  pbCover.addEventListener('click', openNP);
+  pbCover.addEventListener('click', () => {
+    if (!currentId) return;
+    npOpen = true;
+    npModal.hidden = false;
+    npModal.classList.remove('closing');
+    document.body.style.overflow = 'hidden';
+    
+    // 宽屏直接进入双栏模式
+    if (window.innerWidth > 768 || window.innerWidth > window.innerHeight) {
+      npViewCover.classList.remove('hidden');
+      npViewLyrics.classList.remove('hidden');
+      npViewLyrics.classList.add('active');
+      npToggleLyricsBtn.classList.remove('active');
+    } else {
+      npViewCover.classList.remove('hidden');
+      npViewLyrics.classList.add('hidden');
+      npViewLyrics.classList.remove('active');
+      npToggleLyricsBtn.classList.remove('active');
+    }
+
+    if (isPlaying || isSpectrumRunning) startSpectrum();
+    else drawSpectrum(npSpectrumCanvas, npSpectrumCtx, visData, true);
+  });
 
   npModal.addEventListener('click', e => {
-    if (e.target.closest('[data-np-close]')) closeNP(false);
+    if (e.target.closest('[data-np-close]')) {
+      npOpen = false;
+      npModal.classList.add('closing');
+      setTimeout(() => {
+        npModal.hidden = true;
+        npModal.classList.remove('closing');
+        document.body.style.overflow = '';
+      }, 200);
+    }
   });
   
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
     if (e.key === 'Escape') {
-      if(npOpen) closeNP(false);
-      else if (!settingsModal.hidden) closeSettings(false);
+      if(npOpen) {
+        npOpen = false;
+        npModal.classList.add('closing');
+        setTimeout(() => { npModal.hidden = true; npModal.classList.remove('closing'); document.body.style.overflow = ''; }, 200);
+      } else if (!settingsModal.hidden) settingsModal.hidden = true;
     }
     if (e.key === ' ') { e.preventDefault(); togglePlay(); }
     if (e.key === 'ArrowRight' && !npOpen) nextTrack();
@@ -1385,9 +1365,8 @@
     settingsCurrent.innerHTML = `<strong>当前生效地址</strong>${resolved}`;
   }
 
-  settingsBtn.addEventListener('click', openSettings);
-  settingsModal.addEventListener('click', e => { if(e.target.closest('[data-settings-close]')) closeSettings(false); });
-  
+  settingsBtn.addEventListener('click', () => { settingsModal.hidden = false; settingsStatus.textContent = ''; updateManifestHints(); });
+  settingsModal.addEventListener('click', e => { if(e.target.closest('[data-settings-close]')) settingsModal.hidden = true; });
   settingsTabs.addEventListener('click', e => {
     var btn = e.target.closest('.settings-tab'); if(!btn) return;
     var name = btn.getAttribute('data-tab');
@@ -1398,21 +1377,19 @@
   pfSave.addEventListener('click', () => {
     sourceState.manifestUrl = manifestUrlEl.value.trim();
     try { localStorage.setItem(SOURCE_KEY, JSON.stringify(sourceState)); } catch(e){}
-    closeSettings(false);
+    settingsModal.hidden = true;
     refreshLibrary();
   });
 
   window.addEventListener('resize', () => {
-    // 监听屏幕旋转/尺寸改变
+    // 旋转屏幕时更新布局
     if (npOpen) {
-      if (window.innerWidth > 900 || (window.innerWidth > 600 && window.innerHeight < window.innerWidth)) {
-        // 切换到宽屏/横屏布局时，强制显示歌词
+      if (window.innerWidth > 768 || window.innerWidth > window.innerHeight) {
         npViewCover.classList.remove('hidden');
         npViewLyrics.classList.remove('hidden');
         npViewLyrics.classList.add('active');
         npToggleLyricsBtn.classList.remove('active');
       } else {
-        // 恢复竖屏布局时，恢复之前的切换状态
         if (!npToggleLyricsBtn.classList.contains('active')) {
           npViewCover.classList.remove('hidden');
           npViewLyrics.classList.add('hidden');
