@@ -107,51 +107,6 @@
   .cover-card.no-cover { display: grid; place-items: center; font-size: 3rem; color: var(--text-3); background: var(--accent-soft); }
   .cover-card.is-centered { box-shadow: 0 0 0 3px var(--accent), 0 20px 40px rgba(0,0,0,0.2); }
 
-  /* 单曲随机的极速模糊效果 */
-  .cover-track.spinning .cover-card {
-    filter: blur(4px) brightness(0.8);
-    transition: filter 0.2s ease;
-  }
-
-  /* ==================== 随机按钮区域 ==================== */
-  .shuffle-trigger {
-    position: fixed;
-    right: 24px;
-    bottom: 130px;
-    z-index: 200;
-  }
-  .shuffle-btn {
-    width: 48px; height: 48px;
-    border-radius: 50%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-md);
-    color: var(--text-2);
-    display: grid; place-items: center;
-    transition: all 0.2s;
-  }
-  .shuffle-btn:hover { color: var(--accent); transform: scale(1.05) rotate(15deg); }
-  .shuffle-menu {
-    position: absolute;
-    bottom: 60px;
-    right: 0;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: var(--shadow-md);
-    padding: 6px;
-    display: flex; flex-direction: column; gap: 4px;
-    animation: modalIn 0.2s ease;
-  }
-  .shuffle-item {
-    padding: 8px 16px; border-radius: 8px;
-    font-size: 0.85rem; font-weight: 600;
-    color: var(--text);
-    white-space: nowrap;
-    transition: all 0.2s;
-  }
-  .shuffle-item:hover { background: var(--accent-soft); color: var(--accent); }
-
   /* ==================== 底栏 Dock ==================== */
   .player-bar {
     position: absolute; left: 0; right: 0; bottom: 0; z-index: 150;
@@ -310,6 +265,7 @@
     mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
     padding: 30vh 0;
     box-sizing: border-box;
+    scroll-behavior: smooth; /* 交由 CSS 处理平滑滚动 */
   }
   .np-view-lyrics.hidden { display: none; }
   .np-view-lyrics.active { opacity: 1; pointer-events: auto; }
@@ -436,9 +392,6 @@
     .np-btn.np-main { width: 56px; height: 56px; }
     
     .np-view-lyrics { bottom: 120px; padding: 25vh 0; }
-    
-    .shuffle-trigger { bottom: 120px; right: 16px; }
-    .shuffle-btn { width: 44px; height: 44px; }
   }
 </style>
 </head>
@@ -461,17 +414,6 @@
     </div>
   </main>
 
-</div>
-
-<!-- 随机按钮 -->
-<div class="shuffle-trigger" id="shuffle-trigger">
-  <button class="shuffle-btn" id="shuffle-btn" title="随机播放">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
-  </button>
-  <div class="shuffle-menu" id="shuffle-menu" hidden>
-    <button class="shuffle-item" id="shuffle-single">单曲随机</button>
-    <button class="shuffle-item" id="shuffle-list">随机列表</button>
-  </div>
 </div>
 
 <!-- ==================== 底栏 ==================== -->
@@ -629,7 +571,6 @@
   var tabsEl = document.getElementById('tabs');
   var coverStage = document.getElementById('cover-stage');
   var coverTrack = document.getElementById('cover-track');
-  var mainStage = document.querySelector('.main-stage');
   
   // 底栏
   var pbCover = document.getElementById('pb-cover');
@@ -667,12 +608,6 @@
   var npCur = document.getElementById('np-cur');
   var npDur = document.getElementById('np-dur');
 
-  // 随机按钮
-  var shuffleBtn = document.getElementById('shuffle-btn');
-  var shuffleMenu = document.getElementById('shuffle-menu');
-  var shuffleSingle = document.getElementById('shuffle-single');
-  var shuffleList = document.getElementById('shuffle-list');
-
   // 设置
   var settingsBtn = document.getElementById('settings-btn');
   var settingsModal = document.getElementById('settings-modal');
@@ -695,7 +630,6 @@
   var currentId = null, isPlaying = false, npOpen = false;
   var currentManifestUrl = '';
   var currentLyrics = [], currentLyricIndex = -1;
-  var isShuffling = false; // 是否正在播放随机动画
 
   var SOURCE_KEY = 'yaonet_manifest_v3';
   var PLAYER_KEY = 'yaonet_player_state_v1';
@@ -898,9 +832,24 @@
 
   function renderLyrics(lyrics) {
     currentLyrics = lyrics; currentLyricIndex = -1;
-    if (!lyrics.length) { npLyricsContent.innerHTML = '<div class="lyric-line active">纯音乐，请欣赏</div>'; return; }
+    
+    // 瞬间重置滚动，防止切歌时乱滚
+    npViewLyrics.style.scrollBehavior = 'auto';
+    npViewLyrics.scrollTop = 0;
+
+    if (!lyrics.length) { 
+      npLyricsContent.innerHTML = '<div class="lyric-line active">纯音乐，请欣赏</div>'; 
+      npViewLyrics.style.scrollBehavior = '';
+      return; 
+    }
     npLyricsContent.innerHTML = lyrics.map((l, i) => `<div class="lyric-line" data-index="${i}">${esc(l.text)}</div>`).join('');
+    
     updateLyricsHighlight(audio.currentTime);
+    
+    // 渲染完之后恢复平滑滚动
+    setTimeout(() => {
+        npViewLyrics.style.scrollBehavior = '';
+    }, 100);
   }
 
   function updateLyricsHighlight(currentTime) {
@@ -917,7 +866,7 @@
       }
       if (idx >= 0 && lines[idx]) {
         var top = lines[idx].offsetTop - npViewLyrics.offsetHeight / 2 + lines[idx].offsetHeight / 2;
-        npViewLyrics.scrollTo({ top: top, behavior: 'smooth' });
+        npViewLyrics.scrollTop = top; // 使用 scrollTop，交给 CSS 平滑处理
       }
     }
   }
@@ -931,7 +880,7 @@
     }
   }
 
-  // ==================== 3D Cover Flow 与 随机特效 ====================
+  // ==================== 3D Cover Flow ====================
   function renderTabs() {
     var set = {};
     tracks.forEach(t => { if (t.category) set[t.category] = true; });
@@ -980,7 +929,7 @@
   var scrollTimer = null;
   function update3D() {
     var cards = coverTrack.querySelectorAll('.cover-card');
-    if (!cards.length || isShuffling) return;
+    if (!cards.length) return;
     
     var viewportCenter = window.innerWidth / 2;
     var closestCard = null, minDist = Infinity;
@@ -990,8 +939,6 @@
     var stepWidth = cardW + gap;
 
     cards.forEach(card => {
-      if (card.style.transform && card.style.transform.includes('scale(0.1)')) return;
-
       var physicalCenter = card.offsetLeft + cardW / 2 - coverTrack.scrollLeft;
       var distance = viewportCenter - physicalCenter; 
       var absDist = Math.abs(distance);
@@ -1026,174 +973,7 @@
     }
   }
 
-  // === 单曲随机（不重复 + 恒定步长防卡顿） ===
-  function startSingleShuffle() {
-    if (isShuffling || !filtered.length) return;
-    isShuffling = true;
-    coverTrack.classList.add('spinning');
-
-    var cards = coverTrack.querySelectorAll('.cover-card');
-    if (cards.length === 0) { isShuffling = false; return; }
-
-    // 1. 过滤掉正在播放的歌
-    var candidates = filtered.filter(t => t.id !== currentId);
-    if (candidates.length === 0) candidates = filtered;
-    
-    // 2. 真随机选出一首目标
-    var targetTrack = candidates[Math.floor(Math.random() * candidates.length)];
-    
-    // 3. 找到最近的一个目标卡片，且强制在右侧
-    var viewportCenter = window.innerWidth / 2;
-    var currentCenterScroll = coverTrack.scrollLeft + viewportCenter;
-    var targetCard = null;
-    var minDistance = Infinity;
-
-    cards.forEach(card => {
-      if (card.getAttribute('data-id') === targetTrack.id) {
-        var cardCenter = card.offsetLeft + card.offsetWidth / 2;
-        var distance = cardCenter - currentCenterScroll;
-        
-        // 只考虑在当前视野中心右侧（或刚好在中心）的卡片
-        if (distance > -10) {
-           if (distance < minDistance) {
-             minDistance = distance;
-             targetCard = card;
-           }
-        }
-      }
-    });
-
-    // 兜底：如果都在左侧，则取最左边的那个（等下会加上一整圈的距离强制拉到右侧）
-    if (!targetCard) {
-      cards.forEach(card => {
-        if (card.getAttribute('data-id') === targetTrack.id) {
-          if (!targetCard) targetCard = card;
-        }
-      });
-    }
-
-    var targetScroll = targetCard.offsetLeft - viewportCenter + targetCard.offsetWidth / 2;
-    
-    // 4. 如果目标在左边，加上一圈的宽度，模拟用力向右扒拉
-    var singleGroupWidth = (cards[0].offsetWidth + 24) * filtered.length;
-    while (targetScroll <= coverTrack.scrollLeft + 50) {
-        targetScroll += singleGroupWidth;
-    }
-
-    // 5. 恒定步长的缓动动画
-    var speed = 25; // 初始速度：每帧移动 25px (不依赖时间差，低端机绝对能渲染)
-    
-    function step() {
-        var remaining = targetScroll - coverTrack.scrollLeft;
-        
-        if (remaining <= speed) {
-            // 到达终点
-            coverTrack.scrollLeft = targetScroll;
-            coverTrack.classList.remove('spinning');
-            isShuffling = false;
-            
-            playTrack(targetTrack.id, true);
-            update3D();
-            coverTrack.dispatchEvent(new Event('scroll'));
-            return;
-        }
-        
-        coverTrack.scrollLeft += speed;
-        speed = Math.max(2, speed * 0.96); // 缓慢减速，最低速 2px/帧
-        
-        requestAnimationFrame(step);
-    }
-    
-    requestAnimationFrame(step);
-  }
-
-  // === 随机列表（完全洗牌 + 避重） ===
-  function startListShuffle() {
-    if (isShuffling || !filtered.length) return;
-    isShuffling = true;
-
-    var cards = Array.from(coverTrack.querySelectorAll('.cover-card'));
-    if (!cards.length) { isShuffling = false; return; }
-
-    var originalMainStageOverflow = mainStage.style.overflow;
-    var originalTrackOverflowX = coverTrack.style.overflowX;
-    mainStage.style.overflow = 'visible';
-    coverTrack.style.overflowX = 'visible';
-    coverTrack.style.scrollBehavior = 'auto';
-
-    var centerX = window.innerWidth / 2;
-    var centerY = coverTrack.offsetHeight / 2;
-
-    // 第一步：聚拢
-    cards.forEach((card) => {
-      var rect = card.getBoundingClientRect();
-      var dx = centerX - (rect.left + rect.width / 2);
-      var dy = centerY - (rect.top + rect.height / 2);
-
-      card.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease';
-      card.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(0.1) rotate(0deg)`;
-      card.style.opacity = '0.8';
-      card.style.zIndex = 999;
-      card.style.pointerEvents = 'none';
-    });
-
-    // 第二步：爆炸散开
-    setTimeout(() => {
-      cards.forEach(card => {
-        var angle = Math.random() * Math.PI * 2;
-        var radius = 300 + Math.random() * 600; 
-        var tx = Math.cos(angle) * radius;
-        var ty = Math.sin(angle) * radius;
-        var rot = (Math.random() - 0.5) * 1080;
-
-        card.style.transition = 'transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s ease';
-        card.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${0.5 + Math.random() * 0.8}) rotate(${rot}deg)`;
-        card.style.opacity = '0';
-      });
-    }, 450);
-
-    // 第三步：洗牌重绘并恢复
-    setTimeout(() => {
-      mainStage.style.overflow = originalMainStageOverflow;
-      coverTrack.style.overflowX = originalTrackOverflowX;
-
-      // 真正的 Fisher-Yates 洗牌算法
-      for (var i = tracks.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var temp = tracks[i];
-        tracks[i] = tracks[j];
-        tracks[j] = temp;
-      }
-
-      // 更新 filtered 池
-      filtered = activeCat === '全部' ? tracks : tracks.filter(t => t.category === activeCat);
-
-      // 确保洗牌后的第一首不是当前正在播放的，如果是，则往后挪
-      if (filtered.length > 1 && filtered[0].id === currentId) {
-        var idx0 = tracks.findIndex(t => t.id === filtered[0].id);
-        var idx1 = tracks.findIndex(t => t.id === filtered[1].id);
-        if (idx0 > -1 && idx1 > -1) {
-           var tempT = tracks[idx0]; tracks[idx0] = tracks[idx1]; tracks[idx1] = tempT;
-        }
-        filtered = activeCat === '全部' ? tracks : tracks.filter(t => t.category === activeCat);
-      }
-
-      // 渲染，会自动将列表第一个居中
-      filterAndRenderCards();
-      
-      setTimeout(() => {
-        if (filtered.length > 0) {
-          playTrack(filtered[0].id, true); 
-        }
-        isShuffling = false;
-      }, 50);
-    }, 1050); 
-  }
-
-  // ==================== 其他拖动与交互绑定 ====================
   coverTrack.addEventListener('scroll', () => {
-    if (isShuffling) return; // 动画期间不响应
-
     var cards = coverTrack.querySelectorAll('.cover-card');
     if (cards.length === 0) return;
     
@@ -1218,7 +998,6 @@
   });
 
   function snapToCenter() {
-    if (isShuffling) return;
     var cards = coverTrack.querySelectorAll('.cover-card');
     var viewportCenter = window.innerWidth / 2;
     var closestCard = null, minDist = Infinity;
@@ -1247,7 +1026,6 @@
 
   let isDown = false, startX, scrollLeftStart;
   coverStage.addEventListener('mousedown', (e) => {
-    if (isShuffling) return;
     isDown = true;
     startX = e.pageX - coverStage.offsetLeft;
     scrollLeftStart = coverTrack.scrollLeft;
@@ -1262,14 +1040,13 @@
     }
   });
   window.addEventListener('mousemove', (e) => {
-    if (!isDown || isShuffling) return;
+    if (!isDown) return;
     e.preventDefault();
     const x = e.pageX - coverStage.offsetLeft;
     coverTrack.scrollLeft = scrollLeftStart - (x - startX) * 2;
   });
 
   coverStage.addEventListener('wheel', (e) => {
-    if (isShuffling) return;
     if (e.deltaY !== 0) {
       e.preventDefault();
       coverTrack.scrollLeft += e.deltaY;
@@ -1277,35 +1054,12 @@
   }, { passive: false });
 
   coverTrack.addEventListener('click', (e) => {
-    if (isShuffling) return;
     if (Math.abs(scrollLeftStart - coverTrack.scrollLeft) > 10) return; 
     var card = e.target.closest('.cover-card');
     if (card) {
       var id = card.getAttribute('data-id');
       if (id) { playTrack(id); snapToCenter(); }
     }
-  });
-
-  // 随机按钮事件
-  shuffleBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    shuffleMenu.hidden = !shuffleMenu.hidden;
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.shuffle-trigger')) {
-      shuffleMenu.hidden = true;
-    }
-  });
-
-  shuffleSingle.addEventListener('click', () => {
-    shuffleMenu.hidden = true;
-    startSingleShuffle();
-  });
-
-  shuffleList.addEventListener('click', () => {
-    shuffleMenu.hidden = true;
-    startListShuffle();
   });
 
   // ==================== 数据加载与播放 ====================
@@ -1404,8 +1158,7 @@
     if (!t || !t.src) return;
     if (id === currentId && !forcePlay) { togglePlay(); return; }
 
-    hideLyricsView();
-
+    // 切歌不再强制切回封面
     currentId = id;
     audio.src = t.src;
     audio.play().catch(e => console.warn('播放失败', e));
@@ -1415,7 +1168,7 @@
   }
 
   function togglePlay() {
-    hideLyricsView();
+    // 按播放/暂停不再强制切回封面
     if (!currentId) { if (filtered.length) playTrack(filtered[0].id); return; }
     if (audio.paused) { ensureAudioContext(); audio.play().catch(e => console.warn(e)); } 
     else { audio.pause(); }
@@ -1632,7 +1385,8 @@
       void npViewLyrics.offsetWidth;
       npViewLyrics.classList.add('active');
       npToggleLyricsBtn.classList.add('active');
-      if (isPlaying) updateLyricsHighlight(audio.currentTime);
+      // 切换过去时立刻同步滚动
+      if (isPlaying || currentLyricIndex !== -1) updateLyricsHighlight(audio.currentTime);
     }
   });
 
@@ -1688,7 +1442,6 @@
         npModal.classList.add('closing');
         setTimeout(() => { npModal.hidden = true; npModal.classList.remove('closing'); document.body.style.overflow = ''; }, 200);
       } else if (!settingsModal.hidden) settingsModal.hidden = true;
-      else shuffleMenu.hidden = true;
     }
     if (e.key === ' ') { e.preventDefault(); togglePlay(); }
     if (e.key === 'ArrowRight' && !npOpen) nextTrack();
