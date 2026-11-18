@@ -55,7 +55,7 @@
   .settings-btn:hover { transform: rotate(18deg); color: var(--text); }
   .settings-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; }
 
-  /* ==================== 3D Cover Flow (数学取模版) ==================== */
+  /* ==================== 3D Cover Flow ==================== */
   .main-stage {
     flex: 1; display: flex; align-items: center; justify-content: center;
     overflow: hidden; position: relative;
@@ -119,6 +119,7 @@
   .pb-track { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
 
   .pb-cover {
+    position: relative;
     width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
     background: var(--accent-soft); display: grid; place-items: center;
     overflow: hidden; box-shadow: var(--shadow-sm); cursor: pointer;
@@ -127,6 +128,7 @@
   .pb-cover:hover { transform: scale(1.05); }
   .pb-cover img { width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1; }
   .pb-cover::before { content: '♪'; position: absolute; font-size: 1.2rem; color: var(--text-3); z-index: 0; }
+  .pb-cover.has-cover::before { display: none; }
 
   .pb-info { display: flex; flex-direction: column; min-width: 0; }
   .pb-title { font-size: 0.95rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); line-height: 1.3; }
@@ -180,7 +182,7 @@
   .np-info h2{font-size:clamp(1.3rem,3.2vw,1.7rem);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e0e0e0;margin-bottom:4px;}
   .np-info p{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(255,255,255,0.5);}
 
-  .np-view-lyrics{position:absolute;top:0;left:0;right:0;bottom:140px;display:block;opacity:0;pointer-events:none;transition:opacity .3s;overflow-y:auto;scrollbar-width:none;padding:30vh 0;box-sizing:border-box;scroll-behavior:smooth;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);}
+  .np-view-lyrics{position:absolute;top:0;left:0;right:0;bottom:140px;display:block;opacity:0;pointer-events:none;transition:opacity .3s;overflow-y:auto;scrollbar-width:none;padding:30vh 0 20vh;box-sizing:border-box;scroll-behavior:smooth;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);}
   .np-view-lyrics.hidden{display:none;}
   .np-view-lyrics.active{opacity:1;pointer-events:auto;}
   .np-view-lyrics::-webkit-scrollbar{display:none;}
@@ -235,7 +237,136 @@
     .np-vinyl{width:min(240px,55vw);height:min(240px,55vw);margin-left:calc(min(240px,55vw) * -0.5);}
     .np-btn{width:44px;height:44px;}
     .np-btn.np-main{width:56px;height:56px;}
-    .np-view-lyrics{bottom:120px;padding:25vh 0;}
+    .np-view-lyrics{bottom:120px;padding:25vh 0 15vh;}
+  }
+
+  /* ========================================================
+     ★★★ 全新宽屏 UI：专门针对横屏/桌面端单独设计 ★★★
+     放弃所有 vh/vw 的迁就，重置排版，不做拼接
+     ======================================================== */
+  @media (min-aspect-ratio: 1/1), (min-width: 768px) {
+    /* 宽屏全屏播放页全面重构 */
+    .np-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr; /* 50% / 50% */
+      grid-template-rows: 1fr auto auto;
+      grid-template-areas: 
+        "cover lyrics"
+        "progress progress"
+        "controls controls";
+      max-width: 1200px; /* 宽屏不再无限拉伸，居中呈现 */
+      width: 90%;
+      height: 85vh; /* 占据大半个屏幕，上下留白 */
+      padding: 0;
+      gap: 20px 60px;
+      align-items: center;
+      align-content: center;
+      /* 重置基础样式中的高度限制 */
+      max-height: none;
+    }
+
+    /* 1. 左侧：封面与信息 */
+    .np-view-cover {
+      grid-area: cover;
+      display: flex !important;
+      flex-direction: column;
+      justify-content: center;
+      height: 100%;
+      opacity: 1 !important; /* 强制显示，无视 JS 的 hidden 类 */
+      pointer-events: auto !important;
+      transform: none !important;
+    }
+    
+    /* 宽屏尺寸重写：固定大小的圆角矩形，更加大气 */
+    .np-cover {
+      width: clamp(280px, 30vw, 360px);
+      height: clamp(280px, 30vw, 360px);
+      border-radius: 24px;
+    }
+    
+    .np-vinyl {
+      width: clamp(260px, 28vw, 340px);
+      height: clamp(260px, 28vw, 340px);
+      margin-left: calc(clamp(260px, 28vw, 340px) * -0.5);
+    }
+    
+    /* 标题左对齐，更符合桌面阅读习惯 */
+    .np-info {
+      margin-bottom: 0;
+      padding: 0;
+      text-align: left;
+      width: 100%;
+    }
+    .np-info h2 { font-size: 2.2rem; text-align: left; }
+    .np-info p { font-size: 1rem; text-align: left; }
+
+    /* 2. 右侧：独立歌词面板 */
+    .np-view-lyrics {
+      grid-area: lyrics;
+      position: relative !important;
+      inset: auto !important;
+      bottom: auto !important;
+      height: 100%;
+      width: 100%;
+      display: block !important; /* 强制显示歌词 */
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      padding: 15vh 0;
+      background: rgba(255, 255, 255, 0.03); /* 桌面端专属磨砂背景 */
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+    }
+
+    /* 歌词字体在宽屏下放大 */
+    .lyric-line { font-size: 1.4rem; padding: 16px 0; }
+    .lyric-line.active { font-size: 1.7rem; }
+
+    /* 3. 底部控制栏（横跨底端并居中） */
+    .np-progress-row {
+      grid-area: progress;
+      max-width: 500px; /* 进度条拉长 */
+      margin: 0 auto;
+      display: flex !important;
+    }
+
+    .np-controls {
+      grid-area: controls;
+      display: flex !important;
+      padding-bottom: 10px;
+    }
+
+    /* 桌面端不需要歌词切换按钮，因为已经左右并列显示 */
+    .np-lyric-btn { display: none !important; }
+  }
+
+  /* ==================== 极端横屏保险（手机横屏被工具栏挤压） ==================== */
+  /* 如果屏幕极其扁平（高度小于 500px），按比例缩放宽屏排版 */
+  @media (min-aspect-ratio: 1/1) and (max-height: 500px) {
+    .np-content {
+      grid-template-columns: 200px 1fr; /* 左侧收窄 */
+      height: 100%;
+      gap: 10px 30px;
+    }
+    
+    /* 极度压缩封面尺寸 */
+    .np-cover { width: 140px; height: 140px; border-radius: 12px; }
+    .np-vinyl { width: 120px; height: 120px; margin-left: -60px; }
+    
+    .np-art { margin-bottom: 10px; }
+    .np-info h2 { font-size: 1.2rem; }
+    .np-info p { font-size: 0.8rem; }
+
+    .np-view-lyrics { 
+      padding: 10vh 0; 
+      border-radius: 12px;
+    }
+    .lyric-line { font-size: 1rem; padding: 8px 0; }
+    .lyric-line.active { font-size: 1.1rem; }
+
+    .np-progress-row { max-width: 80%; margin-bottom: 8px; }
+    .np-btn { width: 42px; height: 42px; }
+    .np-btn.np-main { width: 50px; height: 50px; }
   }
 </style>
 </head>
@@ -408,13 +539,12 @@
   var currentId = null, isPlaying = false, npOpen = false;
   var currentManifestUrl = '';
   var currentLyrics = [], currentLyricIndex = -1;
+  var userScrolling = false, scrollTimer = null;
 
-  // 数学取模核心变量
   var logicalCenter = 0; 
   var currentOffset = 0; 
   var isAnimatingScroll = false;
   
-  // 拖拽状态
   var isDown = false;
   var startX = 0;
   var lastX = 0;
@@ -425,7 +555,6 @@
   var THEME_KEY = 'yaonet_theme';
   var sourceState = { manifestUrl: '' };
 
-  // ==================== 基础工具 ====================
   function esc(s){
     return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
@@ -450,6 +579,10 @@
   function looksLikeLRC(s){
     return typeof s === 'string' && /^\s*\[\d{1,3}:\d{1,2}/.test(s);
   }
+  function isSameOrigin(url) {
+    try { return new URL(url, location.href).origin === location.origin; }
+    catch (e) { return true; }
+  }
 
   function getStepWidth() {
     var viewportW = window.innerWidth;
@@ -459,7 +592,6 @@
     return cardW + gap;
   }
 
-  // ==================== 主题与颜色提取 ====================
   function initTheme() {
     var savedTheme = localStorage.getItem(THEME_KEY);
     if (savedTheme === 'dark') {
@@ -484,6 +616,7 @@
       document.documentElement.removeAttribute('data-theme');
       localStorage.setItem(THEME_KEY, 'light');
     }
+    if (currentId) updateTrackColors(getTrack(currentId));
   });
 
   var spectrumColor = [45, 90, 74], spectrumColorLight = [127, 191, 168];
@@ -542,7 +675,6 @@
     });
   }
 
-  // ==================== 歌词逻辑 ====================
   function parseLRC(text) {
     if (!text) return [];
     var lines = String(text).replace(/\r\n?/g, '\n').split('\n');
@@ -595,6 +727,7 @@
 
   function loadLyrics(track) {
     currentLyrics = []; currentLyricIndex = -1;
+    userScrolling = false;
     npLyricsContent.innerHTML = '<div class="lyric-line active">暂无歌词</div>';
     if (!track || !track.lyrics) return;
     
@@ -654,23 +787,20 @@
       for (var j = 0; j < lines.length; j++) {
         if (j === idx) lines[j].classList.add('active'); else lines[j].classList.remove('active');
       }
-      if (idx >= 0 && lines[idx]) {
+      if (idx >= 0 && lines[idx] && !userScrolling) {
         var top = lines[idx].offsetTop - npViewLyrics.offsetHeight / 2 + lines[idx].offsetHeight / 2;
         npViewLyrics.scrollTop = top;
       }
     }
   }
 
-  function hideLyricsView() {
-    if (npViewCover.classList.contains('hidden')) {
-      npViewLyrics.classList.remove('active');
-      setTimeout(function(){ npViewLyrics.classList.add('hidden'); }, 300);
-      npViewCover.classList.remove('hidden');
-      npToggleLyricsBtn.classList.remove('active');
-    }
-  }
+  npViewLyrics.addEventListener('scroll', function () {
+    if (npViewLyrics.style.scrollBehavior === 'auto') return;
+    userScrolling = true;
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function () { userScrolling = false; }, 4000);
+  }, { passive: true });
 
-  // ==================== 3D Cover Flow ====================
   function initCoverFlow() {
     let html = '';
     for (let i = -4; i <= 4; i++) {
@@ -699,7 +829,7 @@
       if (card.getAttribute('data-id') !== t.id) {
         card.setAttribute('data-id', t.id);
         if (t.cover) {
-          card.innerHTML = `<img src="${esc(t.cover)}" onerror="this.style.display='none'">`;
+          card.innerHTML = `<img src="${esc(t.cover)}" loading="lazy" decoding="async" onerror="this.style.display='none'">`;
           card.classList.remove('no-cover');
         } else {
           card.innerHTML = '♪';
@@ -725,6 +855,7 @@
       card.style.transform = `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
       card.style.opacity = Math.max(0, opacity);
       card.style.zIndex = 100 - Math.floor(absStep * 10);
+      card.style.pointerEvents = '';
 
       if (absStep < minDist) {
         minDist = absStep;
@@ -740,39 +871,40 @@
   }
 
   function animateToOffset(targetOffset) {
-    if (isAnimatingScroll) return;
+    if (isAnimatingScroll || !tracks.length) return;
     isAnimatingScroll = true;
-    
-    let startOffset = currentOffset;
-    let distance = targetOffset - startOffset;
-    let duration = 250;
-    let startTime = performance.now();
+
+    const N = tracks.length;
+    const startOffset = currentOffset;
+    const distance = targetOffset - startOffset;
+    const duration = 250;
+    const startTime = performance.now();
 
     function step(now) {
       if (!isAnimatingScroll) return;
       let p = (now - startTime) / duration;
       if (p > 1) p = 1;
-      let ease = 1 - Math.pow(1 - p, 3);
-      
+      const ease = 1 - Math.pow(1 - p, 3);
+
       currentOffset = startOffset + distance * ease;
       update3D();
 
       if (p < 1) {
         requestAnimationFrame(step);
-      } else {
-        currentOffset = targetOffset;
-        
-        if (targetOffset !== 0) {
-          let shift = Math.floor(targetOffset);
-          logicalCenter = (logicalCenter + shift) % tracks.length;
-          if (logicalCenter < 0) logicalCenter += tracks.length;
-          currentOffset -= shift;
-          
-          update3D();
-          syncPlayerToCurrent();
-        }
-        isAnimatingScroll = false;
+        return;
       }
+
+      currentOffset = targetOffset;
+
+      if (targetOffset !== 0) {
+        const shift = Math.floor(targetOffset);
+        logicalCenter = ((logicalCenter + shift) % N + N) % N;
+        currentOffset -= shift;
+      }
+
+      update3D();
+      isAnimatingScroll = false;
+      syncPlayerToCurrent();
     }
     requestAnimationFrame(step);
   }
@@ -861,7 +993,6 @@
     }
   });
 
-  // ==================== 数据加载与播放 ====================
   function buildCandidates(rawInput){
     var input = (rawInput || '').trim();
     if (input) return [input];
@@ -896,12 +1027,14 @@
   }
 
   function normalizeSongs(rawSongs, baseUrl){
-    return rawSongs.filter(s => s && typeof s === 'object').map((s, i) => ({
-      id: s.id || ('s' + i), title: s.title || '未命名', artist: s.artist || '',
-      album: s.album || '', category: s.category || '未分类',
-      src: resolveAsset(s.src, baseUrl), cover: resolveAsset(s.cover, baseUrl),
-      lyrics: looksLikeLRC(s.lyrics) ? s.lyrics : resolveAsset(s.lyrics, baseUrl)
-    }));
+    return rawSongs
+      .filter(s => s && typeof s === 'object' && s.src)
+      .map((s, i) => ({
+        id: s.id || ('s' + i), title: s.title || '未命名', artist: s.artist || '',
+        album: s.album || '', category: s.category || '未分类',
+        src: resolveAsset(s.src, baseUrl), cover: resolveAsset(s.cover, baseUrl),
+        lyrics: looksLikeLRC(s.lyrics) ? s.lyrics : resolveAsset(s.lyrics, baseUrl)
+      }));
   }
 
   function refreshLibrary(){
@@ -909,7 +1042,9 @@
       .then(res => {
         currentManifestUrl = res.url;
         tracks = normalizeSongs(res.data.tracks, absoluteUrl(res.url));
-        
+        if (!tracks.length) throw new Error('清单中没有可用曲目（缺少 src 字段）');
+        logicalCenter = ((logicalCenter % tracks.length) + tracks.length) % tracks.length;
+
         applyRestoredPlayerState();
         if (!currentId && tracks.length) {
           currentId = tracks[0].id;
@@ -926,44 +1061,39 @@
 
   function updatePlayerUI(t) {
     if (!t) {
-      pbTitle.textContent = '未在播放'; pbArtist.textContent = '请选择曲目';
-      pbCoverImg.style.display = 'none'; pbCover.style.background = 'var(--border)';
+      pbTitle.textContent = '未在播放';
+      pbArtist.textContent = '请选择曲目';
+      pbCoverImg.style.display = 'none';
+      pbCover.classList.remove('has-cover');
+      pbCover.style.background = 'var(--border)';
       return;
     }
     pbTitle.textContent = t.title;
     pbArtist.textContent = t.artist || '未知艺术家';
     if (t.cover) {
-      pbCoverImg.src = t.cover; pbCoverImg.style.display = 'block'; pbCover.style.background = 'transparent';
+      pbCoverImg.src = t.cover;
+      pbCoverImg.style.display = 'block';
+      pbCover.classList.add('has-cover');
+      pbCover.style.background = 'transparent';
     } else {
-      pbCoverImg.style.display = 'none'; pbCover.style.background = 'var(--border)';
+      pbCoverImg.removeAttribute('src');
+      pbCoverImg.style.display = 'none';
+      pbCover.classList.remove('has-cover');
+      pbCover.style.background = 'var(--border)';
     }
-    
-    npCover.style.background = t.cover ? `url("${t.cover}") center/cover` : 'var(--accent-soft)';
-    if (!t.cover) npCover.innerHTML = '<span style="font-size:4rem;color:rgba(255,255,255,0.2)">♪</span>'; else npCover.innerHTML = '';
-    npTitle.textContent = t.title;
-    npArtist.textContent = (t.artist || '') + (t.album ? ' · ' + t.album : '');
-    
+
     if (t.cover) {
-      npVinylDisc.style.setProperty('--vinyl-label', `url("${t.cover}")`);
+      npCover.innerHTML = '<img src="' + esc(t.cover) + '" alt="">';
+      npVinylDisc.style.setProperty('--vinyl-label', 'url("' + t.cover + '")');
     } else {
+      npCover.innerHTML = '';
       npVinylDisc.style.setProperty('--vinyl-label', 'var(--np-primary)');
     }
+    npTitle.textContent = t.title;
+    npArtist.textContent = (t.artist || '') + (t.album ? ' · ' + t.album : '');
 
     updateTrackColors(t);
     loadLyrics(t);
-  }
-
-  function playTrack(id, forcePlay) {
-    var t = getTrack(id);
-    if (!t || !t.src) return;
-    if (id === currentId && !forcePlay) { togglePlay(); return; }
-
-    currentId = id;
-    audio.src = t.src;
-    audio.play().catch(e => console.warn('播放失败', e));
-    
-    updatePlayerUI(t);
-    savePlayerState();
   }
 
   function togglePlay() {
@@ -1006,7 +1136,6 @@
     npModal.classList.toggle('is-playing', isPlaying);
   }
 
-  // ==================== 持久化与音频 ====================
   function savePlayerState() {
     try { localStorage.setItem(PLAYER_KEY, JSON.stringify({ trackId: currentId || null, currentTime: audio.currentTime || 0 })); } catch(e){}
   }
@@ -1034,7 +1163,6 @@
     } catch(e){}
   }
 
-  // ==================== 频谱动画 ====================
   var audioCtx = null, analyser = null, freqData = null;
   var barSpectrumCanvas = document.getElementById('bar-spectrum'), barSpectrumCtx = barSpectrumCanvas.getContext('2d');
   var npSpectrumCanvas = document.getElementById('np-spectrum'), npSpectrumCtx = npSpectrumCanvas.getContext('2d');
@@ -1049,12 +1177,16 @@
     if (audioCtx) return;
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
+    if (!audio.src || !isSameOrigin(audio.src)) return;
     try {
-      audioCtx = new AC(); analyser = audioCtx.createAnalyser(); analyser.fftSize = 256;
+      audioCtx = new AC();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
       var sourceNode = audioCtx.createMediaElementSource(audio);
-      sourceNode.connect(analyser); analyser.connect(audioCtx.destination);
+      sourceNode.connect(analyser);
+      analyser.connect(audioCtx.destination);
       freqData = new Uint8Array(analyser.frequencyBinCount);
-    } catch(e){}
+    } catch(e){ audioCtx = null; analyser = null; }
   }
 
   function ensureAudioContext() {
@@ -1075,13 +1207,16 @@
     var dpr = window.devicePixelRatio || 1;
     var w = canvas.clientWidth, h = canvas.clientHeight;
     if (!w || !h) return;
-    if (canvas.width !== w*dpr) { canvas.width = w*dpr; canvas.height = h*dpr; }
+    var cw = Math.round(w * dpr), ch = Math.round(h * dpr);
+    if (canvas.width !== cw || canvas.height !== ch) {
+      canvas.width = cw;
+      canvas.height = ch;
+    }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
     var usable = data.length;
     
-    // 统一按固定宽度的柱子计算，如果屏幕宽则自适应
     var targetBarW = isFullScreen ? 8 : 6;
     var bars = Math.floor(w / targetBarW);
     if (bars <= 0) return;
@@ -1119,7 +1254,6 @@
     if (!isSpectrumRunning) return;
     
     if (!lastSpectrumTime) lastSpectrumTime = now;
-    // 限制最大帧间隔 50ms（防止后台切回来瞬间滑落太快）
     var dt = Math.min(now - lastSpectrumTime, 50);
     lastSpectrumTime = now;
 
@@ -1134,26 +1268,24 @@
           }
         } else {
           var fake = generateFakeData(Date.now());
-          for(var i=0; i<64; i++) targetData[i] = fake[i];
+          for(var k=0; k<64; k++) targetData[k] = fake[k];
         }
       } else {
         var fake = generateFakeData(Date.now());
-        for(var i=0; i<64; i++) targetData[i] = fake[i];
+        for(var k=0; k<64; k++) targetData[k] = fake[k];
       }
     } else {
       targetData.fill(0);
     }
 
-    // 基于时间差的平滑过渡（无论 60Hz 还是 120Hz 衰减率一致）
-    // 假设 60fps 下的 ease = 0.35，根据 dt 推导当前 ease
     var baseEase = isPlaying ? 0.35 : 0.08;
     var ease = 1 - Math.pow(1 - baseEase, dt / 16.66);
 
     var isAllZero = true;
-    for (var i = 0; i < 64; i++) {
-      visData[i] += (targetData[i] - visData[i]) * ease;
-      if (visData[i] > 1) isAllZero = false;
-      else visData[i] = 0;
+    for (var m = 0; m < 64; m++) {
+      visData[m] += (targetData[m] - visData[m]) * ease;
+      if (visData[m] > 1) isAllZero = false;
+      else visData[m] = 0;
     }
 
     if (npOpen) drawSpectrum(npSpectrumCanvas, npSpectrumCtx, visData, true);
@@ -1174,8 +1306,7 @@
     spectrumRAF = requestAnimationFrame(loopSpectrum);
   }
 
-  // ==================== UI 历史状态管理 (返回键) ====================
-  var historyState = 'main'; // 'main', 'np', 'settings'
+  var historyState = 'main';
 
   function openNP() {
     if (!currentId || npOpen) return;
@@ -1242,11 +1373,11 @@
   }
 
   window.addEventListener('popstate', function() {
+    historyState = 'main';
     if (npOpen) closeNP(true);
     if (!settingsModal.hidden) closeSettings(true);
   });
 
-  // ==================== 全局事件 ====================
   audio.addEventListener('play', () => { isPlaying = true; ensureAudioContext(); syncPlayUI(); startSpectrum(); });
   audio.addEventListener('pause', () => { isPlaying = false; syncPlayUI(); savePlayerState(); startSpectrum(); });
   audio.addEventListener('ended', nextTrack);
@@ -1275,14 +1406,22 @@
     }
   });
 
-  seekBar.addEventListener('click', e => {
-    var rect = seekBar.getBoundingClientRect(), ratio = (e.clientX - rect.left) / rect.width;
-    if (isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
-  });
-  npBar.addEventListener('click', e => {
-    var rect = npBar.getBoundingClientRect(), ratio = (e.clientX - rect.left) / rect.width;
-    if (isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
-  });
+  function bindSeek(barEl) {
+    function seek(e) {
+      var rect = barEl.getBoundingClientRect();
+      var ratio = Math.max(0, Math.min(1, (getClientX(e) - rect.left) / rect.width));
+      if (isFinite(audio.duration)) audio.currentTime = ratio * audio.duration;
+    }
+    var dragging = false;
+    barEl.addEventListener('mousedown', function(e){ dragging = true; seek(e); e.preventDefault(); });
+    window.addEventListener('mousemove', function(e){ if (dragging) seek(e); });
+    window.addEventListener('mouseup', function(){ dragging = false; });
+    barEl.addEventListener('touchstart', function(e){ dragging = true; seek(e); }, { passive: true });
+    barEl.addEventListener('touchmove', function(e){ if (dragging) { seek(e); e.preventDefault(); } }, { passive: false });
+    barEl.addEventListener('touchend', function(){ dragging = false; });
+  }
+  bindSeek(seekBar);
+  bindSeek(npBar);
 
   pbCover.addEventListener('click', openNP);
 
@@ -1295,7 +1434,9 @@
     if (e.key === 'Escape') {
       if(npOpen) closeNP(false);
       else if (!settingsModal.hidden) closeSettings(false);
+      return;
     }
+    if (e.target.closest('button')) return;
     if (e.key === ' ') { e.preventDefault(); togglePlay(); }
     if (e.key === 'ArrowRight' && !npOpen) nextTrack();
     if (e.key === 'ArrowLeft' && !npOpen) prevTrack();
@@ -1304,7 +1445,7 @@
   function updateManifestHints(){
     var raw = (sourceState.manifestUrl || '').trim();
     var resolved = raw ? absoluteUrl(raw) : absoluteUrl('./manifest.json');
-    settingsCurrent.innerHTML = `<strong>当前生效地址</strong>${resolved}`;
+    settingsCurrent.innerHTML = '<strong>当前生效地址</strong>' + esc(resolved);
   }
 
   settingsBtn.addEventListener('click', openSettings);
@@ -1320,6 +1461,7 @@
   pfSave.addEventListener('click', () => {
     sourceState.manifestUrl = manifestUrlEl.value.trim();
     try { localStorage.setItem(SOURCE_KEY, JSON.stringify(sourceState)); } catch(e){}
+    settingsStatus.textContent = '已保存';
     closeSettings(false);
     refreshLibrary();
   });
