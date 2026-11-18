@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>YAONET · 音频播放器</title>
+
+<!-- ==================== 网页图标 (Favicon) 兼容性配置 ==================== -->
+<!-- 严格要求：不使用 SVG，只使用标准的 .ico 格式 -->
+<!-- 1. 标准兼容（现代浏览器、旧版浏览器、Firefox等） -->
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<!-- 2. 书签兼容 -->
+<link rel="bookmark" href="favicon.ico" type="image/x-icon">
+<!-- 3. 苹果设备兼容 (iOS添加到主屏幕) - 严格遵循要求使用ico格式 -->
+<link rel="apple-touch-icon" href="favicon.ico">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -44,8 +55,10 @@
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 24px; z-index: 100; flex-shrink: 0;
   }
-  .site-brand { font-size: 1.4rem; font-weight: 800; letter-spacing: -.03em; }
+  /* 修复 Logo 链接样式 */
+  .site-brand { font-size: 1.4rem; font-weight: 800; letter-spacing: -.03em; cursor: pointer; display: inline-block; }
   .site-brand span { color: var(--accent); }
+  .site-brand:hover { opacity: 0.8; }
 
   .settings-btn {
     width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
@@ -146,7 +159,23 @@
     display: flex; align-items: center; gap: 12px;
     font-size: 0.75rem; color: var(--text-3); font-variant-numeric: tabular-nums; padding: 0 4px;
   }
-  .pb-bar { flex: 1; height: 4px; border-radius: 999px; background: var(--border); position: relative; cursor: pointer; overflow: hidden; }
+  
+  /* ==================== 进度条优化（带缓冲条 + 大热区） ==================== */
+  .pb-bar { 
+    flex: 1; height: 4px; border-radius: 999px; background: var(--border); position: relative; 
+    cursor: pointer; 
+  }
+  /* 隐形热区：上下各延伸 12px，极大增加手指容易点中的范围 */
+  .pb-bar::before {
+    content: ''; position: absolute; top: -12px; bottom: -12px; left: 0; right: 0; z-index: 10;
+  }
+  
+  /* 需要额外加一个容器来限制圆角，否则进度条伸出去会变成方块 */
+  .pb-bar-bg {
+    position: absolute; inset: 0; border-radius: 999px; overflow: hidden; pointer-events: none;
+  }
+  
+  .pb-bar-buffer { position: absolute; left: 0; top: 0; height: 100%; border-radius: 999px; background: rgba(128,128,128,0.3); width: 0%; transition: width 0.2s linear; }
   .pb-bar-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 999px; background: var(--text); width: 0%; transition: width 0.1s linear; }
 
   /* ==================== 全屏 Now Playing ==================== */
@@ -191,7 +220,16 @@
   .lyric-line.active{color:rgba(255,255,255,.85);font-size:1.25rem;font-weight:800;transform:scale(1.02);}
 
   .np-progress-row{display:flex;align-items:center;gap:12px;width:100%;max-width:320px;font-size:.75rem;color:rgba(255,255,255,.4);margin-bottom:16px;}
-  .np-bar{flex:1;height:4px;border-radius:999px;background:rgba(255,255,255,.15);position:relative;cursor:pointer;overflow:hidden;}
+  
+  /* 全屏进度条热区与缓冲 */
+  .np-bar{flex:1;height:4px;border-radius:999px;background:rgba(255,255,255,.15);position:relative;cursor:pointer;}
+  .np-bar::before {
+    content: ''; position: absolute; top: -12px; bottom: -12px; left: 0; right: 0; z-index: 10;
+  }
+  .np-bar-bg {
+    position: absolute; inset: 0; border-radius: 999px; overflow: hidden; pointer-events: none;
+  }
+  .np-bar-buffer{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:rgba(255,255,255,.2);width:0%;transition:width 0.2s linear;}
   .np-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:var(--np-primary-light);width:0%;transition:width .1s linear;}
 
   .np-controls{display:flex;align-items:center;justify-content:center;gap:24px;width:100%;}
@@ -242,42 +280,37 @@
 
   /* ========================================================
      ★★★ 全新宽屏 UI：专门针对横屏/桌面端单独设计 ★★★
-     放弃所有 vh/vw 的迁就，重置排版，不做拼接
      ======================================================== */
   @media (min-aspect-ratio: 1/1), (min-width: 768px) {
-    /* 宽屏全屏播放页全面重构 */
     .np-content {
       display: grid;
-      grid-template-columns: 1fr 1fr; /* 50% / 50% */
+      grid-template-columns: 1fr 1fr;
       grid-template-rows: 1fr auto auto;
       grid-template-areas: 
         "cover lyrics"
         "progress progress"
         "controls controls";
-      max-width: 1200px; /* 宽屏不再无限拉伸，居中呈现 */
+      max-width: 1200px;
       width: 90%;
-      height: 85vh; /* 占据大半个屏幕，上下留白 */
+      height: 85vh;
       padding: 0;
       gap: 20px 60px;
       align-items: center;
       align-content: center;
-      /* 重置基础样式中的高度限制 */
       max-height: none;
     }
 
-    /* 1. 左侧：封面与信息 */
     .np-view-cover {
       grid-area: cover;
       display: flex !important;
       flex-direction: column;
       justify-content: center;
       height: 100%;
-      opacity: 1 !important; /* 强制显示，无视 JS 的 hidden 类 */
+      opacity: 1 !important;
       pointer-events: auto !important;
       transform: none !important;
     }
     
-    /* 宽屏尺寸重写：固定大小的圆角矩形，更加大气 */
     .np-cover {
       width: clamp(280px, 30vw, 360px);
       height: clamp(280px, 30vw, 360px);
@@ -290,7 +323,6 @@
       margin-left: calc(clamp(260px, 28vw, 340px) * -0.5);
     }
     
-    /* 标题左对齐，更符合桌面阅读习惯 */
     .np-info {
       margin-bottom: 0;
       padding: 0;
@@ -300,7 +332,6 @@
     .np-info h2 { font-size: 2.2rem; text-align: left; }
     .np-info p { font-size: 1rem; text-align: left; }
 
-    /* 2. 右侧：独立歌词面板 */
     .np-view-lyrics {
       grid-area: lyrics;
       position: relative !important;
@@ -308,24 +339,22 @@
       bottom: auto !important;
       height: 100%;
       width: 100%;
-      display: block !important; /* 强制显示歌词 */
+      display: block !important;
       opacity: 1 !important;
       pointer-events: auto !important;
       padding: 15vh 0;
-      background: rgba(255, 255, 255, 0.03); /* 桌面端专属磨砂背景 */
+      background: rgba(255, 255, 255, 0.03);
       border-radius: 24px;
       border: 1px solid rgba(255, 255, 255, 0.05);
       box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
     }
 
-    /* 歌词字体在宽屏下放大 */
     .lyric-line { font-size: 1.4rem; padding: 16px 0; }
     .lyric-line.active { font-size: 1.7rem; }
 
-    /* 3. 底部控制栏（横跨底端并居中） */
     .np-progress-row {
       grid-area: progress;
-      max-width: 500px; /* 进度条拉长 */
+      max-width: 500px;
       margin: 0 auto;
       display: flex !important;
     }
@@ -336,20 +365,16 @@
       padding-bottom: 10px;
     }
 
-    /* 桌面端不需要歌词切换按钮，因为已经左右并列显示 */
     .np-lyric-btn { display: none !important; }
   }
 
-  /* ==================== 极端横屏保险（手机横屏被工具栏挤压） ==================== */
-  /* 如果屏幕极其扁平（高度小于 500px），按比例缩放宽屏排版 */
   @media (min-aspect-ratio: 1/1) and (max-height: 500px) {
     .np-content {
-      grid-template-columns: 200px 1fr; /* 左侧收窄 */
+      grid-template-columns: 200px 1fr;
       height: 100%;
       gap: 10px 30px;
     }
     
-    /* 极度压缩封面尺寸 */
     .np-cover { width: 140px; height: 140px; border-radius: 12px; }
     .np-vinyl { width: 120px; height: 120px; margin-left: -60px; }
     
@@ -374,7 +399,7 @@
 
 <div class="app-wrapper">
   <header class="site-header">
-    <div class="site-brand">YAO<span>NET</span></div>
+    <a href="https://yaonet.de5.net" class="site-brand" target="_blank">YAO<span>NET</span></a>
     <button class="settings-btn" id="settings-btn" aria-label="设置">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
@@ -405,7 +430,12 @@
   </div>
   <div class="pb-row-bottom">
     <span id="cur-time">0:00</span>
-    <div class="pb-bar" id="seek-bar"><div class="pb-bar-fill" id="seek-fill"></div></div>
+    <div class="pb-bar" id="seek-bar">
+      <div class="pb-bar-bg">
+        <div class="pb-bar-buffer" id="seek-buffer"></div>
+        <div class="pb-bar-fill" id="seek-fill"></div>
+      </div>
+    </div>
     <span id="dur-time">0:00</span>
   </div>
 </div>
@@ -429,7 +459,12 @@
     <div class="np-view-lyrics hidden" id="np-view-lyrics"><div id="np-lyrics-content"><div class="lyric-line active">暂无歌词</div></div></div>
     <div class="np-progress-row">
       <span id="np-cur">0:00</span>
-      <div class="np-bar" id="np-bar"><div class="np-bar-fill" id="np-fill"></div></div>
+      <div class="np-bar" id="np-bar">
+        <div class="np-bar-bg">
+          <div class="np-bar-buffer" id="np-buffer"></div>
+          <div class="np-bar-fill" id="np-fill"></div>
+        </div>
+      </div>
       <span id="np-dur">0:00</span>
     </div>
     <div class="np-controls">
@@ -493,10 +528,13 @@
   var btnPlay = document.getElementById('btn-play');
   var btnPrev = document.getElementById('btn-prev');
   var btnNext = document.getElementById('btn-next');
+  
   var seekBar = document.getElementById('seek-bar');
   var seekFill = document.getElementById('seek-fill');
+  var seekBuffer = document.getElementById('seek-buffer'); 
   var curTimeEl = document.getElementById('cur-time');
   var durTimeEl = document.getElementById('dur-time');
+  
   var audio = document.getElementById('player');
 
   var npModal = document.getElementById('now-playing');
@@ -513,8 +551,10 @@
   var npPlayBtn = document.getElementById('np-play');
   var npPrevBtn = document.getElementById('np-prev');
   var npNextBtn = document.getElementById('np-next');
+  
   var npBar = document.getElementById('np-bar');
   var npFill = document.getElementById('np-fill');
+  var npBuffer = document.getElementById('np-buffer'); 
   var npCur = document.getElementById('np-cur');
   var npDur = document.getElementById('np-dur');
 
@@ -1130,6 +1170,19 @@
     updateLyricsHighlight(c);
   }
 
+  // 更新缓冲进度条
+  function updateBuffered() {
+    if (!audio.buffered || audio.buffered.length === 0) return;
+    var d = audio.duration;
+    if (!isFinite(d) || d <= 0) return;
+    
+    var bufferedEnd = audio.buffered.end(audio.buffered.length - 1);
+    var percent = (bufferedEnd / d) * 100;
+    
+    seekBuffer.style.width = percent + '%';
+    npBuffer.style.width = percent + '%';
+  }
+
   function syncPlayUI() {
     btnPlay.innerHTML = isPlaying ? ICON_PAUSE_SM : ICON_PLAY_SM;
     npPlayBtn.innerHTML = isPlaying ? ICON_PAUSE_LG : ICON_PLAY_LG;
@@ -1382,6 +1435,10 @@
   audio.addEventListener('pause', () => { isPlaying = false; syncPlayUI(); savePlayerState(); startSpectrum(); });
   audio.addEventListener('ended', nextTrack);
   audio.addEventListener('timeupdate', updateProgress);
+  
+  // 监听 audio 的 progress 事件来刷新缓冲进度条
+  audio.addEventListener('progress', updateBuffered);
+  audio.addEventListener('loadedmetadata', updateBuffered);
 
   btnPlay.addEventListener('click', togglePlay);
   btnPrev.addEventListener('click', prevTrack);
